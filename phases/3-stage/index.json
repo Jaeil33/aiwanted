@@ -13,7 +13,10 @@
     {
       "step": 1,
       "name": "stage-renderer",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-09-14T17:23:42+0900",
+      "summary": "src/stage/render: types.ts(step 파일의 StageScene·PitchPlayback·StageDeps·StageInspect·StageController + StageBanner·BannerTone·StageOptions), background.ts(buildBackground(ctx): 논리 좌표로 하늘·조명탑·관중 2600점(mulberry 11)·전광판 틀·펜스·잔디 줄무늬·내야 흙·마운드·배터 박스·파울 라인·홈플레이트·비네트를 한 번 그림), figures.ts(drawPitcher(손 위치 반환)·drawBatter·drawFielders·batterKeys(테이크/스윙 키프레임)·idlePitcherPose·idleBatterPose·SKIN/INK/CHALK), overlay.ts(drawZone·drawBall(그림자·잔상·실밥)·drawMitt·drawMap+runnerAt·callFor/drawCall·drawBanner/bannerDone·burst/drawSparks·drawBoard·CALL_COLOR와 수명 상수), controller.ts(createStage(canvas, {reducedMotion, deps}): 기본 deps(performance·rAF·document)는 여기서만, 프로토타입 타이밍 그대로(투구 동작 1650ms·릴리스 0.76·슬로 2.2, fast/동작 줄이기 700ms·1배속, 타구 rate, 주자 perBase 640/360, 배너 1500/850), 손→추적 궤적 보간·타구 비행·최근접 야수 추격·미니 다이아몬드 주자·HR 불꽃, 큐 재생, inspect, resize(dpr 상한 2·최소 320px, 배율이 바뀔 때만 배경 재생성), showBanner는 타이머 대신 프레임에서 resolve, destroy가 대기 Promise 모두 resolve, 타구 u1·u2와 불꽃은 시드 mulberry), testing.ts(createFakeContext·createFakeCanvas·createManualDeps·advanceUntil·flushMicrotasks), render/index.ts(createStage+타입만), stage/index.ts(math+render 재내보내기); 원본과 다르게 한 점: 미트 고리를 공이 꽂힌 뒤에만 그림(원본은 꽂히기 전 popAge<−140에서 arc 반지름이 음수가 돼 예외로 프레임 루프가 멈출 수 있음), NaN·홈에 오지 않는 투구 행은 DEFAULT_PITCH_ROW로 대체(연출이 끝나지 않는 것 방지), 2D 컨텍스트가 없으면 그리지 않고 상태만 반영하고 즉시 resolve, buildBackground는 장면과 무관해 scene 인자를 받지 않음; AC 통과(vitest 195, pytest 81)",
+      "completed_at": "2026-09-14T17:51:44+0900"
     },
     {
       "step": 2,
