@@ -21,7 +21,10 @@
     {
       "step": 2,
       "name": "stage-component",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-09-14T17:52:41+0900",
+      "summary": "src/stage/useReducedMotion.ts(useSyncExternalStore로 matchMedia('(prefers-reduced-motion: reduce)') 구독·change 반영, matchMedia 없으면 false), BallparkStage.tsx(forwardRef<StageController, BallparkStageProps>, props {scene: StageScene|null; bases?; board?: [string, string]; className?; label?}: div 컨테이너 안 role=img canvas 1개·기본 aria-label '경기장: 투수와 타자가 공을 주고받는 화면', useLayoutEffect에서 createStage(canvas, {reducedMotion}) 한 번(동작 줄이기는 마운트 시점 값) → useImperativeHandle이 컨트롤러 객체를 그대로 ref로 노출(언마운트하면 null), scene(null이면 건너뜀)·bases·board(두 줄 문자열이 바뀔 때만) 변경 시 setScene·setBases·setBoard, 컨테이너 폭은 ResizeObserver contentRect(없으면 window resize + getBoundingClientRect)로 resize(width, devicePixelRatio), 언마운트 시 destroy·구독 해제, StrictMode 재마운트에서도 ref가 새 컨트롤러를 가리킴), BallparkStage.module.css(.stage 폭 100%·min-width 0, .canvas block·width/max-width 100%·aspect-ratio 16/9·배경 var(--board)), index.ts에 BallparkStage·BallparkStageProps·useReducedMotion 추가; 테스트는 getContext를 vi.spyOn으로 testing.ts 가짜 컨텍스트, createStage는 실제 구현을 감싼 vi.fn 모듈 모킹(1회 생성·destroy·resize 인자·getContext null 환경); 추가 검증: 프로토타입 createStage와 같은 가짜 컨텍스트·16ms 시계·시드로 대기·슬로(B/T/S/F/SF/HR)·fast 인플레이 8종+볼넷·동작 줄이기 4개 시나리오 약 178만 그리기 호출을 프레임별 대조해 불일치 0(미트 고리 가드만 알려진 차이); AC 통과(vitest 208, pytest 81)",
+      "completed_at": "2026-09-14T19:05:34+0900"
     }
   ],
   "created_at": "2026-09-14T17:09:28+0900"
