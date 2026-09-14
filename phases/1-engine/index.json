@@ -29,7 +29,10 @@
     {
       "step": 3,
       "name": "engine-playout",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-09-14T18:59:56+0900",
+      "summary": "src/engine/measured.ts: OFFENSE_W(=KNOB_WEIGHTS.mood) · runsElasticity(lg)(리그 평균 타선 무사 주자 없음 반이닝 ln 기대 득점의 k=0 중앙 차분 h=0.01, lg.join(',') 키 캐시) · measuredRunsRatio(def,item,value)=exp(beta×transformValue) · compileMeasuredPart(part,ctx,evidence,lg,sourceId)(applicable false·evidence null·항목 없음·값이나 beta가 유한수 아님·대상 확정 불가면 []; scale=ln(배수)/탄력성, logOdds=scale×OFFENSE_W, scope game; env는 대상과 상관없이 all, team은 batting 진영, opponentStarter는 fielding 진영이고 everyone이면 []) · compileEffects(parts,ctx,{sourceId,evidence,lg}) / src/engine/playout.ts: PlayoutInput·PlayoutPA·PlayoutResult · playout(input)(시작과 같은 이닝·초말은 scenePitcher, 이후 수비 팀 bullpen; 첫 타석만 first true; countTable 있으면 simulatePA(calibrateCount)이고 카운트 모델은 한 재생 안에서 진영·타순·장면 투수 여부·first 키로 캐시(난수 소비는 명세와 같음), 없으면 sampleEvent·pitches []; trackWinProbability(기본 true)면 wpHomeBefore는 첫 타석만 evaluate하고 이후 직전 wpHomeAfter, 경기 종료면 wpHomeAfter 홈 승 1·그 외 0, tieAfter 무승부 1; false면 셋 다 null; maxPlateAppearances(기본 300)를 넘으면 truncated true, final은 다음 타석 상태, winner는 그 시점 점수) · pickHighlights(result,max=6)(0·마지막 필수, 승리확률 변화 ≥0.05 또는 7회 이후 득점 타석을 변화량 순, wp가 없으면 7회 이후 득점 타석을 득점 순, max 1이면 [0]) · expectedCounts(probs,n=1000)(내림 후 소수부 큰 순·동률 home→tie→away, 1e-9 격자로 부동소수 잡음 흡수, n이 0 이상 정수가 아니면 RangeError); index.ts에 measured·playout API·타입과 EV(src/domain/events 재수출, 5-app step1이 엔진 API로 요구) 추가, index.test가 값 공개 API 39개 이름 정확 일치 확인; AC 통과(vitest 276 = 이전 240 + measured 20 + playout 15 + index 1, 장면 상태 3,000번 재생 홈 승률이 효과 없음·pa/game 효과+만화 모드 두 경우 모두 3σ 이내, 표본 수 줄이지 않음, pytest 81). 사용량 제한으로 17:55에 시작한 작업이 멈췄다가 재개해 started_at은 재개 시각",
+      "completed_at": "2026-09-14T19:06:18+0900"
     }
   ],
   "created_at": "2026-09-14T17:11:53+0900"
