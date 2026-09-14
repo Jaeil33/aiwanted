@@ -2,8 +2,31 @@
   "project": "TMI 야구",
   "phase": "stage",
   "steps": [
-    { "step": 0, "name": "stage-math", "status": "pending" },
-    { "step": 1, "name": "stage-renderer", "status": "pending" },
-    { "step": 2, "name": "stage-component", "status": "pending" }
-  ]
+    {
+      "step": 0,
+      "name": "stage-math",
+      "status": "completed",
+      "started_at": "2026-09-14T17:09:59+0900",
+      "summary": "src/stage/math 순수 모듈(DOM·Math.random 없음): camera.ts(W·H·CAMERA·PLATE_Y·MITT_Y·BALL_R·project), pitch.ts(TRACK_Y0·pitchAt·timeToY·plateTime·DEFAULT_PITCH_ROW=145km/h 존 한가운데 합성 직구), batted.ts(GRAVITY·DRAG·battedPreset·flight·pathAt(points, t), 타입 BattedSpec·Flight·FlightPoint), pose.ts(lerp·clamp01·smooth·제네릭 poseAt<K>·PITCHER_SET·RELEASE_AT·DELIVERY_MS·PITCHER_KEYS·BAT·BATTER_X, 관절 타입 PitcherJoint·BatterJoint·Pose·PoseKey), field.ts(FIELDERS·BASES·basePoint·nearestFielder), color.ts(mix·uniform({color, home}) → {jersey, trim, pants, cap}: step 파일의 {base,dark,light} 시그니처 대신 괄호 설명대로 stage.js 구조 그대로), random.ts(mulberry: 읽기 목록에 있으나 파일 자리가 없어 추가, 배경 관중·타구 난수용), index.ts 재내보내기(index.test.ts 이름 목록); 프로토타입 복사본과 상수·투영·궤적·타구·자세·색 33,156개 값 대조 불일치 0; 뜬공 200~340ft 테스트는 프리셋이 u1≥0.5·u2 큰 구석에서 365ft까지 가므로 안쪽 u값으로 확인; AC 통과(vitest 118, pytest 81)",
+      "completed_at": "2026-09-14T17:22:53+0900"
+    },
+    {
+      "step": 1,
+      "name": "stage-renderer",
+      "status": "completed",
+      "started_at": "2026-09-14T17:23:42+0900",
+      "summary": "src/stage/render: types.ts(step 파일의 StageScene·PitchPlayback·StageDeps·StageInspect·StageController + StageBanner·BannerTone·StageOptions), background.ts(buildBackground(ctx): 논리 좌표로 하늘·조명탑·관중 2600점(mulberry 11)·전광판 틀·펜스·잔디 줄무늬·내야 흙·마운드·배터 박스·파울 라인·홈플레이트·비네트를 한 번 그림), figures.ts(drawPitcher(손 위치 반환)·drawBatter·drawFielders·batterKeys(테이크/스윙 키프레임)·idlePitcherPose·idleBatterPose·SKIN/INK/CHALK), overlay.ts(drawZone·drawBall(그림자·잔상·실밥)·drawMitt·drawMap+runnerAt·callFor/drawCall·drawBanner/bannerDone·burst/drawSparks·drawBoard·CALL_COLOR와 수명 상수), controller.ts(createStage(canvas, {reducedMotion, deps}): 기본 deps(performance·rAF·document)는 여기서만, 프로토타입 타이밍 그대로(투구 동작 1650ms·릴리스 0.76·슬로 2.2, fast/동작 줄이기 700ms·1배속, 타구 rate, 주자 perBase 640/360, 배너 1500/850), 손→추적 궤적 보간·타구 비행·최근접 야수 추격·미니 다이아몬드 주자·HR 불꽃, 큐 재생, inspect, resize(dpr 상한 2·최소 320px, 배율이 바뀔 때만 배경 재생성), showBanner는 타이머 대신 프레임에서 resolve, destroy가 대기 Promise 모두 resolve, 타구 u1·u2와 불꽃은 시드 mulberry), testing.ts(createFakeContext·createFakeCanvas·createManualDeps·advanceUntil·flushMicrotasks), render/index.ts(createStage+타입만), stage/index.ts(math+render 재내보내기); 원본과 다르게 한 점: 미트 고리를 공이 꽂힌 뒤에만 그림(원본은 꽂히기 전 popAge<−140에서 arc 반지름이 음수가 돼 예외로 프레임 루프가 멈출 수 있음), NaN·홈에 오지 않는 투구 행은 DEFAULT_PITCH_ROW로 대체(연출이 끝나지 않는 것 방지), 2D 컨텍스트가 없으면 그리지 않고 상태만 반영하고 즉시 resolve, buildBackground는 장면과 무관해 scene 인자를 받지 않음; AC 통과(vitest 195, pytest 81)",
+      "completed_at": "2026-09-14T17:51:44+0900"
+    },
+    {
+      "step": 2,
+      "name": "stage-component",
+      "status": "completed",
+      "started_at": "2026-09-14T17:52:41+0900",
+      "summary": "src/stage/useReducedMotion.ts(useSyncExternalStore로 matchMedia('(prefers-reduced-motion: reduce)') 구독·change 반영, matchMedia 없으면 false), BallparkStage.tsx(forwardRef<StageController, BallparkStageProps>, props {scene: StageScene|null; bases?; board?: [string, string]; className?; label?}: div 컨테이너 안 role=img canvas 1개·기본 aria-label '경기장: 투수와 타자가 공을 주고받는 화면', useLayoutEffect에서 createStage(canvas, {reducedMotion}) 한 번(동작 줄이기는 마운트 시점 값) → useImperativeHandle이 컨트롤러 객체를 그대로 ref로 노출(언마운트하면 null), scene(null이면 건너뜀)·bases·board(두 줄 문자열이 바뀔 때만) 변경 시 setScene·setBases·setBoard, 컨테이너 폭은 ResizeObserver contentRect(없으면 window resize + getBoundingClientRect)로 resize(width, devicePixelRatio), 언마운트 시 destroy·구독 해제, StrictMode 재마운트에서도 ref가 새 컨트롤러를 가리킴), BallparkStage.module.css(.stage 폭 100%·min-width 0, .canvas block·width/max-width 100%·aspect-ratio 16/9·배경 var(--board)), index.ts에 BallparkStage·BallparkStageProps·useReducedMotion 추가; 테스트는 getContext를 vi.spyOn으로 testing.ts 가짜 컨텍스트, createStage는 실제 구현을 감싼 vi.fn 모듈 모킹(1회 생성·destroy·resize 인자·getContext null 환경); 추가 검증: 프로토타입 createStage와 같은 가짜 컨텍스트·16ms 시계·시드로 대기·슬로(B/T/S/F/SF/HR)·fast 인플레이 8종+볼넷·동작 줄이기 4개 시나리오 약 178만 그리기 호출을 프레임별 대조해 불일치 0(미트 고리 가드만 알려진 차이); AC 통과(vitest 208, pytest 81)",
+      "completed_at": "2026-09-14T19:05:34+0900"
+    }
+  ],
+  "created_at": "2026-09-14T17:09:28+0900",
+  "completed_at": "2026-09-14T19:06:29+0900"
 }

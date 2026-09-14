@@ -1,0 +1,15 @@
+/* 경기장 캔버스: 부모 폭을 꽉 채우는 16:9. 가로 스크롤을 만들지 않는다(UI_GUIDE 레이아웃). */
+.stage {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.canvas {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  background: var(--board);
+}
