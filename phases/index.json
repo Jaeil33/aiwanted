@@ -1,9 +1,32 @@
 {
   "phases": [
-    { "dir": "0-setup", "status": "pending" },
-    { "dir": "1-engine", "status": "pending" },
-    { "dir": "2-data", "status": "pending" },
-    { "dir": "3-stage", "status": "pending" },
-    { "dir": "4-ai", "status": "pending" }
+    {
+      "dir": "0-setup",
+      "status": "pending"
+    },
+    {
+      "dir": "1-engine",
+      "status": "pending"
+    },
+    {
+      "dir": "2-data",
+      "status": "pending"
+    },
+    {
+      "dir": "3-stage",
+      "status": "pending"
+    },
+    {
+      "dir": "4-ai",
+      "status": "pending"
+    },
+    {
+      "dir": "5-app",
+      "status": "pending"
+    },
+    {
+      "dir": "6-release",
+      "status": "pending"
+    }
   ]
 }

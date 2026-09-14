@@ -1,0 +1,13 @@
+{
+  "project": "TMI 야구",
+  "phase": "app",
+  "steps": [
+    { "step": 0, "name": "game-core", "status": "pending" },
+    { "step": 1, "name": "engine-client", "status": "pending" },
+    { "step": 2, "name": "app-shell", "status": "pending" },
+    { "step": 3, "name": "play-panels", "status": "pending" },
+    { "step": 4, "name": "play-screen", "status": "pending" },
+    { "step": 5, "name": "result-share", "status": "pending" },
+    { "step": 6, "name": "evidence-about", "status": "pending" }
+  ]
+}
