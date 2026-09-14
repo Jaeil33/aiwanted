@@ -178,14 +178,11 @@ def _scene(scene_id, date, stadium, away, home, dome=False):
     }
 
 
-def test_enrich_scenes_weather_fills_start_hour_values(season_games, weather_by_stadium, monkeypatch):
-    from tmi_pipeline import snapshot
-
-    monkeypatch.setattr(snapshot, "CURATED", [{"id": "fixture-pick", "game": "g4", "inning": 9, "half": 1, "batter": "x", "title": "t"}])
+def test_enrich_scenes_weather_fills_start_hour_values(season_games, weather_by_stadium):
     schedule = {g["gameId"]: g for g in season_games}
     scenes = [
         _scene("g1-57", "2026-04-03", "사직", "HT", "LT"),
-        _scene("fixture-pick", "2026-04-07", "잠실", "LT", "LG"),
+        _scene("fixture-pick", "2026-04-07", "잠실", "LT", "LG"),  # id에 경기 id가 없으면 날짜·팀이 하나로 맞는 경기(g4)
         _scene("g5-12", "2026-04-08", "고척", "LT", "WO", dome=True),
         _scene("by-date-only", "2026-04-11", "광주", "LT", "HT"),
         _scene("unknown-1", "2026-05-01", "대구", "SS", "OB"),

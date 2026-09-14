@@ -22,13 +22,20 @@ def _season_rows(raw_dir: Path, kind: str, load_json: Callable[[Path], Any]) -> 
 
 
 def game_states(game: dict) -> dict:
-    """한 경기의 결과와 타석 상태 목록. 직전 유효 승리확률이 없는 타석(경기 첫 타석 등)은 뺀다."""
+    """한 경기의 결과와 타석 상태 목록. 직전 유효 승리확률이 없는 타석(경기 첫 타석 등)은 뺀다.
+
+    투수는 타석 첫 투구의 투수(PlateAppearance.pitcher_id, ADR-014)다.
+    """
     meta = game["game"]
     lineups: dict[str, list[str | None]] = {"away": [None] * LINEUP_SIZE, "home": [None] * LINEUP_SIZE}
     last_order = {"away": 0, "home": 0}
     wp_before: float | None = None
     pas = []
     for pa in plate_appearances(game):
+        # 결과 옵션이 없는 미완료 타석(주루사로 이닝이 끝났거나 타석 도중 대타)은 같은 상황이 다음 타석으로 이어지므로
+        # 상태에서 빼고 타순 진행에도 세지 않는다.
+        if not pa.complete:
+            continue
         if 1 <= pa.bat_order <= LINEUP_SIZE:
             lineups[pa.side][pa.bat_order - 1] = pa.batter_id
         if wp_before is not None:

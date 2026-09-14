@@ -52,7 +52,7 @@ export interface SceneRecord {
   pitcher: string;
   /** 타순 0~8의 player id */
   lineups: { away: string[]; home: string[] };
-  /** 네이버 wpaByPlate 절댓값(%p) */
+  /** 실제 결과의 |WPA|(네이버 wpaByPlate 절댓값, %p). 장면 선정용이며 화면에 표시하지 않는다(ADR-014) */
   leverage: number;
   /** 0~1 */
   naverWpBeforeHome: number | null;

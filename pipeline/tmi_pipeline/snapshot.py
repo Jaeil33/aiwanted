@@ -2,7 +2,7 @@
 
 reference/tmi-prototype/build_data.py의 SCENARIOS와 main()(카운트 표, 장면 조립, 라인업·타순, 투수 손 추정)에서 이식했다.
 출력 필드 이름은 src/types/data.ts(CoreData, PitchData, SceneRecord, PlayerRecord, BullpenRecord)와 같다.
-선수 사진·엠블럼 URL은 싣지 않는다(ADR-005).
+선수 사진·엠블럼 URL은 싣지 않는다(ADR-005). 장면의 투수·타선·id·제목은 그 타석 첫 투구 시점 기록을 따른다(ADR-014).
 """
 
 import random
@@ -12,7 +12,20 @@ from pathlib import Path
 
 from .contract import PITCH_RESULT_CODE, PITCH_TYPES
 from .io import load_json, relay_game_paths, season_stats_path, write_json
-from .relay import NOTE_TYPES, PlateAppearance, chrono, load_game, pitch_row, plate_appearances, walk_pitches
+from .relay import (
+    NOTE_TYPES,
+    PINCH_HITTER,
+    PITCH,
+    RESULT_TYPES,
+    PlateAppearance,
+    Substitution,
+    chrono,
+    load_game,
+    pitch_row,
+    plate_appearances,
+    substitutions,
+    walk_pitches,
+)
 from .stats import SeasonRates, bullpen, season_rates
 
 SEASON = 2026
@@ -22,14 +35,18 @@ POOL_SAMPLE_CAP = 600
 MIN_SCENE_INNING = 6
 DAY_GAME_BEFORE_HOUR = 17
 DOME_STADIUM = "고척"
+# KBO 정규시즌 연장 한도(11회말이 끝나면 무승부)
+LAST_INNING = 11
+LINEUP_SIZE = 9
 SOURCES = ["네이버 스포츠 KBO 문자중계·기록", "TMI 야구 파이프라인"]
 
-# 직접 고른 명장면(build_data.py SCENARIOS 그대로)
+# 직접 고른 명장면(build_data.py SCENARIOS의 네 타석). 경기 id와 타석 시작 상황(이닝·초말·아웃·주자)·타자 이름으로 타석을 찾는다.
+# 장면 id는 다른 장면과 같은 f"{gameId}-{타석 번호}", 제목은 scene_title 규칙으로 만든다(ADR-014).
 CURATED = [
-    {"id": "walkoff-slam", "game": "20260825LTHT02026", "inning": 9, "half": 1, "batter": "이호연", "title": "9회말 2사 만루, 대타 한 방"},
-    {"id": "walkoff-walk", "game": "20260902HTNC02026", "inning": 9, "half": 1, "batter": "김형준", "title": "9회말 2사 만루, 제구 싸움"},
-    {"id": "extra-go-ahead", "game": "20260830NCHH02026", "inning": 10, "half": 0, "batter": "천재환", "title": "10회초 2사 2·3루, 마무리와 승부"},
-    {"id": "eleventh-last", "game": "20260910NCHT02026", "inning": 11, "half": 1, "batter": "김선빈", "title": "11회말 1사 1·3루, 마지막 이닝"},
+    {"game": "20260825LTHT02026", "inning": 9, "half": 1, "outs": 2, "bases": 7, "batter": "이호연"},
+    {"game": "20260902HTNC02026", "inning": 9, "half": 1, "outs": 2, "bases": 7, "batter": "김형준"},
+    {"game": "20260830NCHH02026", "inning": 10, "half": 0, "outs": 2, "bases": 6, "batter": "천재환"},
+    {"game": "20260910NCHT02026", "inning": 11, "half": 1, "outs": 1, "bases": 5, "batter": "김선빈"},
 ]
 
 OUTS_TEXT = ["무사", "1사", "2사", "3아웃"]
@@ -105,8 +122,89 @@ def situation_text(inning: int, half: int, outs: int, bases: int) -> str:
     return f"{inning}회{'말' if half else '초'} {OUTS_TEXT[min(outs, 3)]} {runners}"
 
 
+def _play_seq(pa: PlateAppearance) -> int:
+    """타석의 첫 투구(투구가 없으면 첫 결과) seqno. 장면은 이 순간이고, 이보다 앞선 교체만 장면에 반영한다."""
+    return min(t.get("seqno", 0) for t in pa.options if t.get("type") == PITCH or t.get("type") in RESULT_TYPES)
+
+
+def scene_lineups(
+    pas: list[PlateAppearance], subs: list[Substitution], target: PlateAppearance
+) -> dict[str, list[str | None]]:
+    """대상 타석 첫 공 시점에 양 팀 타순 1~9번에 있던 선수(ADR-014).
+
+    선발 타순: 슬롯마다 그 슬롯 첫 타석의 타자. 그 첫 타석보다 먼저 그 슬롯의 교체가 있었으면 가장 이른 교체의 나간 선수.
+    여기에 첫 공 전의 교체(slot이 있는 것)를 시간순으로 lineup[slot - 1] = in_id로 적용한다. 대주자로 들어와 누상에 있는
+    선수와 수비 교체로 들어온 선수도 이렇게 들어간다. 대상 타석의 타자는 자기 타순에 둔다. 끝까지 모르는 칸은 None.
+    """
+    first_pa: dict[tuple[str, int], PlateAppearance] = {}
+    for pa in pas:
+        if 1 <= pa.bat_order <= LINEUP_SIZE:
+            first_pa.setdefault((pa.side, pa.bat_order), pa)
+    first_sub: dict[tuple[str, int], Substitution] = {}
+    for sub in sorted(subs, key=lambda s: s.seq):
+        if sub.slot is not None:
+            first_sub.setdefault((sub.side, sub.slot), sub)
+
+    lineups: dict[str, list[str | None]] = {}
+    for side in ("away", "home"):
+        lineup: list[str | None] = []
+        for slot in range(1, LINEUP_SIZE + 1):
+            pa, sub = first_pa.get((side, slot)), first_sub.get((side, slot))
+            if sub is not None and (pa is None or sub.seq < _play_seq(pa)):
+                lineup.append(sub.out_id)
+            else:
+                lineup.append(pa.batter_id if pa is not None else None)
+        lineups[side] = lineup
+
+    moment = _play_seq(target)
+    for sub in sorted(subs, key=lambda s: s.seq):
+        if sub.slot is not None and sub.seq < moment:
+            lineups[sub.side][sub.slot - 1] = sub.in_id
+    if 1 <= target.bat_order <= LINEUP_SIZE:
+        lineups[target.side][target.bat_order - 1] = target.batter_id
+    return lineups
+
+
+def _pinch_hitting(pas: list[PlateAppearance], subs: list[Substitution], target: PlateAppearance) -> bool:
+    """타자를 들여보낸 교체가 대타(kind pinch_hitter)이고, 그 교체 뒤 이번 타석이 그 타자의 첫 타석이면 True."""
+    moment = _play_seq(target)
+    entries = [sub for sub in sorted(subs, key=lambda s: s.seq) if sub.in_id == target.batter_id and sub.seq < moment]
+    if not entries or entries[-1].kind != PINCH_HITTER:
+        return False
+    entered = entries[-1].seq
+    return not any(
+        pa is not target and pa.batter_id == target.batter_id and entered < _play_seq(pa) < moment for pa in pas
+    )
+
+
+def scene_title(pas: list[PlateAppearance], subs: list[Substitution], target: PlateAppearance) -> str:
+    """상황 문구(situation_text)에 기록으로 확인되는 꼬리표만 붙인다(ADR-014).
+
+    - 대타로 들어와 서는 첫 타석이면 ", 대타"
+    - 11회면 ", 마지막 이닝"
+    마무리·한 방·제구 싸움·끝내기처럼 역할이나 결과를 짐작하는 말은 쓰지 않는다.
+    """
+    state = target.state
+    title = situation_text(state["inning"], state["half"], state["outs"], state["bases"])
+    if _pinch_hitting(pas, subs, target):
+        title += ", 대타"
+    if state["inning"] == LAST_INNING:
+        title += ", 마지막 이닝"
+    return title
+
+
+def find_curated(game: dict, rule: dict) -> PlateAppearance | None:
+    """CURATED 규칙(이닝·초말·아웃·주자·타자 이름)에 맞는 첫 타석. 없으면 None."""
+    wanted = (rule["inning"], rule["half"], rule["outs"], rule["bases"], rule["batter"])
+    for pa in plate_appearances(game):
+        state = pa.state
+        if (state["inning"], state["half"], state["outs"], state["bases"], pa.batter_name) == wanted:
+            return pa
+    return None
+
+
 def _set_lineup(lineups: dict[str, list], pa: PlateAppearance) -> None:
-    if 1 <= pa.bat_order <= 9:
+    if 1 <= pa.bat_order <= LINEUP_SIZE:
         lineups[pa.side][pa.bat_order - 1] = pa.batter_id
 
 
@@ -114,14 +212,14 @@ def scene_candidates(games: list[dict], exclude_game_ids: set[str], top_n: int =
     """자동 장면 후보 (경기, 타석 인덱스).
 
     6회 이후, 네이버 wpa가 유효, 이번 타자까지 양 팀 타순 1~9번이 모두 나온 타석 중 경기마다 |wpa|가 가장 큰 하나를 고르고
-    |wpa| 큰 경기 순으로 top_n개.
+    |wpa| 큰 경기 순으로 top_n개. 실제 결과의 |wpa|는 장면 선정용이며 화면에 표시하지 않는다(ADR-014).
     """
     best: list[tuple[float, str, int, dict]] = []
     for game in games:
         game_id = game["game"]["gameId"]
         if game_id in exclude_game_ids:
             continue
-        lineups: dict[str, list] = {"away": [None] * 9, "home": [None] * 9}
+        lineups: dict[str, list] = {"away": [None] * LINEUP_SIZE, "home": [None] * LINEUP_SIZE}
         pick: PlateAppearance | None = None
         for pa in plate_appearances(game):
             _set_lineup(lineups, pa)
@@ -172,6 +270,24 @@ def _substitution_names(game: dict) -> dict[str, str]:
     return names
 
 
+def _pitching_change_notes(target: PlateAppearance, names: dict[str, str]) -> list[str]:
+    """타석 도중 투수가 바뀌었으면 새 투수마다 "N구째부터 <이름> 등판". 이름은 교체 기록에서 찾고, 없으면 id."""
+    notes: list[str] = []
+    current: str | None = None
+    number = 0
+    for t in target.options:
+        if t.get("type") != PITCH:
+            continue
+        number += 1
+        pitcher = str((t.get("currentGameState") or {}).get("pitcher") or "")
+        if not pitcher:
+            continue
+        if current is not None and pitcher != current:
+            notes.append(f"{number}구째부터 {names.get(pitcher, pitcher)} 등판")
+        current = pitcher
+    return notes
+
+
 def _scene_team(meta: dict, side: str) -> dict:
     return {"code": meta[f"{side}TeamCode"], "name": meta[f"{side}TeamName"], "final": int(meta[f"{side}TeamScore"])}
 
@@ -180,37 +296,42 @@ def build_scene(
     game: dict,
     pa_index: int,
     source: str,
-    title: str,
+    title: str | None,
     rates: SeasonRates,
     throws_by_pitcher: dict[str, str],
     players: dict[str, dict] | None = None,
 ) -> dict:
-    """한 타석을 SceneRecord로. players를 주면 라인업 타자와 장면 투수의 PlayerRecord를 채운다."""
+    """한 타석을 SceneRecord로. title이 None이면 scene_title 규칙으로 만든다.
+
+    players를 주면 장면 시점 타순의 타자와 장면 투수의 PlayerRecord를 채운다.
+    """
     meta = game["game"]
     pas = plate_appearances(game)
+    subs = substitutions(game)
     target = pas[pa_index]
-    lineups: dict[str, list] = {"away": [None] * 9, "home": [None] * 9}
+    lineups = scene_lineups(pas, subs, target)
+    change_names = _substitution_names(game)
     hit_types: dict[str, str] = {}
     names: dict[str, str] = {}
     last_order = {"away": 0, "home": 0}
     wp_before = None
     for pa in pas[:pa_index]:
-        _set_lineup(lineups, pa)
         hit_types[pa.batter_id] = pa.hit_type
         names[pa.batter_id] = pa.batter_name
-        last_order[pa.side] = pa.bat_order
+        # 다음 타순은 끝낸 타석으로만 센다(타석 도중 이닝이 끝난 타자는 다음 이닝에 다시 선다)
+        if pa.complete:
+            last_order[pa.side] = pa.bat_order
         if pa.wp_home_after is not None:
             wp_before = pa.wp_home_after
-    _set_lineup(lineups, target)
     hit_types[target.batter_id] = target.hit_type
     names[target.batter_id] = target.batter_name
 
     fielding = "home" if target.side == "away" else "away"
-    slots = {target.side: target.bat_order - 1, fielding: last_order[fielding] % 9}
+    slots = {target.side: target.bat_order - 1, fielding: last_order[fielding] % LINEUP_SIZE}
     scene = {
         "id": f"{meta['gameId']}-{pa_index}",
         "source": source,
-        "title": title,
+        "title": title if title is not None else scene_title(pas, subs, target),
         "date": meta["gameDate"],
         "stadium": meta["stadium"],
         "away": _scene_team(meta, "away"),
@@ -219,13 +340,15 @@ def build_scene(
         "batter": target.batter_id,
         "pitcher": target.pitcher_id,
         "lineups": lineups,
+        # 실제 결과의 |WPA|: 장면 선정용, 화면 표시 금지(ADR-014)
         "leverage": abs(target.wpa) if target.wpa is not None else 0.0,
         "naverWpBeforeHome": wp_before,
         "actual": {
             "result": target.result_text,
             "event": target.event,
             "runs": target.runs_in,
-            "notes": [t.get("text") or "" for t in target.options if t.get("type") in NOTE_TYPES],
+            "notes": [t.get("text") or "" for t in target.options if t.get("type") in NOTE_TYPES]
+            + _pitching_change_notes(target, change_names),
             "pitches": [
                 pitch_row(t, pts, balls, strikes)
                 for t, pts, balls, strikes in walk_pitches(target.options, target.pts_by_id)
@@ -245,9 +368,10 @@ def build_scene(
         for side in ("away", "home"):
             for pid in lineups[side]:
                 if pid is not None:
-                    players[pid] = _hitter_record(pid, rates, names.get(pid, pid), hit_types.get(pid, ""), teams[side])
+                    name = names.get(pid) or change_names.get(pid, pid)
+                    players[pid] = _hitter_record(pid, rates, name, hit_types.get(pid, ""), teams[side])
         players[target.pitcher_id] = _pitcher_record(
-            target.pitcher_id, rates, _substitution_names(game), throws_by_pitcher, teams[fielding]
+            target.pitcher_id, rates, change_names, throws_by_pitcher, teams[fielding]
         )
     return scene
 
@@ -267,24 +391,18 @@ def build_snapshot(raw_dir: Path) -> dict:
     players: dict[str, dict] = {}
     scenes: list[dict] = []
     for cur in CURATED:
+        label = f"{cur['game']} {situation_text(cur['inning'], cur['half'], cur['outs'], cur['bases'])} {cur['batter']}"
         game = by_id.get(cur["game"])
         if game is None:
-            print(f"[snapshot] 경고: 선정 장면 {cur['id']} — 경기 {cur['game']}가 원자료에 없어 건너뜀")
+            print(f"[snapshot] 경고: 선정 장면 {label} — 경기가 원자료에 없어 건너뜀")
             continue
-        pa = next(
-            (p for p in plate_appearances(game) if p.inning == cur["inning"] and p.half == cur["half"] and p.batter_name == cur["batter"]),
-            None,
-        )
+        pa = find_curated(game, cur)
         if pa is None:
-            print(f"[snapshot] 경고: 선정 장면 {cur['id']} — {cur['inning']}회 {'말' if cur['half'] else '초'} {cur['batter']} 타석을 찾지 못해 건너뜀")
+            print(f"[snapshot] 경고: 선정 장면 {label} — 타석을 찾지 못해 건너뜀")
             continue
-        scene = build_scene(game, pa.index, "curated", cur["title"], rates, throws, players=players)
-        scene["id"] = cur["id"]
-        scenes.append(scene)
+        scenes.append(build_scene(game, pa.index, "curated", None, rates, throws, players=players))
     for game, index in scene_candidates(games, {cur["game"] for cur in CURATED}):
-        state = plate_appearances(game)[index].state
-        title = situation_text(state["inning"], state["half"], state["outs"], state["bases"])
-        scenes.append(build_scene(game, index, "auto", title, rates, throws, players=players))
+        scenes.append(build_scene(game, index, "auto", None, rates, throws, players=players))
     scenes.sort(key=lambda s: (s["date"], s["id"]))
 
     bullpens: dict[str, dict] = {}
