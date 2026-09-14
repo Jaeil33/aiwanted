@@ -2,8 +2,24 @@
   "project": "TMI 야구",
   "phase": "stage",
   "steps": [
-    { "step": 0, "name": "stage-math", "status": "pending" },
-    { "step": 1, "name": "stage-renderer", "status": "pending" },
-    { "step": 2, "name": "stage-component", "status": "pending" }
-  ]
+    {
+      "step": 0,
+      "name": "stage-math",
+      "status": "completed",
+      "started_at": "2026-09-14T17:09:59+0900",
+      "summary": "src/stage/math 순수 모듈(DOM·Math.random 없음): camera.ts(W·H·CAMERA·PLATE_Y·MITT_Y·BALL_R·project), pitch.ts(TRACK_Y0·pitchAt·timeToY·plateTime·DEFAULT_PITCH_ROW=145km/h 존 한가운데 합성 직구), batted.ts(GRAVITY·DRAG·battedPreset·flight·pathAt(points, t), 타입 BattedSpec·Flight·FlightPoint), pose.ts(lerp·clamp01·smooth·제네릭 poseAt<K>·PITCHER_SET·RELEASE_AT·DELIVERY_MS·PITCHER_KEYS·BAT·BATTER_X, 관절 타입 PitcherJoint·BatterJoint·Pose·PoseKey), field.ts(FIELDERS·BASES·basePoint·nearestFielder), color.ts(mix·uniform({color, home}) → {jersey, trim, pants, cap}: step 파일의 {base,dark,light} 시그니처 대신 괄호 설명대로 stage.js 구조 그대로), random.ts(mulberry: 읽기 목록에 있으나 파일 자리가 없어 추가, 배경 관중·타구 난수용), index.ts 재내보내기(index.test.ts 이름 목록); 프로토타입 복사본과 상수·투영·궤적·타구·자세·색 33,156개 값 대조 불일치 0; 뜬공 200~340ft 테스트는 프리셋이 u1≥0.5·u2 큰 구석에서 365ft까지 가므로 안쪽 u값으로 확인; AC 통과(vitest 118, pytest 81)",
+      "completed_at": "2026-09-14T17:22:53+0900"
+    },
+    {
+      "step": 1,
+      "name": "stage-renderer",
+      "status": "pending"
+    },
+    {
+      "step": 2,
+      "name": "stage-component",
+      "status": "pending"
+    }
+  ],
+  "created_at": "2026-09-14T17:09:28+0900"
 }
