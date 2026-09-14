@@ -13,3 +13,5 @@ export {
 } from './effects';
 export type { PaContext } from './effects';
 export { sampleEvent, sampleInPlay, sampleTransition, transitions } from './transitions';
+export { calibrateCount, countChain, nextCount, outcomeAtCount, simulatePA } from './count';
+export type { CountModel } from './count';
