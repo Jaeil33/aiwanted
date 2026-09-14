@@ -34,6 +34,8 @@ export interface GameContextValue {
   platform: Platform;
   session: SessionState;
   dispatch: (action: SessionAction) => void;
+  /** 렌더를 기다리지 않은 최신 세션: 비동기 흐름(재생 반복 등)이 dispatch 직후 상태를 읽는다 */
+  getSession(): SessionState;
   setup: SceneSetup | null;
   engine: EngineClient;
   /** 이번 화면에서 쓸 AI 프로바이더 (없거나 꺼졌으면 null = 규칙 해석) */
@@ -91,6 +93,7 @@ export function GameProvider({ data, platform, children }: { data: AppData; plat
     stateRef.current = sessionReducer(stateRef.current, action);
     reactDispatch(action);
   }, []);
+  const getSession = useCallback(() => stateRef.current, []);
 
   const engine = useMemo(() => createLazyEngine(platform), [platform]);
   useEffect(() => () => engine.dispose(), [engine]);
@@ -244,8 +247,8 @@ export function GameProvider({ data, platform, children }: { data: AppData; plat
   }, [dispatch]);
 
   const value = useMemo<GameContextValue>(
-    () => ({ data, platform, session, dispatch, setup, engine, provider, actions }),
-    [data, platform, session, dispatch, setup, engine, provider, actions],
+    () => ({ data, platform, session, dispatch, getSession, setup, engine, provider, actions }),
+    [data, platform, session, dispatch, getSession, setup, engine, provider, actions],
   );
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
 }

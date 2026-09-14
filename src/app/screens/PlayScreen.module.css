@@ -1,0 +1,136 @@
+/*
+ * 다시 치르기 화면 (UI_GUIDE 레이아웃)
+ * 휴대폰: 한 단 순서 = 머리 → 경기장 → 스코어버그 → 3단 승률 → 모드 → TMI 입력 → 해석 카드 → 차트 → 기록 → 조작(아래 고정).
+ *   두 묶음(.main·.side)을 display: contents로 풀어 order로 섞는다. 조작 바는 sticky라 한 겹 더 풀어 둔다.
+ * 1024px 이상: 좌 1.5fr(머리·경기장·스코어버그·조작·기록·차트) / 우 1fr(확률판·모드·TMI·해석 카드).
+ */
+.play {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  padding-top: 16px;
+}
+
+.main,
+.side {
+  display: contents;
+}
+
+.head {
+  order: 1;
+  display: grid;
+  gap: 4px;
+}
+
+.stage {
+  order: 2;
+  min-width: 0;
+}
+
+.bug {
+  order: 3;
+  min-width: 0;
+}
+
+.tiers {
+  order: 4;
+  min-width: 0;
+}
+
+.mode {
+  order: 5;
+}
+
+.tmi {
+  order: 6;
+}
+
+.cards {
+  order: 7;
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chart {
+  order: 8;
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.log {
+  order: 9;
+}
+
+.controls {
+  display: contents;
+}
+
+.controls > * {
+  order: 10;
+}
+
+.title {
+  margin: 0;
+  color: var(--chalk);
+  font: 400 28px/1.25 var(--display);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.meta {
+  margin: 0;
+  color: var(--chalk-3);
+  font: 500 13px/1.5 var(--body);
+  letter-spacing: 0.02em;
+}
+
+.note {
+  margin: 0;
+  color: var(--chalk-3);
+  font: 400 13px/1.5 var(--body);
+}
+
+.sectionTitle {
+  margin: 0;
+  color: var(--chalk-2);
+  font: 600 15px/1.4 var(--body);
+}
+
+@media (min-width: 1024px) {
+  .play {
+    display: grid;
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+    align-items: start;
+    gap: 24px;
+  }
+
+  .main,
+  .side {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 0;
+  }
+
+  .head,
+  .stage,
+  .bug,
+  .tiers,
+  .mode,
+  .tmi,
+  .cards,
+  .chart,
+  .log,
+  .controls > * {
+    order: 0;
+  }
+
+  .title {
+    font-size: 40px;
+  }
+}

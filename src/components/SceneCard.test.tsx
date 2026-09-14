@@ -1,9 +1,17 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { fixtureAppData } from '../test/fixtures/appData';
-import { SceneCard } from './SceneCard';
+import { SceneCard, formatSceneDate } from './SceneCard';
 
 const SCENE = fixtureAppData.scenes[0];
+
+describe('formatSceneDate', () => {
+  it('YYYY-MM-DD를 "8월 25일"로 쓰고, 형식이 아니면 그대로 둔다', () => {
+    expect(formatSceneDate('2026-08-25')).toBe('8월 25일');
+    expect(formatSceneDate('2026-09-03')).toBe('9월 3일');
+    expect(formatSceneDate('어제')).toBe('어제');
+  });
+});
 
 describe('SceneCard', () => {
   it('날짜·구장·장면 시점 점수·상황 문장을 보여준다', () => {
