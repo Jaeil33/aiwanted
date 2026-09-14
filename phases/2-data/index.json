@@ -2,10 +2,34 @@
   "project": "TMI 야구",
   "phase": "data",
   "steps": [
-    { "step": 0, "name": "pipeline-io", "status": "pending" },
-    { "step": 1, "name": "app-snapshot", "status": "pending" },
-    { "step": 2, "name": "game-context", "status": "pending" },
-    { "step": 3, "name": "evidence-model", "status": "pending" },
-    { "step": 4, "name": "trust-states", "status": "pending" }
-  ]
+    {
+      "step": 0,
+      "name": "pipeline-io",
+      "status": "completed",
+      "started_at": "2026-09-14T17:11:26+0900",
+      "summary": "파이프라인 입출력 이식: io.py(load_json·write_json 압축 UTF-8·부모 폴더 생성, relay_game_paths·schedule_paths·season_stats_path, load_schedule_games는 gameId 중복 시 뒤 파일 값), relay.py(chrono·sorted_options·walk_pitches·pitch_row 16필드·event_of·bases_of·valid_home_wp 합 99~101, PlateAppearance·plate_appearances는 type 8+batterRecord만 — 이닝 머리글 type 0의 batterRecord 제외, runs_in=14·24 \"홈인\"+홈런 타자, WP 무효면 wpa도 None), stats.py(K_H 200·K_P 250·innings·rel(리그 비율 0인 사건은 1)·SeasonRates(투수는 ip·g 포함)·season_rates·bullpen g≥8·ip/g<2), build.py(STAGES 빈 등록부, main --only/--raw/--out, 모르는 stage면 목록 출력 후 2, 등록 순서대로 실행·요약 출력), 합성 픽스처 pipeline/tests/fixtures/raw/naver(relay 20260815HTLT02026 2이닝 27타석·투구 84(PTS 83)·무효 WP 1행·relay 순서 섞음, 일정 2026-08 7경기(정규 완료·취소·더블헤더·kbo_ps_wd·경기 전), 2026 타자 4·투수 6); 실데이터 읽기 확인: relay 140경기 11,434타석·투구 42,854(PTS 42,848, 행 오류 0)·유효 WP 타석 10,959, 일정 5,172경기(52파일), 시즌 기록 2026 타자 287·투수 288 / 2025 타자 299·투수 281; AC 통과(lint, build, vitest 71, pytest 210)",
+      "completed_at": "2026-09-14T17:37:05+0900"
+    },
+    {
+      "step": 1,
+      "name": "app-snapshot",
+      "status": "pending"
+    },
+    {
+      "step": 2,
+      "name": "game-context",
+      "status": "pending"
+    },
+    {
+      "step": 3,
+      "name": "evidence-model",
+      "status": "pending"
+    },
+    {
+      "step": 4,
+      "name": "trust-states",
+      "status": "pending"
+    }
+  ],
+  "created_at": "2026-09-14T17:10:34+0900"
 }
