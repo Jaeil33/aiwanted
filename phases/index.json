@@ -1,9 +1,25 @@
 {
   "phases": [
-    { "dir": "0-setup", "status": "pending" },
-    { "dir": "1-engine", "status": "pending" },
-    { "dir": "2-data", "status": "pending" },
-    { "dir": "3-stage", "status": "pending" },
-    { "dir": "4-ai", "status": "pending" }
+    {
+      "dir": "0-setup",
+      "status": "completed",
+      "completed_at": "2026-09-14T17:01:16+0900"
+    },
+    {
+      "dir": "1-engine",
+      "status": "pending"
+    },
+    {
+      "dir": "2-data",
+      "status": "pending"
+    },
+    {
+      "dir": "3-stage",
+      "status": "pending"
+    },
+    {
+      "dir": "4-ai",
+      "status": "pending"
+    }
   ]
 }
