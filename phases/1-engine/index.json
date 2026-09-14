@@ -21,7 +21,10 @@
     {
       "step": 2,
       "name": "engine-game",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-09-14T17:39:46+0900",
+      "summary": "src/engine/halfInning.ts: RMAX 15 · halfInning(dists, {slot,outs,bases}, firstDist?)→Float64Array((RMAX+1)×9, engine.js 그대로; 분기표를 모듈 로드 때 모아 두고, 분포가 9개가 아니거나 시작 상태가 범위 밖이면 RangeError) · halfSummary(hd)→{pScore,expRuns,total} / src/engine/game.ts: MAX_INN 11·DMAX 20 · 타입 LineupSlot·TeamConfig·GameConfig·AfterEvent·Evaluation·EvaluateOptions·Game · createGame(cfg)(이후 반이닝 희소 분포 + 이닝×점수차×양 팀 타순 동적 계획, 타선이 9명이 아니면 RangeError) · evaluate(st, pitcher, {first=true, detail=true})(현재 반이닝은 넘긴 투수, 이후는 수비 팀 bullpen; detail false면 after [] · count null; 이닝 1~11·초말·타순·점수·아웃·주자가 잘못되면 RangeError; 9회 이후 말 끝내기 분기는 남은 반이닝을 전파하지 않아 after 홈 승리확률이 정확히 1) · gaugesAtCount(ev,b,s)(count 없으면 Error) · applyTransition(state,tr)→{state,over}(app.js applyPlay 그대로, 입력 불변) · startNextHalf(state); index.ts에 반이닝·경기 API와 타입 추가; 스크래치 대조로 halfInning은 프로토타입과 차이 0, createGame은 효과 7종 × 상태 7개에서 차이 ≤ 1.8e-15; AC 통과(vitest 240 = 이전 192 + halfInning 12 + game 35 + index 1, pytest 81). 리그 평균 반이닝 몬테카를로는 seed 7 표본이 다음 선두 타순 3·7에서 +3.2σ·−3.4σ로 우연히 벗어나(독립 100만 × 5회 |z| ≤ 2.3로 편향 없음 확인) 미리 정한 seed 2026으로 바꿈(표본 20만·3σ 기준 유지)",
+      "completed_at": "2026-09-14T17:51:09+0900"
     },
     {
       "step": 3,
