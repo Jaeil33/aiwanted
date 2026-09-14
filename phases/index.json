@@ -27,11 +27,15 @@
     },
     {
       "dir": "5-app",
-      "status": "pending"
+      "status": "completed",
+      "completed_at": "2026-09-15T01:10:16+0900",
+      "note": "남은 step은 11-screens·12-release로 재계획"
     },
     {
       "dir": "6-release",
-      "status": "pending"
+      "status": "completed",
+      "completed_at": "2026-09-15T01:10:16+0900",
+      "note": "남은 step은 11-screens·12-release로 재계획"
     },
     {
       "dir": "7-scene-data",
@@ -47,6 +51,14 @@
     },
     {
       "dir": "10-stage-broadcast",
+      "status": "pending"
+    },
+    {
+      "dir": "11-screens",
+      "status": "pending"
+    },
+    {
+      "dir": "12-release",
       "status": "pending"
     }
   ]

@@ -13,7 +13,10 @@
     {
       "step": 1,
       "name": "artifact-bundle",
-      "status": "pending"
+      "status": "completed",
+      "completed_at": "2026-09-15T01:10:16+0900",
+      "summary": "재계획으로 실행하지 않음(코드 산출물 없음): 2026-09-15 재설계(ADR-011~015)에 맞춰 12-release step 0(artifact-bundle)가 이 step의 요구를 옮겨 구현한다. step 파일은 설계 기록으로 남긴다.",
+      "replanned_to": "12-release step 0(artifact-bundle)"
     }
   ],
   "created_at": "2026-09-14T19:34:58+0900"

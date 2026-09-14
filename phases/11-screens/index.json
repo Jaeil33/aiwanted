@@ -1,0 +1,12 @@
+{
+  "project": "TMI 야구",
+  "phase": "screens",
+  "steps": [
+    { "step": 0, "name": "playback-v2", "status": "pending" },
+    { "step": 1, "name": "lobby", "status": "pending" },
+    { "step": 2, "name": "play-hud", "status": "pending" },
+    { "step": 3, "name": "tmi-sheet", "status": "pending" },
+    { "step": 4, "name": "result-screen", "status": "pending" },
+    { "step": 5, "name": "records-cleanup", "status": "pending" }
+  ]
+}
