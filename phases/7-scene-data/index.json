@@ -29,7 +29,10 @@
     {
       "step": 3,
       "name": "swing-index",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-09-15T01:36:42+0900",
+      "completed_at": "2026-09-15T01:39:45+0900",
+      "summary": "src/game/selectors.ts: expectedSwing(ev: Pick<Evaluation, 'batSide' | 'pa' | 'after' | 'winHome' | 'winAway' | 'tie'>): number | null — 승부처 지수(ADR-014) = 100 × Σ_e pa[e] × |B(after[e]) − B(지금)|, B = batSide 쪽 승리(home이면 winHome, away면 winAway) + tie/2, after가 비면(detail: false) null, 반올림 없음, SceneRecord.leverage(실제 |WPA|)는 쓰지 않음; 머리 주석을 '확률 숫자는 엔진 결과에서만 온다: 옮기거나 그 값끼리 빼고 더한다'로 · src/game/index.ts에서 expectedSwing 내보냄(index.test 값 이름 30개 정확 일치) · src/types/data.ts는 SceneRecord.leverage JSDoc만 '실제 결과의 |WPA|(네이버 wpaByPlate 절댓값, %p). 장면 선정용이며 화면에 표시하지 않는다(ADR-014)'로 바꿈(타입 그대로) / selectors.test.ts expectedSwing 6개: after가 모두 지금과 같으면 0, 손으로 계산한 사건 7개 합성 평가(pa [0.2, 0.1, 0.03, 0.01, 0.05, 0.16, 0.45], |ΔB| [0.05, 0.065, 0.24, 0.165, 0.13, 0.08, 0.045]) = 6.49와 1e-12 이내, 원정·홈 거울 입력 대칭 + 공격 진영 값 사용(원정 승리만 움직인 인위 입력: 원정 공격 10·홈 공격 0), 무승부 절반(10, 통째로 세면 20·빼면 0), 반올림 없는 유한한 0 이상 값(0.246912), after가 비면 null / src/components·src/app 변경 없음, src/game 순수(Math.abs만, DOM·타이머·난수 없음) / AC 통과(npm run lint, npm run build(tsc -b + vite build), npx vitest run src/game 9파일 116)"
     }
   ]
 }
