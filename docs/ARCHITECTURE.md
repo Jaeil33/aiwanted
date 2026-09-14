@@ -5,13 +5,13 @@
 src/
 ├── main.tsx                # mount(el) 부트스트랩
 ├── app/                    # App 셸, 해시 라우터, 화면(Home·Play·Result·Evidence·About), platform.ts 어댑터
-├── components/             # 재사용 UI (Scorebug, ProbabilityTiers, TmiComposer, InterpretationCard, WpChart, ShareCard …)
+├── components/             # 재사용 UI (Scorebug, Callout, TugGauge, TmiCard, TmiSheet, TicketCard, MultiverseDots, ShareCard …)
 ├── engine/                 # 확률 엔진(순수): matchup, knobs, effects, transitions, count, halfInning, game, playout, measured
 ├── stage/
-│   ├── math/               # 카메라 투영·투구 궤적·타구 비행·자세 보간(순수)
+│   ├── math/               # 중견수 쪽 중계 카메라 투영·투구 궤적·타구 비행·자세 보간(순수, ADR-012)
 │   ├── render/             # 캔버스 그리기와 연출 컨트롤러 createStage
 │   └── BallparkStage.tsx   # React 래퍼
-├── ai/                     # safety, normalize, rules, prompts, interpret, verdict(순수)
+├── ai/                     # text(입력 정리·절 나누기), safety, targets(대상 추론), lexicon(개념 사전), rules, normalize, prompts, interpret, verdict(순수, ADR-013)
 │   └── providers/          # artifact(sample), http(/api), none — 외부 호출은 여기서만
 ├── game/                   # 세션 reducer·selectors·장면 조립·재생 계획·공유 인코딩(순수) + engineClient(워커)
 ├── data/                   # appData 로더(import.meta.glob) + 조회 헬퍼
@@ -25,6 +25,7 @@ pipeline/
 └── tests/                  # pytest + fixtures(합성)
 scripts/                    # execute.py(하네스), run-python.mjs, trust-report.ts, check-artifact.mjs
 reference/tmi-prototype/    # 1차 JS 프로토타입(이식 참고용, 수정 금지)
+docs/design/nightgame/      # UI 시각 기준 시안(ADR-011, import 금지)
 data/                       # git 제외: raw/(원자료 캐시), build/(생성물)
 phases/                     # 하네스 step 정의
 ```
@@ -70,7 +71,8 @@ api/interpret.ts, api/verdict.ts → Anthropic Messages API (환경변수 ANTHRO
 ### 확률 (`src/engine`)
 - `createGame(cfg).evaluate(state, pitcher, { first })` → `{ batSide, pa, batterWin, pitcherWin, inningScore, expRuns, winHome, tie, winAway, after[7], count }`.
 - 현재 반이닝은 장면 투수가 끝까지 던지고, 이후 반이닝은 각 팀 불펜 합성 선수가 던진다. 11회말이 끝나면 무승부, 9회 이후 끝내기, 9회말 이후 홈팀이 앞서면 공격하지 않는다.
-- 확률은 정확 계산(마르코프 질량 전파 + 동적 계획)이다. 재생(`playout`)만 시드 난수로 표본을 뽑는다.
+- 확률은 정확 계산(마르코프 질량 전파 + 동적 계획)이다. 재생(`playout`)만 시드 난수로 표본을 뽑고, 한 판에는 난수 생성기 하나를 이어 쓴다(ADR-015).
+- 승부처 지수(ADR-014): `game/selectors`의 `expectedSwing(evaluation)` = 100 × Σ_e `pa[e]` × |B(`after[e]`) − B(지금)|, B = 공격 팀 승리 + 무승부/2. 파이프라인의 `leverage`(실제 |WPA|)는 장면 선정에만 쓰고 화면에 보이지 않는다.
 
 ### 데이터 (`src/types/data.ts` ↔ `pipeline`)
 - 파이프라인 JSON의 필드 이름은 `src/types/data.ts`와 같다. 한쪽을 바꾸면 양쪽 테스트를 함께 고친다.
@@ -81,11 +83,12 @@ api/interpret.ts, api/verdict.ts → Anthropic Messages API (환경변수 ANTHRO
 - `AiProvider { name, interpret(prompt, signal), verdict(prompt, tools, signal) }`는 원문 JSON만 돌려준다. 검증은 `normalize.ts`가 한다.
 - 프로바이더 선택 순서: 아티팩트 런타임 `claude.use('sample')` → 배포 `/api/*` → 없음(규칙 해석).
 - 판정(`judgeTmi`)은 도구 `lookupEvidence(variableId)`로 evidence.json 값만 조회한다. 효과 크기는 도구 결과만 인용한다.
+- 해석은 거부가 아니면 항상 효과 1개 이상이다(ADR-013). `normalize`는 버리기 전에 복구하고, 복구 뒤에도 효과가 없으면 규칙 효과로 채운다. 로컬 안전 판정이 allow인데 AI가 거부하면 규칙 해석을 쓴다.
 
 ## 패턴
 - 순수 함수 + 얇은 React 계층. 계산·규칙은 `engine`/`game`/`ai`에서 테스트하고, 컴포넌트는 selector 결과만 그린다.
 - 무거운 `createGame`은 `game/engineClient.ts`가 인라인 Web Worker로 돌린다. 테스트나 워커가 없는 환경은 동기 실행으로 대신한다.
-- 캔버스 연출은 명령형 컨트롤러(`createStage`)로 두고 React는 ref로만 조작한다.
+- 캔버스 연출은 명령형 컨트롤러(`createStage`)로 두고 React는 ref로만 조작한다. 캔버스는 경기장·사람·공만 그리고, 콜·결과 글자는 DOM `Callout`이 그린다. 문서가 숨겨지면 진행 중인 연출을 즉시 끝낸다(ADR-012).
 - 외부 입출력(네트워크, 아티팩트 런타임, 다운로드·공유)은 `ai/providers`와 `app/platform.ts` 어댑터에만 둔다.
 
 ## 상태 관리

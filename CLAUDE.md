@@ -19,11 +19,13 @@
 - 확률을 보여주는 곳에는 근거 등급(실측/그럴듯함/상상)과 모드(현실/만화) 라벨을 함께 둔다.
 - 의존성은 ADR-007 목록만 쓴다. 새 패키지가 필요하면 설치하지 말고 step을 blocked로 보고한다.
 - `reference/tmi-prototype/`는 이식 참고용이다. 수정하거나 import하지 마라.
+- `docs/design/nightgame/`은 UI 시각 기준 시안이다(ADR-011). 앱 코드에서 import하지 말고 토큰·구성·동작만 옮겨라.
 - 공용 타입은 `src/types/`, 런타임 상수는 `src/domain/`에 둔다. 실측 변수 정의의 원본은 `src/domain/measured.json` 하나다(TS와 Python이 함께 읽는다).
 
 ## 개발 프로세스
 - CRITICAL: 새 기능 구현 시 반드시 테스트를 먼저 작성하고, 테스트가 통과하는 구현을 작성할 것 (TDD)
 - 커밋 메시지는 conventional commits 형식을 따를 것 (feat:, fix:, docs:, refactor:, test:, chore:)
+- 테스트 말뭉치·픽스처에 실존 선수 이름과 민감한 문장을 함께 쓰지 마라. 이유: 공개 저장소다. 가상 이름(예: 김타자, 박투수)을 쓴다.
 - Windows 환경이다. Python은 `.venv/Scripts/python`으로 실행하고, 셸 명령은 Git Bash 문법을 쓴다.
 
 ## 명령어

@@ -1,0 +1,229 @@
+<title>TMI 야구 나이트게임 시안</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Gasoek+One&family=Noto+Sans+KR:wght@400;500;600;700;800;900&display=swap">
+<link rel="stylesheet" href="style.css">
+
+<main class="page">
+  <header class="intro">
+    <p class="kicker">UI 방향 시안 · 2026년 9월 15일</p>
+    <h1>TMI 야구 나이트게임 시안</h1>
+    <p class="lede">지금 화면은 설명 문서처럼 읽혀서, 경기장과 결과가 나오는 순간을 주인공으로 바꿨어요. 네 화면 모두 8월 11일 창원 KT–NC 9회초 2사 만루 실제 장면과 엔진이 계산한 확률로 그렸어요.</p>
+    <ul class="principles">
+      <li><b>경기장이 화면이다</b><span>사이트 머리말과 설명 문단을 걷어내고, 중계 카메라 시점의 경기장을 화면 절반 넘게 씁니다.</span></li>
+      <li><b>큰 숫자는 하나만</b><span>3단 승률 표 대신 줄다리기 게이지 하나. 타석·이닝·경기는 탭으로 바꿔 봅니다.</span></li>
+      <li><b>TMI는 카드 한 장</b><span>문장을 넣으면 카드가 뒤집히며 해석·효과·근거 등급이 한 장에 담깁니다. 등급은 테두리 금속색입니다.</span></li>
+      <li><b>움직임은 결과를 알릴 때만</b><span>볼·스트라이크 콜, 게이지 이동, 카드 뒤집기, 1,000경기 점 채우기. 나머지는 조용히 둡니다.</span></li>
+    </ul>
+  </header>
+
+  <section class="gallery" aria-label="화면 시안 네 장">
+    <!-- 1. 로비 -->
+    <figure class="shot">
+      <div class="phone lobby" id="lobby">
+        <canvas class="stage" data-view="lobby" aria-hidden="true"></canvas>
+        <div class="topbar"><span class="brand">TMI <i>야구</i></span><span class="topmeta">명장면 16</span></div>
+        <div class="hero">
+          <p class="eyebrow">오늘의 명장면 <span>8.11 (화) · 창원</span></p>
+          <h3 class="situation">9회초<br>2사 만루</h3>
+          <div class="teams">
+            <div class="team" style="--team: var(--kt)"><b>KT</b><small>원정</small><em>3</em></div>
+            <span class="colon">:</span>
+            <div class="team home" style="--team: var(--nc)"><b>NC</b><small>홈</small><em>3</em></div>
+          </div>
+          <div class="leverage">
+            <span>승부처 지수</span>
+            <div class="lev-meter" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+            <b>38.6</b>
+          </div>
+          <a class="cta" href="#play">경기 입장 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></a>
+        </div>
+        <div class="rail-head"><h3>다른 명장면</h3><span>옆으로 넘겨 보기</span></div>
+        <div class="tickets" role="list">
+          <article class="ticket" role="listitem">
+            <div class="t-top"><div class="t-meta"><span>8.23 · 고척</span><b>90.3</b></div><p class="t-teams"><i style="--c:#F0474B"></i>KIA <span class="num">7 : 4</span> 키움<i style="--c:#C9566C"></i></p></div>
+            <div class="t-bottom"><p class="t-sit">9회말 2사 만루</p><svg viewBox="0 0 26 22" aria-hidden="true"><path d="M13 2l5 5-5 5-5-5z" fill="#FFCF6B"/><path d="M20 9l5 5-5 5-5-5z" fill="#FFCF6B"/><path d="M6 9l5 5-5 5-5-5z" fill="#FFCF6B"/></svg></div>
+          </article>
+          <article class="ticket" role="listitem">
+            <div class="t-top"><div class="t-meta"><span>8.25 · 광주</span><b>70.8</b></div><p class="t-teams"><i style="--c:#5C8DF6"></i>롯데 <span class="num">5 : 4</span> KIA<i style="--c:#F0474B"></i></p></div>
+            <div class="t-bottom"><p class="t-sit">9회말 2사 만루, 대타 한 방</p><svg viewBox="0 0 26 22" aria-hidden="true"><path d="M13 2l5 5-5 5-5-5z" fill="#FFCF6B"/><path d="M20 9l5 5-5 5-5-5z" fill="#FFCF6B"/><path d="M6 9l5 5-5 5-5-5z" fill="#FFCF6B"/></svg></div>
+          </article>
+          <article class="ticket" role="listitem">
+            <div class="t-top"><div class="t-meta"><span>8.12 · 잠실</span><b>48.0</b></div><p class="t-teams"><i style="--c:#FF8A2A"></i>한화 <span class="num">3 : 2</span> 두산<i style="--c:#A3A7EA"></i></p></div>
+            <div class="t-bottom"><p class="t-sit">9회말 2사 2루</p><svg viewBox="0 0 26 22" aria-hidden="true"><path d="M13 2l5 5-5 5-5-5z" fill="#FFCF6B"/><path d="M20 9l5 5-5 5-5-5z" fill="none" stroke="#626D73"/><path d="M6 9l5 5-5 5-5-5z" fill="none" stroke="#626D73"/></svg></div>
+          </article>
+          <article class="ticket" role="listitem">
+            <div class="t-top"><div class="t-meta"><span>9.10 · 광주</span><b>46.7</b></div><p class="t-teams"><i style="--c:#86A8EE"></i>NC <span class="num">2 : 1</span> KIA<i style="--c:#F0474B"></i></p></div>
+            <div class="t-bottom"><p class="t-sit">11회말 1사 1·3루</p><svg viewBox="0 0 26 22" aria-hidden="true"><path d="M13 2l5 5-5 5-5-5z" fill="none" stroke="#626D73"/><path d="M20 9l5 5-5 5-5-5z" fill="#FFCF6B"/><path d="M6 9l5 5-5 5-5-5z" fill="#FFCF6B"/></svg></div>
+          </article>
+        </div>
+        <nav class="tabbar" aria-label="메뉴">
+          <a href="#lobby" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 7h18v3a2 2 0 000 4v3H3v-3a2 2 0 000-4z"/><path d="M14 7v10" stroke-dasharray="2 2"/></svg>명장면</a>
+          <a href="#lobby"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 3v18M5 7h14M5 7l-3 6h6zM19 7l-3 6h6z"/></svg>판정소</a>
+          <a href="#lobby"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M7.5 5.5c2 2 2 11 0 13M16.5 5.5c-2 2-2 11 0 13"/></svg>만든 이유</a>
+        </nav>
+      </div>
+      <figcaption>
+        <span class="step">화면 1 · 로비</span>
+        <h2>들어오자마자 오늘의 승부처</h2>
+        <p>조명탑이 켜지는 경기장 위에 상황·점수·승부처 지수만 크게. 다른 장면은 경기 티켓처럼 넘겨 고릅니다.</p>
+      </figcaption>
+    </figure>
+
+    <!-- 2. 플레이 -->
+    <figure class="shot">
+      <div class="phone play" id="play">
+        <canvas class="stage" data-view="play" aria-hidden="true"></canvas>
+        <div class="bug" aria-label="9회초 2아웃 만루, KT 3 대 NC 3">
+          <div class="bug-rows">
+            <div class="bug-row batting"><i style="--c: var(--kt)"></i><b>KT</b><em>3</em></div>
+            <div class="bug-row"><i style="--c: var(--nc)"></i><b>NC</b><em>3</em></div>
+          </div>
+          <div class="bug-state">
+            <span class="inning"><small>▲</small>9</span>
+            <svg class="bases" viewBox="0 0 26 22" aria-hidden="true"><path d="M13 2l5 5-5 5-5-5z" fill="#FFCF6B"/><path d="M20 9l5 5-5 5-5-5z" fill="#FFCF6B"/><path d="M6 9l5 5-5 5-5-5z" fill="#FFCF6B"/></svg>
+            <div class="count" id="count">
+              <span>B <i class="dot b"></i><i class="dot b"></i><i class="dot b"></i></span>
+              <span>S <i class="dot s"></i><i class="dot s"></i></span>
+              <span>O <i class="dot o on"></i><i class="dot o on"></i></span>
+            </div>
+          </div>
+        </div>
+        <div class="hud-actions">
+          <button class="icon-btn" type="button" aria-label="처음부터"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 12a8 8 0 108-8H7"/><path d="M8 1L5 4l3 3"/></svg></button>
+        </div>
+        <div class="callout" id="callout" aria-live="polite"></div>
+        <div class="matchup">
+          <div class="p"><small>타자 · 좌타</small><b>최원준</b><span>타율 .342 · OPS .884</span></div>
+          <span class="vs">VS</span>
+          <div class="p right"><small>투수 · 우투</small><b>이용준</b><span>ERA 2.65 · WHIP 1.53</span></div>
+        </div>
+        <section class="wp" aria-label="승부 확률">
+          <div class="wp-head">
+            <div class="tabs" role="tablist">
+              <button type="button" role="tab" id="tab-pa" aria-selected="false" data-tier="pa">타석</button>
+              <button type="button" role="tab" id="tab-inning" aria-selected="false" data-tier="inning">이닝</button>
+              <button type="button" role="tab" id="tab-game" aria-selected="true" data-tier="game">경기</button>
+            </div>
+            <span class="delta"><small>TMI</small><span id="wp-delta">+0.4%p</span></span>
+          </div>
+          <div class="wp-nums">
+            <div class="side"><small id="wp-left-label">KT 승리</small><b id="wp-left">54.0<i>%</i></b></div>
+            <div class="tie" id="wp-tie"><small>무승부</small><b id="wp-tie-num">13.3%</b></div>
+            <div class="side right"><small id="wp-right-label">NC 승리</small><b id="wp-right">32.7<i>%</i></b></div>
+          </div>
+          <div class="tug" aria-hidden="true">
+            <span class="a" id="tug-a" style="flex-basis: 54%"></span><span class="t" id="tug-t" style="flex-basis: 13.3%"></span><span class="h" id="tug-h" style="flex-basis: 32.7%"></span>
+            <i class="ghost" id="tug-ghost" style="left: 53.6%"></i>
+          </div>
+          <p class="wp-foot"><span class="chip mode">현실 모드</span><span class="chip fun">상상 1장</span><span id="wp-note">TMI 없음 53.6%</span></p>
+        </section>
+        <section class="slots" aria-label="TMI 카드 세 장">
+          <button class="slot filled" type="button"><span class="slot-q">짜장면 곱빼기</span><span class="slot-k">투수 체력 ▼<b>+0.4%p</b></span></button>
+          <button class="slot empty" type="button">+ TMI</button>
+          <button class="slot empty" type="button">+ TMI</button>
+        </section>
+        <nav class="dock" aria-label="다시 치르기">
+          <button class="side-btn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 5l8 7-8 7zM16 5v14"/></svg>이 타석 끝까지</button>
+          <button class="pitch-btn" type="button" id="pitch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M6.5 5.5c2.5 3 2.5 10 0 13M17.5 5.5c-2.5 3-2.5 10 0 13"/></svg>던지기</button>
+          <button class="side-btn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 5l7 7-7 7zM12 5l7 7-7 7zM21 5v14"/></svg>경기 끝까지</button>
+        </nav>
+      </div>
+      <figcaption>
+        <span class="step">화면 2 · 플레이</span>
+        <h2>중계 화면 그대로, 조작은 엄지 하나</h2>
+        <p>중견수 쪽 중계 카메라 시점에 스코어버그와 타자·투수 자막을 겹쳤어요. 던지기를 누르면 실제 이 장면의 첫 공(볼)과 그 뒤 엔진 값으로 바뀝니다. 타석·이닝·경기 탭도 실제 값입니다.</p>
+      </figcaption>
+    </figure>
+
+    <!-- 3. TMI 카드 -->
+    <figure class="shot">
+      <div class="phone tmi" id="tmi">
+        <canvas class="stage" data-view="tmi" aria-hidden="true"></canvas>
+        <div class="scrim"></div>
+        <div class="mini-wp">
+          <div class="mini-row"><small>KT 승리확률</small><span class="delta"><span>+0.4%p</span></span></div>
+          <div class="mini-row"><span class="from-to"><s>53.6%</s>→ <span id="mini-to">54.0%</span></span><small>현실 모드</small></div>
+        </div>
+        <div class="sheet">
+          <div class="grabber"></div>
+          <div class="card-stage">
+            <div class="card" id="card">
+              <div class="face front">
+                <div class="inner">
+                  <div class="card-top"><span>TMI 카드 · 규칙 해석</span><span class="grade">상상</span></div>
+                  <p class="card-quote">“이용준이 경기 전 짜장면 곱빼기를 먹었다”</p>
+                  <div class="knob">
+                    <svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="8" width="19" height="12" rx="2"/><path d="M24 12v4"/><path d="M7 12v4"/><path d="M14 11v6m-3-3l3 3 3-3"/></svg>
+                    <div><b>투수 체력 ▼</b><small>대상 이용준 · 1단계 약하게</small></div>
+                    <div class="pips" aria-label="세기 −1"><i></i><i></i><i class="neg"></i><i class="mid"></i><i></i><i></i><i></i></div>
+                  </div>
+                  <div class="effect">
+                    <div><small>KT 승리확률</small><small><span class="num">53.6%</span> → <span class="num">54.0%</span></small></div>
+                    <b id="effect-num">+0.4<i>%p</i></b>
+                  </div>
+                  <p class="card-why"><span>배가 부르면 몸이 무거워진다는 가정</span><button type="button">진짜야?</button></p>
+                </div>
+              </div>
+              <div class="face rear"><div class="inner"><span class="rear-mark">TMI</span></div></div>
+            </div>
+          </div>
+          <div class="input-row"><input id="tmi-input" type="text" maxlength="80" value="이용준이 경기 전 짜장면 곱빼기를 먹었다" aria-label="TMI 한 줄"><button class="go" type="button" id="flip">TMI 걸기</button></div>
+          <div class="field-meta"><span>카드 1 / 3</span><span id="tmi-count">21 / 80</span></div>
+          <div class="chips"><button type="button">투수가 어젯밤 3시간 잤다</button><button type="button">오늘 기온 35도, 폭염</button><button type="button">원정팀 버스 5시간</button><button type="button">새 배트를 들고 나왔다</button></div>
+        </div>
+      </div>
+      <figcaption>
+        <span class="step">화면 3 · TMI 카드</span>
+        <h2>한 줄을 넣으면 카드가 뒤집힌다</h2>
+        <p>해석(투수 체력 ▼), 세기, 효과(+0.4%p), 이유를 한 장에. 테두리 금속색이 근거 등급이에요: 금 실측 · 은 그럴듯함 · 구리 상상. TMI 걸기를 누르면 다시 뒤집어요.</p>
+      </figcaption>
+    </figure>
+
+    <!-- 4. 결과 -->
+    <figure class="shot">
+      <div class="phone result" id="result">
+        <canvas class="stage" data-view="result" aria-hidden="true"></canvas>
+        <div class="scrim"></div>
+        <header class="final">
+          <p class="eyebrow">경기 종료 <span>다시 치른 결과 · 점수는 예시</span></p>
+          <h3>KT 승리</h3>
+          <p class="score">KT <span class="num">4 : 3</span> NC <span>9회초 밀어내기 볼넷 결승점</span></p>
+        </header>
+        <section class="multiverse" aria-label="평행우주 1,000경기">
+          <div class="mv-head"><h4>평행우주 1,000경기</h4><span>엔진 정확 확률의 기대값</span></div>
+          <canvas class="dots" id="dots" aria-hidden="true"></canvas>
+          <div class="legend">
+            <div style="--c: var(--kt)"><small><i></i>KT 승</small><b>540</b><em>TMI 없이 536 <span class="up">+4</span></em></div>
+            <div style="--c: #4a545b"><small><i></i>무승부</small><b>133</b><em>TMI 없이 134</em></div>
+            <div style="--c: var(--nc)"><small><i></i>NC 승</small><b>327</b><em>TMI 없이 330</em></div>
+          </div>
+        </section>
+        <div class="butterfly"><div><small>나비효과</small><p>짜장면 곱빼기 → 투수 체력 ▼</p></div><b>+0.4%p</b></div>
+        <section class="reveal" id="reveal">
+          <div class="sealed"><p>실제 경기는 어떻게 끝났을까요?</p><button class="open-btn" type="button" id="open">실제 결과 열기</button></div>
+          <div class="truth" hidden><b>최원준 우익수 앞 1루타, 주자 2명 홈인</b><span>실제 최종 KT 7 : 3 NC · 네이버 NC 승리확률 47.5% → 8.9%</span></div>
+        </section>
+        <nav class="dock two" aria-label="다음 행동">
+          <button class="primary" type="button">같은 TMI로 다시</button>
+          <button class="secondary" type="button">결과 카드 공유</button>
+        </nav>
+      </div>
+      <figcaption>
+        <span class="step">화면 4 · 결과</span>
+        <h2>1,000번 치르면 몇 번 이기나</h2>
+        <p>점 1,000개가 엔진 확률만큼 채워져요(KT 540 · 무 133 · NC 327). 실제 결과는 스포일러라 봉인해 두고 눌러야 열립니다.</p>
+        <button class="replay" type="button" id="replay-dots">점 다시 채우기</button>
+      </figcaption>
+    </figure>
+  </section>
+
+  <footer class="notes">
+    <p>글꼴: 콜·큰 제목 Gasoek One · 본문 Noto Sans KR · 숫자 Archivo(좁은 폭). 확률은 모두 현재 TMI 야구 엔진 값이고, 결과 화면의 다시 치른 점수만 예시입니다.</p>
+    <p>기록·중계: 네이버 스포츠(KBO) · 날씨: Open-Meteo · 확률: TMI 야구 엔진 계산값. 선수 사진·구단 로고는 쓰지 않습니다.</p>
+  </footer>
+</main>
+
+<script src="stage.mjs"></script>
+<script src="app.mjs"></script>
