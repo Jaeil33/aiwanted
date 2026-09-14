@@ -1,3 +1,4 @@
+import copy
 import dataclasses
 import json
 from pathlib import Path
@@ -289,3 +290,15 @@ def test_valid_home_wp(metric, expected):
         assert result is None
     else:
         assert result == pytest.approx(expected)
+
+
+def test_load_game_drops_heavy_player_info_and_keeps_the_rest(tmp_path, game):
+    heavy = copy.deepcopy(game)
+    for item in heavy["textRelays"]:
+        for t in item["textOptions"]:
+            t["currentPlayersInfo"] = {"away": {"playerType": "batter"}, "home": {"playerType": "pitcher"}}
+    path = tmp_path / "game.json"
+    path.write_text(json.dumps(heavy, ensure_ascii=False), encoding="utf-8")
+    loaded = relay.load_game(path)
+    assert not any("currentPlayersInfo" in t for item in loaded["textRelays"] for t in item["textOptions"])
+    assert loaded == game

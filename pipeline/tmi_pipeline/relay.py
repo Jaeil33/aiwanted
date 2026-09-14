@@ -5,9 +5,14 @@ relay 파일은 `{"game": {...}, "textRelays": [...]}`이고 textRelays 순서�
 """
 
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Iterator
 
 from .contract import PITCH_RESULT_CODE, PITCH_TYPES
+from .io import load_json
+
+# 옵션마다 붙은 선수 누적 기록 묶음. 파이프라인이 쓰지 않고 원자료 크기의 약 3/4이라 읽을 때 버린다.
+HEAVY_OPTION_KEYS = ("currentPlayersInfo",)
 
 # textOption type
 INNING_HEADER = 0
@@ -33,6 +38,16 @@ HOME_RUN = 2
 
 def _num(value) -> float:
     return float(value or 0)
+
+
+def load_game(path: Path | str) -> dict:
+    """relay 경기 파일을 읽고 쓰지 않는 무거운 옵션 필드(HEAVY_OPTION_KEYS)를 버린다."""
+    game = load_json(path)
+    for item in game.get("textRelays") or []:
+        for t in item.get("textOptions") or []:
+            for key in HEAVY_OPTION_KEYS:
+                t.pop(key, None)
+    return game
 
 
 def chrono(game: dict) -> list[dict]:

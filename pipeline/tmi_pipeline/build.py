@@ -10,8 +10,12 @@ from typing import Callable
 
 import tmi_pipeline
 
+from . import snapshot
+
 # stage 이름 → fn(raw_dir, out_dir) -> 요약 dict. 등록 순서가 실행 순서다(뒤 stage가 앞 stage 산출물을 읽는다).
-STAGES: dict[str, Callable[[Path, Path], dict]] = {}
+STAGES: dict[str, Callable[[Path, Path], dict]] = {
+    "snapshot": snapshot.write_snapshot,  # app/core.json, pitches.json, scenes.json
+}
 
 
 def main(argv: list[str] | None = None) -> int:
