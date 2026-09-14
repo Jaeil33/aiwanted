@@ -22,7 +22,7 @@
 - props: `{ battingTeam: string; fieldingTeam: string; battingColor: string; final: { winner: Side | 'tie'; walkoff: boolean; state: GameState }; awayName; homeName; batSide: Side; base: GaugeLike | null; tmi: GaugeLike | null; mode: Mode; entries: TmiEntry[]; actual: SceneRecord['actual']; naverBefore: number | null; onReplay(); onChangeTmi(); onHome(); onEvidence(); shareSlot?: ReactNode }`
 - 내용(위에서 아래로):
   - 결과 배너: "롯데 승리" / "무승부", 끝내기면 "끝내기!" 표시. 최종 점수 "KIA 4 : 8 롯데", 연장이면 "11회말".
-  - "같은 장면을 1,000번 치르면": 두 줄 — "TMI 없음 · KIA 277승 35무 688패", "TMI 걸고 · KIA 284승 35무 681패"(공격 팀 기준, `expectedCounts`).
+  - "같은 장면을 1,000번 치르면": 두 줄 — "TMI 없음 · KIA 277승 35무 688패", "TMI 걸고 · KIA 284승 35무 681패"(`expectedCounts(gauge)`가 돌려준 `{ home, tie, away }`를 batSide로 공격 팀의 승·무·패로 옮긴다).
   - 나비효과: 큰 LED 숫자 `formatDeltaPp(butterflyPp)`와 모드 칩, 설명 "TMI 한 줄이 KIA 승리확률을 이만큼 바꿨어요."
   - 실제 결과 공개: "실제로는 이렇게 끝났어요" + `actual.result`, 네이버 승리확률 "62.0% → 100%"(값이 둘 다 있을 때만, 출처 "네이버 스포츠").
   - TMI 목록(문장 + `entryChips`).

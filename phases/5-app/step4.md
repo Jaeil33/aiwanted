@@ -28,13 +28,13 @@
 - `usePlayback(stageRef: RefObject<StageController | null>, opts?: { sleep?: (ms: number) => Promise<void> }): { throwPitch(): Promise<void>; finishPa(): Promise<void>; finishGame(): Promise<void>; busy: boolean }`
   - 난수: `createRng(session.seed * 100003 + 누적 투구 수)`처럼 seed에서 결정적으로.
   - `throwPitch`: tmi evaluation(count 필요)으로 `samplePitchCode` → `resolvePitch` → 끝났으면 `applyTransition`·`headline` → `playbackFor`로 연출 명령 → `animationStart` → `await stage.playPitch` → `pitchApplied` → 타석이 끝났으면 `paFinished`(반이닝 종료면 `startNextHalf` 상태, log의 `wpHomeAfter`는 다음 상태 tmi evaluation의 winHome 또는 경기 종료 값) → 경기 종료면 `gameFinished`. stage가 없으면 연출 없이 진행한다.
-  - 전광판 `setBoard`: 1줄 "타자 이름 vs 투수 이름", 2줄 "직구 148km"(투구 행의 구종·구속, 없으면 빈 줄).
+  - 전광판 `setBoard`: 1줄 "타자 이름 vs 투수 이름", 2줄 "직구 148km"(투구 행의 구종·구속, 없으면 빈 줄). 전광판은 이 훅만 명령형으로 바꾼다.
   - `finishPa`: 타석이 끝날 때까지 `throwPitch` 반복.
-  - `finishGame`: 타석 중간이면 먼저 `finishPa`. 그다음 `engine.playout({ spec, start: live.state, scenePitcher, seed })` — **장면 첫 타석이 이미 끝났으면 `scope: 'pa'` 효과를 spec에서 뺀다**. `pickHighlights`로 고른 타석은 그 타석의 투구를 차례로 연출(마지막 공만 보통 속도, 앞 공은 `fast`), 나머지 타석은 연출 없이 log만 추가하고 `sleep(150)`. 끝나면 `gameFinished`.
+  - `finishGame`: 타석 중간이면 먼저 `finishPa`. 그다음 `engine.playout({ spec, start: live.state, scenePitcher: pitcherFor(setup, live.state), seed })` — **장면 첫 타석이 이미 끝났으면 `scope: 'pa'` 효과를 spec에서 뺀다**. `pickHighlights(result)`로 고른 타석은 `PlayoutPA.pitches`(던지기 전 카운트와 code)를 차례로 연출(마지막 공만 보통 속도, 앞 공은 `fast`, 결과는 그 타석의 `event`·`transition`·`over`), 나머지 타석은 연출 없이 log만 추가하고 `sleep(150)`. 끝나면 `gameFinished`.
   - 진행 중 다시 부르면 무시한다(busy).
 
 ### `src/app/screens/PlayScreen.tsx` (자리 표시 교체)
-- 구성(휴대폰 순서): 장면 머리(제목, "8월 25일 · 사직", "실제 결과는 경기가 끝나면 공개돼요") → `BallparkStage`(scene은 `stageSceneFor`, bases는 live.state.bases) → `Scorebug` → `ProbabilityTiers`(base/tmi 게이지 → `selectTiers`) → `ModeToggle` → `TmiComposer`(예시 4개: `josa`로 "`<투수>`이/가 경기 전 짜장면 곱빼기를 먹었다", "`<타자>`이/가 새 배트를 들고 나왔다", "오늘 기온 35도, 폭염", "원정팀이 버스로 5시간 이동했다") → `InterpretationCard` 목록 → `WpChart`(시작 tmi 승리확률 + log의 wpHomeAfter를 공격 팀 기준으로, baseline은 시작 base 값) → `PlayLog` → `PlayControls`(하단 고정).
+- 구성(휴대폰 순서): 장면 머리(제목, "8월 25일 · 사직", "실제 결과는 경기가 끝나면 공개돼요") → `BallparkStage`(`forwardRef<StageController>`라 `ref`를 usePlayback의 stageRef로 준다. `scene`은 `stageSceneFor(setup, live.state)`를 useMemo로, `bases`는 live.state.bases. `board` prop은 넘기지 않는다 — 넘기면 usePlayback의 setBoard를 덮어쓴다) → `Scorebug` → `ProbabilityTiers`(base/tmi 게이지 → `selectTiers`) → `ModeToggle` → `TmiComposer`(예시 4개: `josa`로 "`<투수>`이/가 경기 전 짜장면 곱빼기를 먹었다", "`<타자>`이/가 새 배트를 들고 나왔다", "오늘 기온 35도, 폭염", "원정팀이 버스로 5시간 이동했다") → `InterpretationCard` 목록 → `WpChart`(시작 tmi 승리확률 + log의 wpHomeAfter를 공격 팀 기준으로, baseline은 시작 base 값) → `PlayLog` → `PlayControls`(하단 고정).
 - 1024px 이상: 좌 1.5fr(머리·경기장·스코어버그·조작·기록·차트) / 우 1fr(확률판·모드·TMI·해석 카드).
 - 편집 잠금은 `canEditTmi(session)`. 판정 버튼은 거부되지 않은 entry에만.
 - 경기가 끝나면(`status finished`) result 라우트로 이동.

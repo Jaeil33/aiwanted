@@ -24,7 +24,9 @@
   - `EngineClient { evaluate(req: EvaluateRequest): Promise<Evaluation>; playout(req: PlayoutRequest): Promise<PlayoutResult>; dispose(): void }`
   - 워커 메시지: `EngineRequestMessage = { id: number; kind: 'evaluate' | 'playout'; req: EvaluateRequest | PlayoutRequest }`, `EngineResponseMessage = { id: number; ok: true; result: Evaluation | PlayoutResult } | { id: number; ok: false; error: string }`
 - `specKey(spec: GameSpec): string` — 선수 id·rel·불펜·lg·효과·모드가 같으면 같은 키.
-- `createLocalEngineClient(opts?: { maxCachedGames?: number; createGameImpl?: typeof createGame }): EngineClient` — 같은 스레드에서 계산. `specKey`로 createGame 결과를 최근 사용 순서로 최대 4개 캐시. playout은 `createRng(seed)`로 결정적.
+- `createLocalEngineClient(opts?: { maxCachedGames?: number; createGameImpl?: typeof createGame }): EngineClient` — 같은 스레드에서 계산. `specKey`로 `createGame({ lg, away, home, effects, mode, countTable })` 결과를 최근 사용 순서로 최대 4개 캐시.
+  - `evaluate(req)` = `game.evaluate(req.state, req.pitcher, { first: req.first })`
+  - `playout(req)` = 엔진 `playout({ game, start: req.start, scenePitcher: req.scenePitcher, away, home, lg, effects, mode, countTable, rng: createRng(req.seed), maxPlateAppearances: req.maxPlateAppearances })` — 같은 seed면 같은 결과. `Evaluation`·`PlayoutResult`는 구조화 복제가 되는 값(Float64Array 포함)이라 워커로 그대로 보낸다.
 - `handleEngineMessage(client: EngineClient, msg: EngineRequestMessage): Promise<EngineResponseMessage>` — 예외는 `ok: false`로.
 - `createWorkerEngineClient(worker: { postMessage(m: unknown): void; addEventListener(type: 'message', fn: (e: { data: unknown }) => void): void; terminate(): void }): EngineClient` — id로 요청·응답을 짝지어 resolve/reject, dispose 시 terminate하고 대기 중 요청을 reject.
 
@@ -33,12 +35,15 @@
 
 ### `src/game/playback.ts`
 - `samplePitchCode(ev: Evaluation, balls: number, strikes: number, r: () => number): PitchCode` — `ev.count.rates[balls*3+strikes]` 누적 확률로 뽑는다(count가 없으면 Error).
-- `resolvePitch(ev: Evaluation, state: GameState, balls: number, strikes: number, code: PitchCode, r: () => number): { balls: number; strikes: number; ended: null | { event: EventIndex; transition: Transition } }` — `nextCount` 기준. K → `transitions(bases, outs, K)[0]`, BB → `transitions(..., BB)[0]`, X → `sampleInPlay(ev.pa, r)` 후 `sampleTransition`.
+- `resolvePitch(ev: Evaluation, state: GameState, balls: number, strikes: number, code: PitchCode, r: () => number): { balls: number; strikes: number; ended: null | { event: EventIndex; transition: Transition } }` — `nextCount(balls, strikes, code)`가 돌려준 카운트와 `ends`(`'K' | 'BB' | 'X' | null`)를 그대로 쓴다. K → `transitions(state.bases, state.outs, EV.K)[0]`, BB → `transitions(state.bases, state.outs, EV.BB)[0]`, X → `event = sampleInPlay(ev.pa, r)` 후 `sampleTransition(state.bases, state.outs, event, r)`.
 - `countBucket(balls: number, strikes: number): number`, `pickPitchRow(rows: readonly PitchRow[], code: PitchCode, balls: number, strikes: number, stance: 'L' | 'R', r: () => number): PitchRow | null` — app.js `pickPitch` 단계 규칙 그대로(같은 결과·같은 손·같은 카운트 유형 → 결과·손 → 결과 → 아무거나).
 - `pitchRowsFor(data: AppData, pitcherId: string, throws: 'L' | 'R'): readonly PitchRow[]` — `pitches.byPitcher[pitcherId]`, 없으면 `pitches.pools[throws]`.
 - `headline(event: EventIndex, transition: Transition, over: GameOver | null): string` — app.js `headline` 그대로("끝내기 만루 홈런!", "밀어내기 볼넷", "병살타", "2타점 적시타" 등).
-- `stageSceneFor(setup: SceneSetup, state: GameState): StageScene` — 공격·수비 팀 색, 홈 여부, 타자 스탠스, 투수 손.
-- `playbackFor(args: { setup: SceneSetup; data: AppData; state: GameState; code: PitchCode; balls: number; strikes: number; number: number; ended: { event: EventIndex; transition: Transition } | null; over: GameOver | null; fast: boolean; r: () => number }): PitchPlayback` — 스테이지에 넘길 연출 명령(투구 행, 타구 play, 주자 moves, basesAfter, 결과 배너 문구·톤: 홈런·끝내기·2점 이상이면 big).
+- `stageSceneFor(setup: SceneSetup, state: GameState): StageScene` — `{ bat: { color: 공격 팀 색, home: 공격 팀이 홈인가, bats: batterFor(setup, state).stance }, fld: { color: 수비 팀 색, home: 수비 팀이 홈인가, throws: 투수 throws(없으면 'R') } }`.
+- `playbackFor(args: { setup: SceneSetup; data: AppData; state: GameState; code: PitchCode; balls: number; strikes: number; number: number; ended: { event: EventIndex; transition: Transition } | null; over: GameOver | null; fast: boolean; r: () => number }): PitchPlayback` — 스테이지에 넘길 연출 명령:
+  - `row`: `pickPitchRow(pitchRowsFor(data, 투수 id, 투수 throws), code, balls, strikes, 타자 stance, r)`, `code`, `number`, `fast`, `bats`: 타자 stance
+  - `play`: 인플레이(X)로 끝났을 때만 `ended.transition.play`, 아니면 null
+  - 타석이 끝났으면 `moves: ended.transition.moves`, `basesAfter: applyTransition(state, ended.transition).state.bases`, `banner: { text: headline(...), tone }` — 톤은 홈런·끝내기·2점 이상이면 'big', 그 외 'normal'
 - `logEntryFor(args: { setup; index; before: GameState; after: GameState; batterId; pitcherId; headline; wpHomeAfter: number | null; highlight: boolean }): PlayLogEntry`
 
 ### `src/game/index.ts`

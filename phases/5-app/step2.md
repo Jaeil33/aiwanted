@@ -39,8 +39,8 @@
   - `setup`: `session.sceneId`가 바뀔 때 `buildSceneSetup`으로 만든다(useMemo).
   - `provider`: `pickProvider({ artifactSample, apiBase, fetch })`, `session.providerDisabled`면 null로 취급.
   - `actions.openScene(sceneId: string, share: SharePayload | null)`: `openScene`(startState = scene.state, seed = 날짜와 장면 id로 만든 정수) 후 share가 있으면 texts를 순서대로 `submitTmi`.
-  - `actions.submitTmi(text)`: `interpretStart` → `interpretTmi(text, setup.promptContext, provider, { measuredAvailable })` → `interpretDone`(entry id는 컴포넌트 안 증가 카운터 `tmi-1`, `tmi-2` …). 빈 문자열 Error는 `interpretFailed`.
-  - `actions.removeTmi(id)`, `actions.setMode(mode)`, `actions.judge(id)`(`judgeTmi` → `judgeDone`), `actions.resetPlay()`.
+  - `actions.submitTmi(text)`: `interpretStart` → `interpretTmi(text, setup.promptContext, provider, { measuredAvailable })` → 결과 `{ interpretation, note, disableProvider }`로 `interpretDone`(entry id는 컴포넌트 안 증가 카운터 `tmi-1`, `tmi-2` …). 빈 문자열 Error는 `interpretFailed`.
+  - `actions.removeTmi(id)`, `actions.setMode(mode)`, `actions.judge(id)`(`judgeStart` → `judgeTmi(entry.text, entry.interpretation, setup.promptContext, data.evidence, provider)` → 결과 `{ verdict, note, disableProvider }`로 `judgeDone`), `actions.resetPlay()`(seed + 1).
 - `useGame()` 훅(컨텍스트 없으면 Error).
 
 ### 앱 셸 — `src/app/App.tsx` (기존 파일 교체)
