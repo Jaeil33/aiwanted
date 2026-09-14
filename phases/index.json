@@ -16,7 +16,8 @@
     },
     {
       "dir": "3-stage",
-      "status": "pending"
+      "status": "completed",
+      "completed_at": "2026-09-14T19:06:29+0900"
     },
     {
       "dir": "4-ai",
