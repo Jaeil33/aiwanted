@@ -31,6 +31,7 @@
 - `Platform { artifactSample: SampleLike | null; downloads: { save(req: { filename: string; data: Blob }): Promise<unknown> } | null; apiBase: string | null; createEngineClient(): EngineClient; today(): string }`
 - `detectPlatform(win: Window & typeof globalThis): Promise<Platform>` — `resolveArtifactSample(win)`, `win.claude?.use?.('downloads')`(없거나 null이면 null), `import.meta.env.VITE_AI_API_BASE ?? null`, 오늘 날짜(YYYY-MM-DD, Asia/Seoul).
 - `createEngineClient`: `typeof Worker !== 'undefined'`이면 **동적** `import('../game/engine.worker?worker&inline')`로 워커를 만들어 `createWorkerEngineClient`, 실패하거나 Worker가 없으면 `createLocalEngineClient()`. 워커 준비 전 요청은 지역 클라이언트로 처리해도 된다.
+  - 워커 생성자가 예외를 던지거나 워커가 `error` 이벤트를 내면(아티팩트 페이지의 CSP가 blob 워커를 막을 수 있다) 아직 응답을 못 받은 요청과 이후 요청을 지역 클라이언트로 처리한다. 이 전환은 `platform.ts` 안에서 두 클라이언트를 감싸는 클라이언트가 맡고, 테스트는 가짜 워커의 error 이벤트로 확인한다.
 - 테스트는 `win` 가짜 객체로 artifact 있음/없음, downloads null, Worker 없음 → 지역 클라이언트를 확인한다.
 
 ### 상태 공급자 — `src/app/GameProvider.tsx`

@@ -18,7 +18,7 @@
   - 외부 스크립트(`<script ... src=`)가 있음
   - `fonts.googleapis.com`이 아닌 외부 스타일시트 링크
   - "TMI 야구" 문구 없음
-  - 앱 데이터가 들어 있지 않음(`"scenes"`와 `"countTable"` 문자열 둘 다 필요)
+  - 앱 데이터가 들어 있지 않음(`countTable` 문자열과 네이버 경기 id 모양 `/\d{8}[A-Z]{4}\d{5}/`이 둘 다 필요 — 번들러가 JSON을 문자열·객체 리터럴로 바꾸며 키 따옴표가 달라지므로 따옴표를 기준으로 삼지 않는다)
   - `sk-ant-` 또는 `ANTHROPIC_API_KEY` 문자열이 있음
   - 크기 초과
 - CLI: `dist-artifact/index.html`을 검사해 결과를 출력하고 문제가 있으면 exit 1.
