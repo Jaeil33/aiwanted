@@ -1,0 +1,10 @@
+{
+  "project": "TMI 야구",
+  "phase": "ui-system",
+  "steps": [
+    { "step": 0, "name": "design-tokens", "status": "pending" },
+    { "step": 1, "name": "controls", "status": "pending" },
+    { "step": 2, "name": "hud-parts", "status": "pending" },
+    { "step": 3, "name": "game-frame", "status": "pending" }
+  ]
+}
