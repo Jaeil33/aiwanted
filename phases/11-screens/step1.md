@@ -49,7 +49,7 @@ export function TicketCard(props: {
    - 눈썹글 "오늘의 명장면"과 날짜(요일)·구장
    - 상황 제목(`--callout` 46px)
    - 원정·홈 팀 판(팀 색 선, 이름, "원정/홈", 점수)
-   - 승부처 지수 `LedMeter`(max 30, valueText "N.N")
+   - 승부처 지수 `LedMeter`(max 40, valueText "N.N")
    - 주요 버튼 "경기 입장" → `#/scene/<id>`
 3. **다른 명장면**: 제목과 "옆으로 넘겨 보기", 오늘 장면을 뺀 `TicketCard` 가로 스크롤(스크롤 스냅), 날짜 최신순.
 - `MenuFrame`의 상단 바·출처·탭바는 그대로 쓴다.
