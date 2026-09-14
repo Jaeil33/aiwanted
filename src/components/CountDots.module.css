@@ -1,0 +1,38 @@
+/* B·S·O 점 (시안 스코어버그 카운트): 6px 점, 꺼진 점 --hair-2, 글자는 --num --dust */
+.count {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--dust);
+  font: 700 11px/1 var(--num);
+  font-stretch: 80%;
+}
+
+.group {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.letter {
+  margin-right: 1px;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--hair-2);
+}
+
+.ball[data-on='true'] {
+  background: var(--ball);
+}
+
+.strike[data-on='true'] {
+  background: var(--strike);
+}
+
+.out[data-on='true'] {
+  background: var(--out);
+}

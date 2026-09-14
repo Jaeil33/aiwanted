@@ -1,0 +1,35 @@
+/* LED 미터 (UI_GUIDE): 20칸, 칸 사이 2px, 켜진 칸 --flood, 꺼진 칸 --hair. 숫자는 --num */
+.meter {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.label {
+  color: var(--dust);
+  font: 500 12px/1 var(--ui);
+  white-space: nowrap;
+}
+
+.cells {
+  display: grid;
+  gap: 2px;
+  height: 10px;
+}
+
+.cell {
+  background: var(--hair);
+}
+
+.on {
+  background: var(--flood);
+}
+
+.value {
+  color: var(--chalk);
+  font: 700 18px/1 var(--num);
+  font-stretch: 75%;
+  font-variant-numeric: tabular-nums;
+}

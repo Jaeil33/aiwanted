@@ -1,6 +1,7 @@
 import { basesText } from '../domain/format';
 import type { Bases, Half } from '../types/domain';
 import { BasesDiamond } from './BasesDiamond';
+import { CountDots } from './CountDots';
 import styles from './Scorebug.module.css';
 
 export interface ScorebugProps {
@@ -18,65 +19,53 @@ export interface ScorebugProps {
   bases: Bases;
 }
 
-/** 스코어버그: 점수·이닝·B·S·O·주자. 화면은 전광판 그래픽, 스크린리더는 한 문장으로 읽는다 */
+/**
+ * 경기장 위 방송 스코어버그: 원정·홈 두 줄(팀 색 3px 선, 공격 팀 이름 --flood, 점수 --num 19px)과 이닝 ▲▼·주자·B·S·O.
+ * 그래픽은 스크린리더에서 숨기고 한 문장(aria-live)으로 읽어 준다
+ */
 export function Scorebug(props: ScorebugProps) {
   const { awayName, homeName, awayColor, homeColor, awayScore, homeScore, inning, half, outs, balls, strikes, bases } = props;
   const runners = bases === 0 ? '주자 없음' : `주자 ${basesText(bases)}`;
   const sentence = `${inning}회${half ? '말' : '초'} ${outs}아웃, ${runners}, 볼 ${balls} 스트라이크 ${strikes}, ${awayName} ${awayScore} 대 ${homeName} ${homeScore}`;
-  const outsLit = Math.max(0, Math.min(outs, 3));
   const teams = [
     { side: 'away', name: awayName, color: awayColor, score: awayScore, batting: half === 0 },
     { side: 'home', name: homeName, color: homeColor, score: homeScore, batting: half === 1 },
   ] as const;
 
   return (
-    <section className={styles.bug} aria-label="전광판">
+    <section className={styles.bug} aria-label="스코어버그">
       <p className={styles.srOnly} aria-live="polite">
         {sentence}
       </p>
       <div className={styles.board} aria-hidden="true">
-        <div className={styles.teams}>
+        <div className={styles.rows}>
           {teams.map((team) => (
-            <div key={team.side} className={styles.team} data-team={team.side} data-batting={team.batting ? 'true' : 'false'}>
-              <span className={styles.swatch} data-swatch="" style={{ backgroundColor: team.color }} />
-              <span className={styles.teamName}>{team.name}</span>
-              <span className={styles.score} data-score={team.side}>
+            <div
+              key={team.side}
+              className={team.batting ? `${styles.row} ${styles.batting}` : styles.row}
+              data-team={team.side}
+              data-batting={team.batting ? 'true' : 'false'}
+            >
+              <i className={styles.swatch} data-swatch="" style={{ backgroundColor: team.color }} />
+              <b className={styles.name}>{team.name}</b>
+              <em className={styles.score} data-score={team.side}>
                 {team.score}
-              </span>
+              </em>
             </div>
           ))}
         </div>
-        <div className={styles.inning}>
-          <span className={styles.half} data-half={half ? 'bottom' : 'top'}>
-            {half ? '▼' : '▲'}
+        <div className={styles.state}>
+          <span className={styles.inning}>
+            <small className={styles.half} data-half={half ? 'bottom' : 'top'}>
+              {half ? '▼' : '▲'}
+            </small>
+            <span data-inning="">{inning}</span>
           </span>
-          <span className={styles.led} data-inning="">
-            {inning}
-          </span>
+          <BasesDiamond bases={bases} size={26} />
+          <div className={styles.count}>
+            <CountDots balls={balls} strikes={strikes} outs={outs} />
+          </div>
         </div>
-        <div className={styles.count}>
-          <span className={styles.countRow}>
-            <span className={styles.countLabel}>B</span>
-            <span className={`${styles.countValue} ${styles.balls}`} data-count="balls">
-              {balls}
-            </span>
-          </span>
-          <span className={styles.countRow}>
-            <span className={styles.countLabel}>S</span>
-            <span className={`${styles.countValue} ${styles.strikes}`} data-count="strikes">
-              {strikes}
-            </span>
-          </span>
-          <span className={styles.countRow}>
-            <span className={styles.countLabel}>O</span>
-            <span className={styles.dots}>
-              {[0, 1, 2].map((i) => (
-                <span key={i} className={styles.dot} data-out-dot="" data-on={i < outsLit ? 'true' : 'false'} />
-              ))}
-            </span>
-          </span>
-        </div>
-        <BasesDiamond bases={bases} size={40} />
       </div>
     </section>
   );
