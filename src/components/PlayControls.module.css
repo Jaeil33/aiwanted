@@ -1,0 +1,72 @@
+/* 조작 바: 휴대폰은 하단 고정(배경 --booth, 위 테두리 --rail). 본문 좌우 여백 16px만큼 넓혀 화면 끝까지 채운다 */
+.bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  gap: 8px;
+  margin-inline: -16px;
+  padding: 8px 16px;
+  border-top: 1px solid var(--rail);
+  background: var(--booth);
+}
+
+.primary,
+.secondary,
+.text {
+  min-height: 48px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font: 600 15px/1.2 var(--body);
+  word-break: keep-all;
+  cursor: pointer;
+}
+
+.primary {
+  border: 1px solid var(--led);
+  background: var(--led);
+  color: var(--led-ink);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.secondary {
+  border: 1px solid var(--rail);
+  background: transparent;
+  color: var(--chalk);
+}
+
+.text {
+  border: 0;
+  background: transparent;
+  color: var(--chalk-3);
+}
+
+.text:hover:not(:disabled),
+.text:focus-visible {
+  color: var(--chalk);
+  text-decoration: underline;
+}
+
+.bar button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+@media (min-width: 1024px) {
+  .bar {
+    position: static;
+    grid-template-columns: repeat(4, auto);
+    justify-content: start;
+    margin-inline: 0;
+    padding: 0;
+    border-top: 0;
+    background: transparent;
+  }
+
+  .primary,
+  .secondary {
+    padding: 0 20px;
+  }
+}

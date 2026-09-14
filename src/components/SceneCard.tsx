@@ -5,7 +5,8 @@ import styles from './SceneCard.module.css';
 /** 승부처 지수 막대의 꽉 찬 값(leverage %p). 넘으면 100%로 자른다 */
 const LEVERAGE_FULL = 60;
 
-function formatSceneDate(date: string): string {
+/** 장면 날짜 "8월 25일" (YYYY-MM-DD가 아니면 그대로) */
+export function formatSceneDate(date: string): string {
   const match = /^\d{4}-(\d{2})-(\d{2})$/.exec(date);
   return match ? `${Number(match[1])}월 ${Number(match[2])}일` : date;
 }

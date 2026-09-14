@@ -1,0 +1,33 @@
+/* 승리확률 차트: viewBox로 폭에 맞춰 늘어난다 (가로 스크롤 없음) */
+.chart {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+}
+
+.grid {
+  stroke: var(--rail);
+  stroke-width: 1;
+}
+
+.mid {
+  stroke: var(--chalk-4);
+  stroke-width: 1;
+}
+
+.tick,
+.baselineLabel {
+  fill: var(--chalk-3);
+  font: 500 11px var(--body);
+}
+
+.baseline {
+  stroke: var(--chalk-3);
+  stroke-width: 1.5;
+}
+
+.lastPoint {
+  stroke: var(--board);
+  stroke-width: 2;
+}

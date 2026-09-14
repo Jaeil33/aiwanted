@@ -1,0 +1,159 @@
+/* 해석 카드: 더그아웃 시트(반경 10px), 근거 등급별 칩 색 (실측 초록·그럴듯함 노랑·상상 회청·거부 빨강) */
+.card {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--rail);
+  border-radius: 10px;
+  background: var(--dugout);
+}
+
+.top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.quote {
+  margin: 0;
+  padding-top: 12px;
+  color: var(--chalk);
+  font: 600 15px/1.5 var(--body);
+  overflow-wrap: anywhere;
+}
+
+.quote::before {
+  content: '“';
+}
+
+.quote::after {
+  content: '”';
+}
+
+.remove {
+  flex: none;
+  min-height: 48px;
+  padding: 0 8px;
+  border: 0;
+  background: transparent;
+  color: var(--chalk-3);
+  font: 500 13px/1 var(--body);
+  cursor: pointer;
+}
+
+.remove:hover,
+.remove:focus-visible {
+  color: var(--chalk);
+  text-decoration: underline;
+}
+
+.source,
+.verdictSource {
+  margin: 0;
+  color: var(--chalk-3);
+  font: 500 13px/1.4 var(--body);
+  letter-spacing: 0.02em;
+}
+
+.comment,
+.body {
+  margin: 0;
+  color: var(--chalk-2);
+  font: 400 15px/1.6 var(--body);
+}
+
+.reason {
+  margin: 0;
+  color: var(--out);
+  font: 500 15px/1.6 var(--body);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chip,
+.verdictChip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid currentColor;
+  border-radius: 6px;
+  font: 500 13px/1.2 var(--body);
+  letter-spacing: 0.02em;
+}
+
+.chip[data-tone='measured'] {
+  color: var(--evidence-measured);
+}
+
+.chip[data-tone='plausible'] {
+  color: var(--evidence-plausible);
+}
+
+.chip[data-tone='fun'] {
+  color: var(--evidence-fun);
+}
+
+.chip[data-tone='refused'] {
+  color: var(--out);
+}
+
+.judge {
+  justify-self: start;
+  min-height: 48px;
+  padding: 0 16px;
+  border: 1px solid var(--rail);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--chalk);
+  font: 600 15px/1 var(--body);
+  cursor: pointer;
+}
+
+.judge:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.verdict {
+  display: grid;
+  justify-items: start;
+  gap: 6px;
+  padding-top: 8px;
+  border-top: 1px solid var(--rail);
+}
+
+.verdictChip {
+  font-weight: 600;
+}
+
+.verdictChip[data-verdict='real'] {
+  color: var(--ball);
+}
+
+.verdictChip[data-verdict='maybe'] {
+  color: var(--strike);
+}
+
+.verdictChip[data-verdict='useless'] {
+  color: var(--out);
+}
+
+.verdictChip[data-verdict='unmeasurable'] {
+  color: var(--evidence-fun);
+}
+
+.headline {
+  margin: 0;
+  color: var(--chalk);
+  font: 600 15px/1.5 var(--body);
+}

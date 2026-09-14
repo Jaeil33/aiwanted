@@ -74,6 +74,21 @@ describe('GameProvider', () => {
     expect(game().engine.evaluate).toBeTypeOf('function');
   });
 
+  it('getSession은 렌더를 기다리지 않고 dispatch 직후 상태를 돌려준다', async () => {
+    const { game } = renderWithGame(null);
+    await openFixture(game);
+    // ref 쪽에도 같은 reducer를 적용하므로 내용은 렌더된 세션과 같다 (객체는 다를 수 있다)
+    expect(game().getSession()).toEqual(game().session);
+    const seen: { status?: string; rendered?: string } = {};
+    act(() => {
+      game().dispatch({ type: 'animationStart' });
+      seen.status = game().getSession().status;
+      seen.rendered = game().session.status;
+    });
+    expect(seen).toEqual({ status: 'animating', rendered: 'ready' });
+    expect(game().session.status).toBe('animating');
+  });
+
   it('openScene: 장면 시작 상태와 날짜·장면 id로 만든 seed로 열고 setup을 만든다', async () => {
     const { game } = renderWithGame(null);
     await openFixture(game);
