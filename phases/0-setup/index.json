@@ -2,7 +2,19 @@
   "project": "TMI 야구",
   "phase": "setup",
   "steps": [
-    { "step": 0, "name": "project-setup", "status": "pending" },
-    { "step": 1, "name": "core-contracts", "status": "pending" }
-  ]
+    {
+      "step": 0,
+      "name": "project-setup",
+      "status": "completed",
+      "started_at": "2026-09-14T16:39:57+0900",
+      "summary": "Vite 8.3·React 19.3·TS 6.0.3·Vitest 5·ESLint 10 뼈대(ADR-007 21개만 설치): package.json scripts, tsconfig(app=src·vite/client / node=config·scripts·api, tsBuildInfo는 node_modules/.tmp), vite.config.ts(artifact 모드 → viteSingleFile, dist-artifact), vitest.config.ts(jsdom·react 플러그인·globals 끔), eslint.config.js(defineConfig + tseslint·react-hooks recommended), index.html(구글 폰트), src/styles/tokens.css(UI_GUIDE 색·폰트 토큰 + --evidence-measured/plausible/fun·--toon)·global.css, 임시 셸 src/app/App.tsx(named export App)·src/main.tsx(mount(el) → unmount), src/test/setup.ts(jest-dom + afterEach cleanup: globals가 꺼져 자동 정리가 안 됨), scripts/run-python.ts(resolvePython·pythonEnv, .venv python을 PYTHONUTF8=1·PYTHONPATH=pipeline으로 실행), pytest.ini(pipeline/tests·scripts), pipeline/tmi_pipeline/__init__.py(__version__·ROOT·RAW_DIR(TMI_RAW_DIR)·BUILD_DIR); AC 전부 통과(vitest 11, pytest 63)",
+      "completed_at": "2026-09-14T16:45:43+0900"
+    },
+    {
+      "step": 1,
+      "name": "core-contracts",
+      "status": "pending"
+    }
+  ],
+  "created_at": "2026-09-14T16:39:57+0900"
 }
