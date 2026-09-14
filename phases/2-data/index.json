@@ -21,7 +21,10 @@
     {
       "step": 2,
       "name": "game-context",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-09-14T17:49:40+0900",
+      "summary": "경기 맥락: stadiums.py(구장 13곳 좌표·DOMES {고척}·haversine_km·coords KeyError), weather.py(ARCHIVE_URL·archive_url(시간별 기온·10m 풍속 m/s·강수, Asia/Seoul)·fetch_site_weather(캐시 om_archive_{lat}_{lon}_{start}_{end}.json이 있으면 네트워크 없음, 실제 요청 1초 간격·실패 시 3회 재시도(5·30·65초 대기) 뒤 RuntimeError, sleep 주입 가능)·HourlySeries.at(정시 값, 없는 시각 None)·precip_sum((start, end]에 끝나는 정시 강수 합, 값 없으면 None)·load_stadium_series(좌표가 같은 대전·한밭은 1회)), context.py(regular_completed(kbo_r·RESULT·취소·서스펜디드 제외, 시작 시각순)·team_game_rows(경기당 원정·홈 2행, 필드 21개를 step 순서대로, 시작 정시 기온·풍속과 시작 전 3시간 강수(18:30 시작이면 16·17·18시 값), 돔·결측은 20/0/0 중립 + weather_missing, start_hour는 18.5 같은 소수 시각, travel_km·after_off_day는 같은 시즌 직전 경기 기준·더블헤더 0, 상대 선발 휴식은 (시즌, 상대 팀, 선발 이름)의 직전 선발과의 일수로 ≤4 짧음·≥8 긴 휴식)·enrich_scenes_weather(장면 id → CURATED 경기 또는 gameId 접두어, 없으면 날짜·팀이 하나로 맞는 경기; 돔은 None 유지, 소수 첫째 자리)·write_context를 STAGES[\"context\"]에 등록); 실데이터: Open-Meteo 11좌표(2021-03-01~2026-09-13) 캐시 RAW_DIR/weather 각 약 1.5MB, 팀-경기 8,460행(경기 2021~2025 시즌마다 720·2026 630), weather_missing 비율 0.0, 돔 행 858, 선발 휴식 계산 가능 비율 0.8086(2024 58%), 짧은 휴식 17행·긴 휴식 1,529행, 장면 16개 중 14개 날씨 채움(고척 2개는 None), team_games.json 2,893KB; AC 통과(lint, build, vitest 71, pytest 274, 8460 rows·weather missing 0.0)",
+      "completed_at": "2026-09-14T19:06:56+0900"
     },
     {
       "step": 3,
