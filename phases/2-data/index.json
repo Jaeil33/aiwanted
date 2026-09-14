@@ -29,7 +29,10 @@
     {
       "step": 3,
       "name": "evidence-model",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-09-14T19:06:57+0900",
+      "summary": "실측 변수 판정: glm.py(PoissonFit, fit_poisson: 로그 링크 IRLS(뉴턴), 시작값 μ0=y+0.1 가중 최소제곱, 벌점 이탈도가 늘면 걸음 반감, 벌점 이탈도 상대 변화 < tol이면 수렴, 미수렴은 예외 없이 converged=False, 열별 릿지, se=sqrt(diag(inv(XᵀWX+diag(penalty)))), poisson_deviance(y=0이면 2μ)), evidence.py(VARIABLES=measured.json 순서 10개, Design(X, y, factor_mask, var_slice, names, game_ids): 절편·off:팀:시즌·def:상대:시즌·park:구장 원핫(정렬)·변수(transform_value), fit_train(2021–2025 행만, 요인 열 벌점 1.0·절편·변수 0, β·se·β±1.96se·n=변환 값이 0이 아닌 학습 행 수), evaluate_test(2026 요인만 μ0·오프셋 μ1·변수 j 제외 μ1₋ⱼ를 각각 재적합, 경기 두 행 이탈도 합, 모든 비교에 같은 경기 부트스트랩 2,000회(seed 7) 2.5·97.5 백분위, TestResult(games, joint, by_variable)·Gain), verdict, build_evidence(EvidenceData, 값은 소수 여섯째 자리·runsPctPerUnit 넷째 자리, 판정은 공개 값으로 계산, note \"라벨: perLabel 득점 ±x.x% (95% 구간 a~b%), 2026 예측 개선 확인/은 확인되지 않음\" + 선발 휴식 변수는 학습 팀-경기 중 휴식일 계산 가능 비율 79%, home은 9회말 문장), write_evidence를 STAGES[\"evidence\"]에 등록); 실데이터(학습 3,600경기·7,200행 IRLS 4회 수렴, 검증 630경기): temp_c maybe +10.04%/10°C(학습 구간 +7.7~+12.5%, 2026 개선 −0.030~+0.034), wind_ms maybe +6.08%, rain_pre3h useless +0.22%, day_game maybe +7.30%, weekend useless −1.33%, travel_km useless −0.22%, after_off_day maybe −0.16%(학습 구간은 0 포함, 2026 개선 하한 +0.00011), starter_short_rest useless +12.18%(n 14, 2026 개선 구간이 전부 음수), starter_long_rest maybe +4.81%, home useless −0.70%; real 0개, 결합 개선 −0.0018/경기(−0.038~+0.035), 기준은 바꾸지 않고 그대로 기록; evidence.json 4.9KB; AC 통과(lint, build, vitest 71, pytest 300, items 10·test 630)",
+      "completed_at": "2026-09-14T19:16:59+0900"
     },
     {
       "step": 4,
