@@ -15,6 +15,7 @@ describe('src/ai 공개 API', () => {
       'normalizeInterpretation',
       'normalizeVerdict',
       'pickProvider',
+      'prepareText',
       'resolveArtifactSample',
       'ruleInterpret',
       'rulesVerdict',
