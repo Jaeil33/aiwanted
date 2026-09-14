@@ -132,6 +132,22 @@ export interface EngineEffect {
   sourceId: string;
 }
 
+/** 장면 시점 타순의 한 칸 */
+export interface RosterEntry {
+  id: string;
+  name: string;
+  /** 타순 1~9 */
+  slot: number;
+}
+
+/** 장면 두 팀 타순·장면 투수 밖의 데이터 선수(이름 인식용) */
+export interface KnownPlayer {
+  name: string;
+  /** 팀 이름(PromptContext.battingTeam/fieldingTeam과 같은 표기) */
+  team: string;
+  kind: 'H' | 'P';
+}
+
 /** AI 프롬프트에 넣는 장면 설명 */
 export interface PromptContext {
   date: string;
@@ -146,8 +162,14 @@ export interface PromptContext {
   pitcher: { id: string; name: string; team: string; throws: 'L' | 'R' };
   battingTeam: string;
   fieldingTeam: string;
-  /** 두 팀 타자 이름 (대상 판별용) */
+  /** 두 팀 타자 이름 (대상 판별용, 호환 필드: 팀 구분은 battingLineup·fieldingLineup) */
   lineupNames: string[];
+  /** 장면 시점 공격 팀 타순 */
+  battingLineup: RosterEntry[];
+  /** 장면 시점 수비 팀 타순 */
+  fieldingLineup: RosterEntry[];
+  /** 장면 두 팀 타순·투수 밖의 데이터 선수(이름 인식용) */
+  otherPlayers: KnownPlayer[];
   weather: { tempC: number | null; windMs: number | null; dayGame: boolean; dome: boolean };
 }
 

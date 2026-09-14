@@ -77,7 +77,20 @@ describe('createHttpProvider', () => {
     expect(calls[0].url).toBe('/api/interpret');
     expect(calls[0].init.method).toBe('POST');
     expect(calls[0].init.headers).toEqual({ 'content-type': 'application/json' });
-    expect(JSON.parse(String(calls[0].init.body))).toEqual(interpretReq);
+    // 이름 인식용 otherPlayers는 서버 본문 제한(해석 4KB) 때문에 비워 보낸다
+    expect(JSON.parse(String(calls[0].init.body))).toEqual({ ...interpretReq, ctx: { ...ctx, otherPlayers: [] } });
+  });
+
+  it('장면 밖 선수가 150명이어도 해석 본문은 4KB 이하다(otherPlayers를 보내지 않는다)', async () => {
+    const { fetchImpl, calls } = fakeFetch(() => jsonResponse(200, { raw: {} }));
+    const many = {
+      ...ctx,
+      otherPlayers: Array.from({ length: 150 }, (_, i) => ({ name: `가상선수${i}`, team: '한화', kind: 'H' as const })),
+    };
+    await createHttpProvider({ baseUrl: '/api', fetch: fetchImpl }).interpret({ text: '가'.repeat(80), ctx: many, measuredAvailable: true });
+    const body = String(calls[0].init.body);
+    expect(new TextEncoder().encode(body).length).toBeLessThanOrEqual(4 * 1024);
+    expect(JSON.parse(body).ctx).toEqual({ ...ctx, otherPlayers: [] });
   });
 
   it('verdict: POST {baseUrl}/verdict, 본문은 VerdictRequest, baseUrl 끝의 /는 떼어 낸다', async () => {
@@ -85,7 +98,7 @@ describe('createHttpProvider', () => {
     const provider = createHttpProvider({ baseUrl: 'https://tmi.example/api/', fetch: fetchImpl });
     await expect(provider.verdict(verdictReq)).resolves.toEqual({ variables: [] });
     expect(calls[0].url).toBe('https://tmi.example/api/verdict');
-    expect(JSON.parse(String(calls[0].init.body))).toEqual(verdictReq);
+    expect(JSON.parse(String(calls[0].init.body))).toEqual({ ...verdictReq, ctx: { ...ctx, otherPlayers: [] } });
     await expect(createHttpProvider({ baseUrl: '/api', fetch: fakeFetch(() => jsonResponse(200, { raw: null })).fetchImpl }).verdict(verdictReq)).resolves.toBeNull();
   });
 

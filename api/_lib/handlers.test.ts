@@ -114,6 +114,12 @@ describe('handleInterpret', () => {
     ['ctx 없음', interpretBody({ ctx: undefined })],
     ['ctx 문자열 41자', interpretBody({ ctx: { ...ctx, stadium: '구'.repeat(41) } })],
     ['lineupNames 21개', interpretBody({ ctx: { ...ctx, lineupNames: Array.from({ length: 21 }, (_, i) => `타자${i}`) } })],
+    ['battingLineup 10명', interpretBody({ ctx: { ...ctx, battingLineup: Array.from({ length: 10 }, (_, i) => ({ id: `b${i}`, name: `타자${i}`, slot: 1 })) } })],
+    ['타순 slot이 0', interpretBody({ ctx: { ...ctx, fieldingLineup: [{ id: 'a1', name: '원정타자1', slot: 0 }] } })],
+    ['타순 slot이 정수가 아님', interpretBody({ ctx: { ...ctx, battingLineup: [{ id: 'h1', name: '홈타자1', slot: 1.5 }] } })],
+    ['타순 이름이 문자열이 아님', interpretBody({ ctx: { ...ctx, battingLineup: [{ id: 'h1', name: 7, slot: 1 }] } })],
+    ['otherPlayers kind가 틀림', interpretBody({ ctx: { ...ctx, otherPlayers: [{ name: '김외부', team: '한화', kind: 'X' }] } })],
+    ['otherPlayers 21명', interpretBody({ ctx: { ...ctx, otherPlayers: Array.from({ length: 21 }, (_, i) => ({ name: `외부${i}`, team: '한화', kind: 'H' })) } })],
     ['타자 손 값이 틀림', interpretBody({ ctx: { ...ctx, batter: { ...ctx.batter, bats: 'X' } } })],
     ['점수가 숫자가 아님', interpretBody({ ctx: { ...ctx, homeScore: '4' } })],
     ['날씨 기온이 문자열', interpretBody({ ctx: { ...ctx, weather: { ...ctx.weather, tempC: '30' } } })],
@@ -125,6 +131,19 @@ describe('handleInterpret', () => {
     const res = await read(await handleInterpret(request('interpret', body), makeDeps(fetchImpl)));
     expect(res.status).toBe(400);
     expect(calls).toHaveLength(0);
+  });
+
+  it('팀별 타순·장면 밖 선수 필드가 없는 예전 ctx도 받는다(빈 배열로 본다)', async () => {
+    const { fetchImpl, calls } = anthropic(aiText('{"refused":false,"reason":"","comment":"","parts":[]}'));
+    const legacy: Record<string, unknown> = { ...ctx };
+    delete legacy.battingLineup;
+    delete legacy.fieldingLineup;
+    delete legacy.otherPlayers;
+    const res = await read(await handleInterpret(request('interpret', interpretBody({ ctx: legacy })), makeDeps(fetchImpl)));
+    expect(res.status).toBe(200);
+    expect(calls).toHaveLength(1);
+    const defaulted = { ...ctx, battingLineup: [], fieldingLineup: [], otherPlayers: [] };
+    expect(calls[0].body.messages).toEqual([{ role: 'user', content: buildInterpretPrompt(TEXT, defaulted, { measuredAvailable: true }) }]);
   });
 
   it('80자 text와 lineupNames 20개는 받는다', async () => {

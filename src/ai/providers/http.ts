@@ -1,3 +1,4 @@
+import type { PromptContext } from '../../types/domain';
 import { AiError } from './errors';
 import type { AiProvider } from './types';
 
@@ -11,6 +12,14 @@ export interface HttpProviderOptions {
 
 const DEFAULT_INTERPRET_TIMEOUT_MS = 8_000;
 const DEFAULT_VERDICT_TIMEOUT_MS = 60_000;
+
+/**
+ * 서버에 보내는 장면 설명. 이름 인식용 otherPlayers(실데이터는 100명이 넘는다)는 해석 본문 4KB 제한을 넘기므로 비워 보낸다.
+ * 서버는 이 목록 없이도 장면 두 팀 타순으로 동작한다.
+ */
+function wireContext(ctx: PromptContext): PromptContext {
+  return { ...ctx, otherPlayers: [] };
+}
 
 /*
  * 배포 프로바이더(ADR-006): api/interpret·api/verdict에 구조화된 요청을 보내고 {raw}를 받는다.
@@ -72,10 +81,10 @@ export function createHttpProvider(opts: HttpProviderOptions): AiProvider {
   return {
     name: 'http',
     interpret(req, signal) {
-      return post('/interpret', req, opts.interpretTimeoutMs ?? DEFAULT_INTERPRET_TIMEOUT_MS, signal);
+      return post('/interpret', { ...req, ctx: wireContext(req.ctx) }, opts.interpretTimeoutMs ?? DEFAULT_INTERPRET_TIMEOUT_MS, signal);
     },
     verdict(req, signal) {
-      return post('/verdict', req, opts.verdictTimeoutMs ?? DEFAULT_VERDICT_TIMEOUT_MS, signal);
+      return post('/verdict', { ...req, ctx: wireContext(req.ctx) }, opts.verdictTimeoutMs ?? DEFAULT_VERDICT_TIMEOUT_MS, signal);
     },
   };
 }

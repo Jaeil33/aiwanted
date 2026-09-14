@@ -3,7 +3,7 @@ import { buildInterpretPrompt, buildVerdictPrompt, evidenceToolResult, VERDICT_T
 import { checkSensitive } from '../../src/ai/safety';
 import { MEASURED } from '../../src/domain/measured';
 import type { EvidenceData, EvidenceItem } from '../../src/types/data';
-import type { Interpretation, MeasuredId, PromptContext } from '../../src/types/domain';
+import type { Interpretation, KnownPlayer, MeasuredId, PromptContext, RosterEntry } from '../../src/types/domain';
 import { AiHttpError, callMessages, extractJson, firstText, runToolLoop } from './anthropic';
 import type { ToolDef } from './anthropic';
 import type { createRateLimiter } from './rateLimit';
@@ -32,6 +32,10 @@ const THINKING_OFF = { type: 'disabled' } as const;
 const MAX_TEXT = 80;
 const MAX_CTX_TEXT = 40;
 const MAX_LINEUP_NAMES = 20;
+/** 팀 타순 칸 수이자 slot 최댓값 */
+const MAX_ROSTER = 9;
+/** 장면 밖 선수 이름 수. 클라이언트(http 프로바이더)는 본문 크기 때문에 보내지 않는다 */
+const MAX_OTHER_PLAYERS = 20;
 const MAX_REASON = 80;
 const MAX_COMMENT = 90;
 const MAX_PARTS = 3;
@@ -58,6 +62,7 @@ const VERDICTS = ['real', 'maybe', 'useless'] as const;
 const SOURCES = ['ai', 'rules'] as const;
 const BATS = ['L', 'R', 'S'] as const;
 const THROWS = ['L', 'R'] as const;
+const PLAYER_KINDS = ['H', 'P'] as const;
 
 // ---------- 응답 ----------
 
@@ -118,6 +123,24 @@ function tmiText(x: unknown): string {
   return value.trim() !== '' ? value : invalid();
 }
 
+/** 타순 한 칸: slot은 1~9 정수 */
+function rosterEntry(x: unknown): RosterEntry {
+  const raw = record(x);
+  const slot = finite(raw.slot);
+  if (!Number.isInteger(slot) || slot < 1 || slot > MAX_ROSTER) invalid();
+  return { id: str(raw.id, MAX_CTX_TEXT), name: str(raw.name, MAX_CTX_TEXT), slot };
+}
+
+function knownPlayer(x: unknown): KnownPlayer {
+  const raw = record(x);
+  return { name: str(raw.name, MAX_CTX_TEXT), team: str(raw.team, MAX_CTX_TEXT), kind: oneOf(raw.kind, PLAYER_KINDS) };
+}
+
+/** 나중에 더한 ctx 목록 필드: 없으면(예전 클라이언트) 빈 배열, 있으면 max개 이하이고 항목마다 모양이 맞아야 한다 */
+function optionalList<T>(x: unknown, max: number, parse: (item: unknown) => T): T[] {
+  return x === undefined ? [] : list(x, max).map(parse);
+}
+
 function parseContext(x: unknown): PromptContext {
   const raw = record(x);
   const batter = record(raw.batter);
@@ -146,6 +169,9 @@ function parseContext(x: unknown): PromptContext {
     battingTeam: str(raw.battingTeam, MAX_CTX_TEXT),
     fieldingTeam: str(raw.fieldingTeam, MAX_CTX_TEXT),
     lineupNames: list(raw.lineupNames, MAX_LINEUP_NAMES).map((name) => str(name, MAX_CTX_TEXT)),
+    battingLineup: optionalList(raw.battingLineup, MAX_ROSTER, rosterEntry),
+    fieldingLineup: optionalList(raw.fieldingLineup, MAX_ROSTER, rosterEntry),
+    otherPlayers: optionalList(raw.otherPlayers, MAX_OTHER_PLAYERS, knownPlayer),
     weather: {
       tempC: finiteOrNull(weather.tempC),
       windMs: finiteOrNull(weather.windMs),
