@@ -1,0 +1,90 @@
+<title>TMI 야구</title>
+<meta name="description" content="쓸데없는 변수 하나가 타석, 이닝, 경기 승부 확률을 얼마나 흔드는지 계산하고 실제 투구 궤적으로 재생하는 KBO 프로토타입">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=VT323&display=swap">
+<style>/*__CSS__*/</style>
+
+<div class="wrap">
+  <header class="masthead">
+    <div class="brand">
+      <p class="eyebrow">2026 KBO 실제 기록 · 해커톤 프로토타입</p>
+      <h1>TMI 야구</h1>
+    </div>
+    <p class="thesis">선수 TMI 한 줄이 <b>타석</b>, <b>이닝</b>, <b>경기</b> 승부 확률을 얼마나 흔드는지 정확히 계산하고, 그 타석을 실제로 던져진 공의 궤적으로 다시 보여줘요.</p>
+  </header>
+
+  <nav class="scenes" id="scenes" aria-label="실제 장면 고르기"></nav>
+
+  <main class="booth">
+    <section class="broadcast" aria-label="중계 화면">
+      <div class="scorebug" id="scorebug"></div>
+      <div class="stage">
+        <canvas id="stage" width="960" height="540" role="img" aria-label="투수가 공을 던지고 타자가 치는 중계 화면"></canvas>
+      </div>
+      <div class="matchup" id="matchup"></div>
+      <div class="controls">
+        <button id="btn-pitch" class="primary" type="button">한 구 던지기</button>
+        <button id="btn-pa" type="button">타석 끝까지</button>
+        <button id="btn-half" type="button">이닝 끝까지</button>
+        <button id="btn-real" type="button">실제 그 타석 재생</button>
+        <button id="btn-reset" type="button">처음 상황으로</button>
+        <label class="speed" for="speed"><input id="speed" type="checkbox"> 빠르게</label>
+      </div>
+      <p class="play-status" id="play-status" role="status"></p>
+
+      <figure class="wpchart">
+        <figcaption id="wp-caption">투구마다 바뀌는 승리 확률</figcaption>
+        <canvas id="wpchart" width="640" height="190"></canvas>
+      </figure>
+
+      <div class="log-head">
+        <h2>진행 기록</h2>
+        <p id="tally" class="tally"></p>
+      </div>
+      <ol class="playlog" id="playlog"></ol>
+    </section>
+
+    <section class="board" aria-label="승부 확률 전광판">
+      <form class="tmi" id="tmi-form" autocomplete="off">
+        <label for="tmi-input" class="tmi-label">쓸데없는 변수 넣기</label>
+        <div class="tmi-row">
+          <input id="tmi-input" name="tmi" type="text" maxlength="80" placeholder="예) 투수가 경기 전 짜장면 곱빼기를 먹었다">
+          <button id="tmi-submit" class="primary" type="submit">계산</button>
+        </div>
+        <div class="chips" id="chips" aria-label="예시 변수"></div>
+        <p class="tmi-status" id="tmi-status" role="status"></p>
+      </form>
+
+      <div class="chain" id="chain" aria-live="polite"></div>
+      <div class="tiers" id="tiers"></div>
+      <p class="legend"><i class="ghost-key"></i> 표시는 변수를 넣기 전 확률이고, 큰 숫자 아래 작은 숫자는 변수가 만든 차이예요.</p>
+
+      <div class="fx-head">
+        <h2>적용된 변수</h2>
+        <p id="interp-mode" class="interp-mode">규칙으로 해석 중</p>
+      </div>
+      <ul class="effects" id="effects"></ul>
+    </section>
+  </main>
+
+  <footer class="notes">
+    <section>
+      <h2>어떻게 계산하나요</h2>
+      <p>2026 시즌 선수 기록으로 타자와 투수의 결과 비율(삼진·볼넷·홈런·3루타·2루타·안타·범타)을 맞대결 비율로 합칩니다. 주자·아웃·타순 상태를 모두 따라가며 이닝과 경기 승리 확률을 정확히 계산해요. 무작위 반복이 아니라서 0.1%p 차이도 흔들리지 않고, KBO 11회 무승부 규칙까지 넣었습니다.</p>
+    </section>
+    <section>
+      <h2>화면의 공</h2>
+      <p>화면의 공은 그 투수가 8월 1일부터 9월 13일까지 실제로 던진 공이에요. 네이버 중계 투구 추적 데이터에서 같은 결과, 비슷한 카운트의 공을 골라 궤적 그대로 재생합니다. 볼카운트마다 결과 확률도 8~9월 KBO 1만 1천여 타석의 카운트별 투구 결과에 맞췄어요.</p>
+    </section>
+    <section>
+      <h2>믿어도 되는 것과 아닌 것</h2>
+      <p>선수 기록과 투구 궤적은 실제 데이터예요. 쓸데없는 변수가 얼마나 영향을 주는지는 설정값이라, '근거 있음'이라고 표시돼도 방향만 참고하세요. 주루·병살 비율은 단순화한 가정입니다. 선수 이름은 기록 표시용으로만 씁니다.</p>
+    </section>
+  </footer>
+</div>
+
+<script>window.TMI_DATA = /*__DATA__*/;</script>
+<script>/*__ENGINE__*/</script>
+<script>/*__STAGE__*/</script>
+<script>/*__APP__*/</script>

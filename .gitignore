@@ -15,6 +15,17 @@ phases/**/step*-output.json
 # python
 __pycache__/
 *.pyc
+.venv/
+.pytest_cache/
+
+# data: Naver/Open-Meteo raw caches and generated snapshots are never committed (rights + size)
+/data/
+
+# build outputs
+dist/
+dist-artifact/
+coverage/
+*.local
 
 # local secrets & personal settings
 .env
