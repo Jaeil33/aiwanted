@@ -13,7 +13,10 @@
     {
       "step": 1,
       "name": "app-snapshot",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-09-14T17:37:06+0900",
+      "summary": "앱 스냅숏: snapshot.py(CURATED 4개 그대로, count_table 12×5 소수 넷째 자리(투구 없는 카운트는 0.2씩), pitches_by_pitcher(투구 옵션의 현재 투수, 없으면 타석 시작 투수), infer_throws(x0 중앙값 > 0 → L), sample_rows((code, stance) 층 최대 잉여 할당·random.Random(seed)·원래 순서 유지), situation_text(format.ts와 같은 규칙), scene_candidates(6회 이후·유효 wpa·이번 타자까지 양 팀 타순 1~9 완성, 경기당 |wpa| 최대 1개, 상위 12), build_scene(SceneRecord, id=gameId-타석 인덱스, 선택 인자 players로 PlayerRecord 수집: 시즌 기록 없으면 rel 1·line {}·relay 이름, 투수 이름은 playerChange→id), build_snapshot(2026 기록, 선정 장면 경기 제외 자동 12, 날짜순, league 소수 다섯째 자리, byPitcher cap 300·pools cap 600, seed 2026), write_snapshot을 build STAGES[\"snapshot\"]에 등록), relay.load_game(원자료의 약 3/4인 currentPlayersInfo를 버리고 적재), 테스트 도우미 pipeline/tests/fixture_games.py(이닝 이동·wpa 배율 복사본, 합성 원자료 폴더), 픽스처 교체 옵션에 playerChange 추가; 실데이터: 장면 16(선정 4개 모두 찾음 + 자동 12, 제목과 상황 일치), 선수 137(타자 123·투수 14, 시즌 기록 없는 선수 0), 불펜 10팀, relay 140경기 2026-08-01~2026-09-13, pools L 600·R 600, core.json 30.0KB·pitches.json 339.9KB·scenes.json 19.3KB, URL 없음; AC 통과(lint, build, vitest 71, pytest 246, 장면 16·선수 137 검사)",
+      "completed_at": "2026-09-14T17:49:40+0900"
     },
     {
       "step": 2,
