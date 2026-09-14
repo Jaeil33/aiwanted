@@ -1,0 +1,66 @@
+/* 버튼 (UI_GUIDE 컴포넌트 규격): 주요 --flood·--flood-ink 900, 보조 --plate + 1px --hair-2 700, 텍스트는 글자만. 반경 6px, 높이 48px 이상 */
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 16px;
+  border: 1px solid transparent;
+  border-radius: var(--r-control);
+  background: transparent;
+  color: var(--chalk);
+  font: 700 15px/1.2 var(--ui);
+  letter-spacing: -0.01em;
+  text-align: center;
+  text-decoration: none;
+  word-break: keep-all;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.button svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+}
+
+.primary {
+  background: var(--flood);
+  color: var(--flood-ink);
+  font-weight: 900;
+}
+
+.secondary {
+  border-color: var(--hair-2);
+  background: var(--plate);
+  color: var(--chalk);
+}
+
+.text {
+  padding: 0 8px;
+  color: var(--dust);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.text:hover:not(:disabled) {
+  color: var(--chalk);
+}
+
+.lg {
+  min-height: 56px;
+  font-size: 17px;
+}
+
+.button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
