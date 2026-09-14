@@ -2,9 +2,29 @@
   "project": "TMI 야구",
   "phase": "engine",
   "steps": [
-    { "step": 0, "name": "engine-pa", "status": "pending" },
-    { "step": 1, "name": "engine-count", "status": "pending" },
-    { "step": 2, "name": "engine-game", "status": "pending" },
-    { "step": 3, "name": "engine-playout", "status": "pending" }
-  ]
+    {
+      "step": 0,
+      "name": "engine-pa",
+      "status": "completed",
+      "started_at": "2026-09-14T17:11:53+0900",
+      "summary": "src/engine 타석 계층(순수): rng.ts createRng(mulberry32, 프로토타입 수열 고정 테스트) · matchup.ts matchup(bRel,pRel,lg,mult?)→Float64Array·batterWin · knobs.ts STEP 0.06·KNOB_WEIGHTS(engine.js w 14개) · effects.ts REAL_LOG_CAP 0.45·TOON_FACTOR 6·TOON_LOG_CAP 1.6·PaContext{batterId,pitcherId,batSide,first}·fieldSideOf·compileKnobPart(Object.hasOwn 손잡이·SUBJECTS_FOR 대상·유한 세기 검증, Math.round 후 ±3, 0이면 [], mood는 batting + / fielding − 효과 2개)·appliesTo·effectMultipliers(해당 logOdds 합 → toon×6 → ±상한 → exp) · transitions.ts buildTransitions 표((outs×8+bases)×7+e, 168칸)를 Object.freeze로 공유, transitions()는 범위 밖이면 RangeError, sampleEvent·sampleInPlay·sampleTransition(표 객체 그대로 반환) · index.ts 재수출(index.test는 Object.keys 정확 일치); AC 통과(vitest 137 = 기존 71 + 엔진 66, 샘플러 20만 번 3σ, pytest 81)",
+      "completed_at": "2026-09-14T17:22:04+0900"
+    },
+    {
+      "step": 1,
+      "name": "engine-count",
+      "status": "pending"
+    },
+    {
+      "step": 2,
+      "name": "engine-game",
+      "status": "pending"
+    },
+    {
+      "step": 3,
+      "name": "engine-playout",
+      "status": "pending"
+    }
+  ],
+  "created_at": "2026-09-14T17:11:53+0900"
 }
