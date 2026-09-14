@@ -44,7 +44,10 @@
     {
       "step": 6,
       "name": "evidence-about",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-09-14T20:29:37+0900",
+      "summary": "src/components/EvidenceTable.tsx(props evidence|null: null이면 '판정 데이터가 아직 없어요. 파이프라인으로 evidence.json을 만들면 보여요.' · 행 순서 = measured.json applicable 변수(파일 순서) → 정의 없거나 적용 안 하는 변수 → 기준점 home(맨 아래, '기준점' 칩) · 칸: 변수 th(라벨 + perLabel, 모르는 id는 id 그대로) / 득점 변화 runsPctPerUnit '+2.1%'(U+2212, 숫자 아니면 —) + 95% 구간 SVG(ciLow·ciHigh → (exp−1)×100, 가로축 −10%~+10%·0 기준선·추정값 점, 축 밖이면 그 끝 화살표 data-arrow low/high, aria-label '95% 구간 +0.3% ~ +3.9%', 머리 칸에 축 라벨) / '{testSeason} 예측 개선 있음·없음' 칩(test.ciLow > 0) / 판정 칩(real 진짜 효과·maybe 애매해요·useless 쓸모없음, 모르는 값은 —) / note · caption '득점 변화는 팀 득점 기준, 막대는 95% 구간' · 표는 tabIndex 0 region '실측 변수 판정표'의 overflow-x auto 컨테이너, tabular-nums · VERDICT_LABEL·isBaseline·formatSigned(부호 고정 소수, 반올림 0이면 ±, 숫자 아니면 —) 내보냄) / TrustPanel.tsx(props trust|null: null이면 '엔진 신뢰도 리포트가 아직 없어요.' · '2025 시즌 기록만으로 만든 엔진을 2026년 8월 1일~9월 13일 중계 타석에 적용했어요(N경기 · N타석)' · Brier 막대 3개(TMI 야구 엔진/네이버 승리확률/항상 50%, 폭 = 세 값 중 최댓값을 100%, 값 소수 셋째 자리, '낮을수록 정확해요') · 로그 손실 작은 표(caption) · 보정 차트 SVG(정사각 영역, 점선 대각선, 두 축 0·50·100% 라벨과 축 제목, 점 x = predicted·y = actual·반지름 ∝ √n·점마다 title, 숫자 아닌 구간은 건너뜀) · note) / EvidenceScreen(useGame: h2 판정소 · 부제(첫 화면 h2와 같은 문구라 '진짜'만 em 강조: App.test의 findByText(부제)가 해시 전환 중 판정소 부제를 먼저 잡아 떨어지던 것을 App.test 수정 없이 해결) · 소개 · evidence가 있으면 '어떻게 판정했나'(method 문단, dl 학습 '2021~2025 시즌 N경기'·검증 '{testSeason} 시즌 N경기'·전체 변수를 함께 넣었을 때 개선 '경기당 이탈도 +0.0000 (95% 구간 … ~ …)', 구간 하한 > 0 좋아졌어요·상한 < 0 오히려 나빠졌어요·그 밖은 좋아졌다고 말할 수 없어요) · '변수별 판정'(home을 뺀 판정 개수 한 줄 '진짜 효과 N개 · 애매해요 N개 · 쓸모없음 N개' + EvidenceTable) · '엔진은 믿을 만한가'(TrustPanel) · '장면으로 돌아가기' Secondary 버튼(sceneId 있으면 play 해시, 없으면 #/)) / AboutScreen(h2 + 다섯 섹션 h3·문단, 조절 항목 수 KNOB_IDS.length·만화 배수 TOON_FACTOR·등급·모드 이름 EVIDENCE_LABEL·MODE_LABEL + josa, '만든 사람'으로만 쓰고 이름·연락처·팀원·순위 없음, 판정소 링크) + CSS 모듈 4개(토큰 색만, UI_GUIDE 칩·Secondary 버튼 규칙); 실데이터(evidence 10행·trust 보정 10구간)를 scratchpad vite SSR로 렌더해 행 순서·화살표·요약·점 개수 확인(테스트는 픽스처만); AC 통과(vitest 958 = 931 − 자리 표시 2 + 29, pytest 311)",
+      "completed_at": "2026-09-14T20:59:05+0900"
     }
   ],
   "created_at": "2026-09-14T19:19:45+0900"
