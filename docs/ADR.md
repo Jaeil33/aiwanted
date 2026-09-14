@@ -33,7 +33,7 @@
 **트레이드오프**: 저장소만 받아서는 앱 데이터를 재현할 수 없다(`npm run data`에 원자료가 필요). 선수 얼굴 없는 연출이 된다.
 
 ### ADR-006: AI 프로바이더 3단 구성
-**결정**: (1) 아티팩트 미리보기: `claude.use('sample')`의 `json`으로 해석(modelTier `quick`), `tools`로 판정(modelTier `default`). (2) 배포: `api/interpret.ts`, `api/verdict.ts`가 서버 환경변수 키로 Anthropic Messages API를 부른다. 모델은 환경변수 `TMI_MODEL_INTERPRET`(기본 `claude-haiku-4-5-20251001`), `TMI_MODEL_VERDICT`(기본 `claude-sonnet-5`). 입력 80자, 출력 토큰, IP당 분당 호출 수를 제한한다. (3) 없음: 규칙 해석·규칙 판정. 모든 호출은 8초 제한 시간이 지나면 다음 경로로 넘어간다.
+**결정**: (1) 아티팩트 미리보기: `claude.use('sample')`의 `json`으로 해석(modelTier `quick`), `tools`로 판정(modelTier `default`). (2) 배포: `api/interpret.ts`, `api/verdict.ts`가 서버 환경변수 키로 Anthropic Messages API를 부른다. 모델은 환경변수 `TMI_MODEL_INTERPRET`(기본 `claude-haiku-4-5-20251001`), `TMI_MODEL_VERDICT`(기본 `claude-sonnet-5`). 입력 80자, 출력 토큰, IP당 분당 호출 수를 제한한다. (3) 없음: 규칙 해석·규칙 판정. 배포 경로는 해석 8초·판정 60초 제한 시간을 넘으면 규칙으로 대신한다. 아티팩트 경로는 첫 호출에서 보는 사람의 동의를 기다리므로 플랫폼 지침대로 페이지 쪽 제한 시간을 두지 않고, 오류 코드가 오면 규칙으로 대신한다. 어느 경로도 코드에서 재시도하지 않는다.
 **이유**: 미리보기에서는 키 없이 실제 AI를 쓸 수 있고, 배포에서는 투표 참여자 누구나 계정 없이 써야 한다. 해석은 짧은 JSON이라 빠른 모델로 충분하고, 판정은 도구 호출과 설명 품질이 중요하다.
 **트레이드오프**: 배포 비용과 남용 위험(호출 제한으로 완화), 프로바이더마다 응답 모양이 다름(normalize로 흡수).
 
