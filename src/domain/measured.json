@@ -1,0 +1,12 @@
+[
+  {"id": "temp_c", "label": "기온", "unit": "°C", "who": "env", "transform": {"kind": "linear", "center": 20, "per": 10, "min": -10, "max": 40}, "perLabel": "10°C 오를 때", "applicable": true, "examples": ["더워", "폭염", "추워", "쌀쌀"]},
+  {"id": "wind_ms", "label": "바람 세기", "unit": "m/s", "who": "env", "transform": {"kind": "linear", "center": 0, "per": 5, "min": 0, "max": 20}, "perLabel": "바람이 5m/s 강해질 때", "applicable": true, "examples": ["바람", "강풍"]},
+  {"id": "rain_pre3h", "label": "경기 전 3시간 강수", "unit": "mm", "who": "env", "transform": {"kind": "linear", "center": 0, "per": 1, "min": 0, "max": 10}, "perLabel": "비가 1mm 더 왔을 때", "applicable": true, "examples": ["비 온 뒤", "그라운드가 젖"]},
+  {"id": "day_game", "label": "낮 경기", "unit": "", "who": "env", "transform": {"kind": "indicator"}, "perLabel": "오후 5시 전에 시작할 때", "applicable": true, "examples": ["낮 경기", "땡볕"]},
+  {"id": "weekend", "label": "주말 경기", "unit": "", "who": "env", "transform": {"kind": "indicator"}, "perLabel": "토·일요일일 때", "applicable": true, "examples": ["주말", "일요일"]},
+  {"id": "travel_km", "label": "원정 이동 거리", "unit": "km", "who": "team", "transform": {"kind": "linear", "center": 0, "per": 300, "min": 0, "max": 450}, "perLabel": "300km 더 이동했을 때", "applicable": true, "examples": ["버스로 이동", "원정길"]},
+  {"id": "after_off_day", "label": "휴식일 다음 경기", "unit": "", "who": "team", "transform": {"kind": "indicator"}, "perLabel": "하루 이상 쉬고 왔을 때", "applicable": true, "examples": ["푹 쉬고", "휴식일"]},
+  {"id": "starter_short_rest", "label": "상대 선발 짧은 휴식", "unit": "", "who": "opponentStarter", "transform": {"kind": "indicator"}, "perLabel": "상대 선발이 4일 이하 쉬고 나왔을 때", "applicable": true, "examples": ["짧게 쉬고", "당겨서 등판"]},
+  {"id": "starter_long_rest", "label": "상대 선발 긴 휴식", "unit": "", "who": "opponentStarter", "transform": {"kind": "indicator"}, "perLabel": "상대 선발이 8일 이상 쉬고 나왔을 때", "applicable": true, "examples": ["오래 쉬", "실전 감각"]},
+  {"id": "home", "label": "홈 경기", "unit": "", "who": "team", "transform": {"kind": "indicator"}, "perLabel": "홈에서 할 때", "applicable": false, "examples": ["홈 경기"]}
+]

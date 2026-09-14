@@ -2,7 +2,23 @@
   "project": "TMI 야구",
   "phase": "setup",
   "steps": [
-    { "step": 0, "name": "project-setup", "status": "pending" },
-    { "step": 1, "name": "core-contracts", "status": "pending" }
-  ]
+    {
+      "step": 0,
+      "name": "project-setup",
+      "status": "completed",
+      "started_at": "2026-09-14T16:39:57+0900",
+      "summary": "Vite 8.3·React 19.3·TS 6.0.3·Vitest 5·ESLint 10 뼈대(ADR-007 21개만 설치): package.json scripts, tsconfig(app=src·vite/client / node=config·scripts·api, tsBuildInfo는 node_modules/.tmp), vite.config.ts(artifact 모드 → viteSingleFile, dist-artifact), vitest.config.ts(jsdom·react 플러그인·globals 끔), eslint.config.js(defineConfig + tseslint·react-hooks recommended), index.html(구글 폰트), src/styles/tokens.css(UI_GUIDE 색·폰트 토큰 + --evidence-measured/plausible/fun·--toon)·global.css, 임시 셸 src/app/App.tsx(named export App)·src/main.tsx(mount(el) → unmount), src/test/setup.ts(jest-dom + afterEach cleanup: globals가 꺼져 자동 정리가 안 됨), scripts/run-python.ts(resolvePython·pythonEnv, .venv python을 PYTHONUTF8=1·PYTHONPATH=pipeline으로 실행), pytest.ini(pipeline/tests·scripts), pipeline/tmi_pipeline/__init__.py(__version__·ROOT·RAW_DIR(TMI_RAW_DIR)·BUILD_DIR); AC 전부 통과(vitest 11, pytest 63)",
+      "completed_at": "2026-09-14T16:45:43+0900"
+    },
+    {
+      "step": 1,
+      "name": "core-contracts",
+      "status": "completed",
+      "started_at": "2026-09-14T16:52:59+0900",
+      "summary": "공용 계약: src/types/domain.ts·data.ts·src/domain/measured.json을 step 파일과 글자 그대로 옮김(코드 블록 자동 대조 MATCH), 런타임 상수 src/domain/events.ts(EV as const, EVENT_LABEL·PITCH_TYPES는 readonly string[], PITCH_CODES·PITCH_CODE_LABEL)·knobs.ts(KNOB_IDS·KNOB_META·SUBJECTS_FOR·SUBJECT_LABEL)·teams.ts(TEAMS·isTeamCode)·measured.ts(MEASURED·measuredById·transformValue + 형식 검증 parseMeasured export)·format.ts(formatPct·formatDeltaPp·josa·basesText·situationText(Pick<GameState,'inning'|'half'|'outs'|'bases'>)·EVIDENCE_LABEL·MODE_LABEL), 합성 픽스처 src/test/fixtures/appData.ts(fixtureAppData: HT a1~a9·ap 우투 vs LT h1~h9·hp 좌투, 장면 fixture-walkoff 9회말 2사 만루 4:4 h6 vs ap, byPitcher ap 12행·hp 4행, evidence temp_c maybe·day_game useless, trust), pipeline/tmi_pipeline/contract.py(MEASURED_PATH·load_measured·measured_by_id·transform_value·EVENT_ORDER·PITCH_TYPES·PITCH_RESULT_CODE); AC 통과(vitest 71, pytest 81)",
+      "completed_at": "2026-09-14T17:00:46+0900"
+    }
+  ],
+  "created_at": "2026-09-14T16:39:57+0900",
+  "completed_at": "2026-09-14T17:01:16+0900"
 }

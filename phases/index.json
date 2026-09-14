@@ -2,7 +2,8 @@
   "phases": [
     {
       "dir": "0-setup",
-      "status": "pending"
+      "status": "completed",
+      "completed_at": "2026-09-14T17:01:16+0900"
     },
     {
       "dir": "1-engine",
