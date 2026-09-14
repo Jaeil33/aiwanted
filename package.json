@@ -11,7 +11,8 @@
     "test": "vitest run && npm run test:py",
     "test:web": "vitest run",
     "test:py": "tsx scripts/run-python.ts -m pytest -q",
-    "data": "tsx scripts/run-python.ts -m tmi_pipeline.build"
+    "data": "tsx scripts/run-python.ts -m tmi_pipeline.build",
+    "trust": "tsx scripts/trust-report.ts"
   },
   "dependencies": {
     "react": "^19.3.0",
