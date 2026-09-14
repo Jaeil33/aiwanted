@@ -10,5 +10,7 @@ export default defineConfig({
     include: ['src/**/*.test.{ts,tsx}', 'scripts/**/*.test.ts', 'api/**/*.test.ts'],
     exclude: ['reference/**', 'node_modules/**', 'dist/**', 'dist-artifact/**', 'data/**'],
     globals: false,
+    // Vitest는 CSS를 빈 문자열(모듈은 클래스 이름 프록시)로 바꾼다. `?raw`로 읽는 CSS 원문 검사만 그대로 둔다(src/styles/tokens.test.ts).
+    css: { include: [/\.css\?raw$/] },
   },
 });

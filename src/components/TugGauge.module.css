@@ -1,0 +1,158 @@
+/* 줄다리기 게이지 (UI_GUIDE 플레이 승률 판): 좌우 큰 숫자 --num 36px, 가운데 무승부, 12px 막대, TMI 없음 위치에 --flood 2px 표시선.
+   막대는 flex-basis가 700ms --ease-out으로 옮겨 간다 */
+.gauge {
+  position: relative;
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.end {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.status {
+  color: var(--dust);
+  font: 600 12px/1 var(--ui);
+}
+
+.board {
+  display: grid;
+  gap: 8px;
+}
+
+.nums {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: end;
+  gap: 8px;
+}
+
+.side {
+  grid-column: 1;
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.right {
+  grid-column: 3;
+  text-align: right;
+}
+
+.label {
+  overflow: hidden;
+  color: var(--dust);
+  font: 600 12px/1.2 var(--ui);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.big {
+  color: var(--chalk);
+  font: 700 36px/1 var(--num);
+  font-stretch: 72%;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+.unit {
+  margin-left: 1px;
+  color: var(--dust);
+  font-size: 18px;
+  font-style: normal;
+}
+
+.tieSide {
+  grid-column: 2;
+  display: grid;
+  gap: 4px;
+  padding-bottom: 4px;
+  text-align: center;
+}
+
+.tieSide .label {
+  font-size: 11px;
+}
+
+.small {
+  color: var(--dust);
+  font: 700 16px/1 var(--num);
+  font-stretch: 75%;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 계산 중에는 지난 숫자를 흐리게 두고 막대는 그대로 */
+.gauge[data-pending='true'] .big,
+.gauge[data-pending='true'] .small {
+  color: var(--dim);
+}
+
+.bar {
+  position: relative;
+  display: flex;
+  gap: 2px;
+  height: 12px;
+}
+
+.seg {
+  flex-grow: 0;
+  flex-shrink: 1;
+  min-width: 0;
+  height: 100%;
+  transition: flex-basis 700ms var(--ease-out);
+}
+
+.tie {
+  background: repeating-linear-gradient(135deg, var(--hair-2) 0 3px, var(--plate-2) 3px 6px);
+}
+
+.ghost {
+  position: absolute;
+  top: -5px;
+  bottom: -5px;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--flood);
+  transition: left 700ms var(--ease-out);
+}
+
+.foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  color: var(--dust);
+  font: 500 11px/1 var(--ui);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .seg,
+  .ghost {
+    transition: none;
+  }
+}

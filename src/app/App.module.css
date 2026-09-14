@@ -1,94 +1,90 @@
-/* 앱 셸: 중계석 머리말·본문 컨테이너·출처 푸터 (UI_GUIDE 레이아웃: 좌측 정렬, max-width 1180px, 좌우 16px) */
-.app {
+/* 게임 틀 (UI_GUIDE 화면 구성·데스크톱, ADR-011): 두 틀 모두 가운데 게임 열(최대 480px, 폭 100%, 최소 높이 100dvh).
+   MenuFrame = 상단 바 52px(브랜드) + 본문(좌우 18px) + 출처 한 줄 + 하단 탭바 / GameFrame = 본문만(여백 0, 화면이 둔다).
+   2단 레이아웃은 없다. 열 밖으로 넘친 가로 폭은 잘라 페이지 가로 스크롤을 막는다(clip은 스크롤 컨테이너를 만들지 않아 sticky 탭바가 산다) */
+.column {
+  position: relative;
   display: flex;
   flex-direction: column;
+  width: 100%;
+  max-width: 480px;
   min-height: 100vh;
+  min-height: 100dvh;
+  margin: 0 auto;
+  overflow-x: clip;
+  background: var(--ground);
 }
 
-.header {
-  background: var(--booth);
-  border-bottom: 1px solid var(--rail);
-}
-
-.bar {
+.topbar {
   display: flex;
-  flex-wrap: wrap;
+  flex: none;
   align-items: center;
   justify-content: space-between;
-  gap: 0 16px;
-  max-width: 1180px;
-  margin: 0 auto;
-  padding: 0 16px;
+  gap: 12px;
+  height: 52px;
+  padding: 0 18px;
 }
 
 .brand {
   margin: 0;
-  font: 400 24px/1 var(--display);
+  font: 900 17px/1 var(--ui);
+  letter-spacing: -0.03em;
 }
 
 .brandLink {
   display: inline-flex;
   align-items: center;
-  min-height: 48px;
-  color: var(--led);
+  min-height: 44px;
+  color: var(--chalk);
   text-decoration: none;
 }
 
-.nav {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0 4px;
+.brandAccent {
+  color: var(--flood);
 }
 
-.navLink {
-  display: inline-flex;
-  align-items: center;
-  min-height: 48px;
-  padding: 0 12px;
-  border-bottom: 2px solid transparent;
-  color: var(--chalk-3);
-  font: 500 15px/1 var(--body);
-  text-decoration: none;
+.meta {
+  color: var(--dust);
+  font: 600 12px/1 var(--ui);
+  white-space: nowrap;
 }
 
-.navLink:hover,
-.navLink:focus-visible {
-  color: var(--chalk);
-  text-decoration: underline;
-}
-
-.navLink[aria-current='page'] {
-  border-bottom-color: var(--led);
-  color: var(--chalk);
-}
-
-.main {
-  flex: 1;
-  width: 100%;
+.menuMain {
+  flex: 1 0 auto;
   min-width: 0;
-  max-width: 1180px;
-  margin: 0 auto;
-  padding: 0 16px 32px;
-}
-
-.footer {
-  border-top: 1px solid var(--rail);
-  background: var(--booth);
+  padding: 0 18px;
 }
 
 .sources {
-  max-width: 1180px;
-  margin: 0 auto;
-  padding: 16px;
-  color: var(--chalk-3);
-  font: 400 13px/1.6 var(--body);
+  margin: 0;
+  padding: 16px 18px 12px;
+  color: var(--dim);
+  font: 400 11px/1.5 var(--ui);
 }
 
+.gameMain {
+  flex: 1 0 auto;
+  min-width: 0;
+  padding: 0;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* 데이터 없음 안내 */
 .notice {
   display: grid;
   gap: 8px;
   padding-block: 24px;
-  color: var(--chalk-2);
+  color: var(--dust);
 }
 
 .notice p {
@@ -97,21 +93,22 @@
 
 .notice code {
   padding: 0 6px;
-  border: 1px solid var(--rail);
-  border-radius: 2px;
-  background: var(--board);
-  color: var(--led);
-  font: 400 20px/1.2 var(--led-font);
+  border: 1px solid var(--hair);
+  border-radius: var(--r-board);
+  background: var(--plate);
+  color: var(--flood);
+  font: 600 13px/1.6 var(--num);
 }
 
 .noticeTitle {
   margin: 0;
   color: var(--chalk);
-  font: 400 28px/1.25 var(--display);
+  font: 900 24px/1.25 var(--ui);
 }
 
 @media (min-width: 1024px) {
-  .noticeTitle {
-    font-size: 40px;
+  .column {
+    border-inline: 1px solid var(--hair-2);
+    box-shadow: var(--shadow-lift);
   }
 }

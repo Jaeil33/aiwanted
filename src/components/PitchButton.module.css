@@ -1,0 +1,44 @@
+/* 던지기 버튼 (UI_GUIDE): 80px 원형 --flood, 바깥 링 4px --ground + 1px --hair-2, 누르는 동안 scale 0.96 */
+.button {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 4px;
+  width: 80px;
+  height: 80px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--flood);
+  color: var(--flood-ink);
+  font: 900 13px/1 var(--ui);
+  letter-spacing: -0.01em;
+  box-shadow: 0 0 0 4px var(--ground), 0 0 0 5px var(--hair-2);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.button svg {
+  width: 26px;
+  height: 26px;
+}
+
+.label {
+  white-space: nowrap;
+}
+
+.button:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+/* 포커스 링은 장식 링(5px) 바깥에 둔다 */
+.button:focus-visible {
+  outline-offset: 7px;
+}
+
+.button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}

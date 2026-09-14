@@ -1,0 +1,74 @@
+/* 볼·스트라이크·결과 콜 (UI_GUIDE 움직임): 위치가 정해진 부모 한가운데, --callout 60px(big 64px), 딱딱한 그림자, 1,150ms */
+.callout {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.text {
+  display: block;
+  color: var(--chalk);
+  font: 400 60px/1 var(--callout);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  text-shadow: var(--shadow-call);
+  transform: skewX(-10deg);
+}
+
+.big {
+  font-size: 64px;
+}
+
+.text[data-tone='ball'] {
+  color: var(--ball);
+}
+
+.text[data-tone='strike'] {
+  color: var(--strike);
+}
+
+.text[data-tone='out'] {
+  color: var(--out);
+}
+
+.text[data-tone='hit'],
+.text[data-tone='big'] {
+  color: var(--flood);
+}
+
+/* 박히고(15%) 머무른 뒤(72%까지) 위로 사라진다 */
+.play {
+  animation: slam 1150ms var(--ease-out) both;
+}
+
+.still {
+  opacity: 1;
+}
+
+@keyframes slam {
+  0% {
+    opacity: 0;
+    transform: scale(1.5) skewX(-10deg);
+  }
+  15% {
+    opacity: 1;
+    transform: scale(1) skewX(-10deg);
+  }
+  72% {
+    opacity: 1;
+    transform: scale(1) skewX(-10deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-12%) scale(0.98) skewX(-10deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .play {
+    animation: none;
+  }
+}
