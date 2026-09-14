@@ -2,12 +2,44 @@
   "project": "TMI 야구",
   "phase": "app",
   "steps": [
-    { "step": 0, "name": "game-core", "status": "pending" },
-    { "step": 1, "name": "engine-client", "status": "pending" },
-    { "step": 2, "name": "app-shell", "status": "pending" },
-    { "step": 3, "name": "play-panels", "status": "pending" },
-    { "step": 4, "name": "play-screen", "status": "pending" },
-    { "step": 5, "name": "result-share", "status": "pending" },
-    { "step": 6, "name": "evidence-about", "status": "pending" }
-  ]
+    {
+      "step": 0,
+      "name": "game-core",
+      "status": "completed",
+      "started_at": "2026-09-14T19:19:45+0900",
+      "summary": "src/game 순수 모듈(DOM·타이머·난수·Date 없음): scene.ts(SceneSetup = 스펙 필드 + hands: 선수 id→{bats?, throws?}(스위치 타자 방향·투수 손 계산용, 스펙 외 추가) · buildSceneSetup(모르는 id Error, 선수 기록 없으면 rel 1·이름은 id, 불펜 없으면 `<팀코드>-pen`·rel 1, names에 불펜 id→'<장면 팀 이름> 불펜', promptContext 팀 이름은 장면 팀 이름·bats/throws 없으면 R, weather는 scene.context 복사) · batterStanceFor · pitcherFor(장면과 같은 이닝·초말이면 장면 투수, 아니면 수비 팀 불펜 = engine playout 규칙) · batterFor(그 상태 투수 손으로 stance) · 모듈 내부 헬퍼 nameOf·throwsOf(index 미노출)), effects.ts(measuredAvailable: applicable 변수의 유한 beta가 하나라도 있을 때만 true · compileSessionEffects: 거부 해석 건너뛰고 entry마다 compileEffects(sceneContext, sourceId=entry.id) 이어 붙임 · effectsKey: JSON [mode, (대상, 범위, logOdds)], sourceId 제외·효과 순서 유지·속성 순서 무관), selectors.ts(GaugeLike · battingWin · TierView · selectTiers(값은 tmi 기준, delta = tmi.left − base.left, 이닝 extra는 expRuns가 유한할 때 '기대 득점 1.23점', 경기 extra '무승부 3.5%', 타자·투수·팀은 넘긴 state 기준) · butterflyPp(%p 숫자) · EntryChip · entryChips(손잡이 '투수 체력 ▼▼'+근거 등급 톤, 실측 '기온 33°C'·지시 변수는 '낮 경기'/'주말 경기 아님', 거부면 '계산 거부' 하나)), share.ts(encodeShare: UTF-8 JSON {sceneId, texts, mode}의 패딩 없는 base64url(수동 인코더 + TextEncoder) · decodeShare: 엄격한 base64url·fatal UTF-8·객체·sceneId 비어 있지 않음·texts ≤ 3개·각 1~80자(.length, 공백만이면 거절)·mode real|toon, 모르는 필드 버림, 아니면 null), session.ts(Screen·PlayLogEntry(log는 시간 순 append)·LiveState·SessionState·SessionAction(type 판별자) · initialSession · canEditTmi · sessionReducer: 조건 밖 액션은 같은 객체, interpretStart는 편집 가능·해석 중 아님·3개 미만일 때만, interpretDone·interpretFailed는 interpreting일 때만 반영(기다리는 사이 잠겼거나 가득 차면 넣지 않고 표시만 끔), judgeStart는 거부 아닌 기존 entry·판정 중 아닐 때(편집 잠금과 무관), judgeDone은 judgingId 일치할 때만, removeTmi는 그 판정·judgingId도 정리, openScene은 tmis 기본 []·mode 기본 유지·interpreting·judgingId 초기화, pitchApplied·paFinished는 status를 ready로, gameFinished는 screen result, resetPlay는 animating이면 무시), index.ts 재내보내기(index.test가 값 이름 16개 정확 일치); AC 통과(vitest 473 = 기존 413 + game 60, pytest 81)",
+      "completed_at": "2026-09-14T19:35:00+0900"
+    },
+    {
+      "step": 1,
+      "name": "engine-client",
+      "status": "pending"
+    },
+    {
+      "step": 2,
+      "name": "app-shell",
+      "status": "pending"
+    },
+    {
+      "step": 3,
+      "name": "play-panels",
+      "status": "pending"
+    },
+    {
+      "step": 4,
+      "name": "play-screen",
+      "status": "pending"
+    },
+    {
+      "step": 5,
+      "name": "result-share",
+      "status": "pending"
+    },
+    {
+      "step": 6,
+      "name": "evidence-about",
+      "status": "pending"
+    }
+  ],
+  "created_at": "2026-09-14T19:19:45+0900"
 }
