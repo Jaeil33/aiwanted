@@ -21,7 +21,10 @@
     {
       "step": 2,
       "name": "trust-rebuild",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-09-15T01:30:40+0900",
+      "completed_at": "2026-09-15T01:33:57+0900",
+      "summary": "pipeline/tmi_pipeline/trust_states.py: game_states가 결과 옵션 없는 미완료 타석(complete False)을 루프 맨 앞에서 건너뛰어 상태에서 빼고 라인업·타순 진행(last_order)에도 세지 않음, 투수는 PlateAppearance.pitcher_id(step 0부터 첫 투구 투수, ADR-014)를 docstring에 명시; 2025 기록·슬롯별 마지막 타자 라인업·직전 유효 승리확률·무승부 처리 등 나머지 규칙은 그대로, 수치 보정·표본 선별 없음, trust_states.py와 test_trust_states.py 밖 변경 없음 / 테스트 2개 추가(cases_game: 3회 상태의 투수 hp3·hp3·hp3·ap1·ap2·ap2로 소개 뒤 교체 타석은 첫 투구 투수 hp3, 타석 도중 교체는 첫 공 투수 ap1; 미완료 원정타자8 타석(3회초 2사 2루)은 빠져 상태 32개, 3회말 slotAway 7, 결과를 붙이면 33개) / 실데이터(npm run data -- --only trust: 140경기 상태 10,819타석 · 무승부 3 · 2025 투수 기록 비율 0.6744; npm run trust 30.5초, 건너뛴 타석 0): 경기 137 · 타석 10,558(이전 11,017, −459 = 빈 대타 타석·미완료 타석 제외), Brier 엔진 0.1595 · 네이버 0.1609 · 0.5 0.2500(이전 0.1567 · 0.1580 · 0.2500, 차이 +0.0028 · +0.0029 · 0), 로그 손실 엔진 0.4828 · 네이버 0.4862 · 0.5 0.6931(이전 0.4747 · 0.4778 · 0.6931, 차이 +0.0081 · +0.0084 · 0), 엔진−네이버 Brier −0.0014(이전 −0.0013)·로그 손실 −0.0034(이전 −0.0031), 보정 10구간 n 합 10,558; data/build/app/trust.json 갱신(커밋 안 함); AC 통과(pytest 358, vitest scripts/trust-report.test.ts 16)"
     },
     {
       "step": 3,
