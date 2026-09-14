@@ -1,0 +1,53 @@
+.toggle {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.options {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 12px;
+  border: 1px solid var(--rail);
+  border-radius: 6px;
+  color: var(--chalk-2);
+  font: 600 15px/1.2 var(--body);
+  cursor: pointer;
+}
+
+.option[data-checked='true'] {
+  border-color: var(--led);
+  color: var(--chalk);
+}
+
+.option[data-mode='toon'][data-checked='true'] {
+  border-color: var(--toon);
+  border-style: dashed;
+}
+
+.option:has(input:disabled) {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.radio {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--led);
+}
+
+.description {
+  margin: 0;
+  color: var(--chalk-3);
+  font: 400 13px/1.5 var(--body);
+}

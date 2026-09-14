@@ -1,0 +1,16 @@
+.diamond {
+  display: block;
+  flex: none;
+}
+
+.on {
+  fill: var(--led);
+  stroke: var(--led);
+  stroke-width: 1.5;
+}
+
+.off {
+  fill: var(--board);
+  stroke: var(--chalk-4);
+  stroke-width: 1.5;
+}

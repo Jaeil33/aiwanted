@@ -1,0 +1,123 @@
+/* TMI 입력: 전광판 바탕 입력(16px, iOS 확대 방지), 예시 칩, Primary 버튼 */
+.composer {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.label {
+  color: var(--chalk-2);
+  font: 600 15px/1.4 var(--body);
+}
+
+.counter,
+.length {
+  color: var(--chalk-3);
+  font: 500 13px/1.4 var(--body);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+.length {
+  justify-self: end;
+}
+
+.input {
+  width: 100%;
+  min-height: 48px;
+  padding: 14px 16px;
+  border: 1px solid var(--rail);
+  border-radius: 6px;
+  background: var(--board);
+  color: var(--chalk);
+  font: 400 16px/1.2 var(--body);
+}
+
+.input::placeholder {
+  color: var(--chalk-4);
+}
+
+.input:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.examples {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.example {
+  min-height: 28px;
+  padding: 4px 10px;
+  border: 1px solid var(--rail);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--chalk-2);
+  font: 500 13px/1.4 var(--body);
+  letter-spacing: 0.02em;
+  text-align: left;
+  cursor: pointer;
+}
+
+.example:hover:not(:disabled) {
+  border-color: var(--chalk-3);
+  color: var(--chalk);
+}
+
+.example:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.submit {
+  min-height: 48px;
+  padding: 0 24px;
+  border: 0;
+  border-radius: 6px;
+  background: var(--led);
+  color: var(--led-ink);
+  font: 700 16px/1 var(--body);
+  cursor: pointer;
+}
+
+.submit:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.busy {
+  color: var(--chalk-3);
+  font: 500 13px/1.4 var(--body);
+}
+
+.hint {
+  margin: 0;
+  color: var(--strike);
+  font: 500 13px/1.5 var(--body);
+}
+
+.notice {
+  min-height: 1.5em;
+  margin: 0;
+  color: var(--chalk-3);
+  font: 500 13px/1.5 var(--body);
+}
