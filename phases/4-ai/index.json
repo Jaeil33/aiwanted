@@ -2,8 +2,24 @@
   "project": "TMI 야구",
   "phase": "ai",
   "steps": [
-    { "step": 0, "name": "interpret-core", "status": "pending" },
-    { "step": 1, "name": "ai-providers", "status": "pending" },
-    { "step": 2, "name": "api-functions", "status": "pending" }
-  ]
+    {
+      "step": 0,
+      "name": "interpret-core",
+      "status": "completed",
+      "started_at": "2026-09-14T17:29:19+0900",
+      "summary": "src/ai 순수 해석 핵심(공개 API index.ts 9개: checkSensitive·normalizeInterpretation·normalizeVerdict·ruleInterpret·rulesVerdict·buildInterpretPrompt·buildVerdictPrompt·VERDICT_TOOL·evidenceToolResult): safety.ts(범주별 정규식 8개, reason '실존 인물에게 민감한 내용이라 계산하지 않았어요.'(SENSITIVE_REASON), '바람이 분다'·'바람을 피해'·아프리카·아파트·도루·시발점 등 오탐 방지), normalize.ts(knob: KNOB_META 자기 키만·env→everyone·SUBJECTS_FOR·세기 반올림 후 −3..3 자르기·0/비숫자 버림(숫자 문자열 허용)·scope·evidence measured→plausible 그 외 fun·why 60 / measured: applicable만·유한수·linear min·max·indicator 0/1·who별 대상 / (kind,id,subject) 중복 제거·최대 3개·comment 90·refused reason 80(비면 기본 문구)·제어 문자 제거와 코드 포인트 기준 자르기(stripControl export) / normalizeVerdict: evidence items id만 중복 없이 3개, verdict는 첫 변수 item이 덮어쓰고 AI 판정이 데이터와 다르거나 문장이 비면 headline·body도 기록표 문구로 교체), rules.ts(프로토타입 사람 규칙 10개 knob·세기·scope·why 그대로(숙취 제거, '~라면'·'모자라'·'헤어스타일' 오탐 보강), 대상 판별에 lineupNames 포함·빈 이름 무시, 날씨·일정 9규칙(measuredAvailable이면 MeasuredPart, 아니면 대체 손잡이, 'N도'(도루 제외·영하)·'N m/s', '비가'는 앞 글자가 한글이면 제외), 팀 변수는 원정팀/홈팀·팀 이름을 하나만 말하면 그 팀 진영 아니면 battingTeam, 관중 규칙, 첫 why가 comment, 없으면 NO_EFFECT_COMMENT / rulesVerdict: evidence null·후보 없음(evidence에 없는 변수 제외)·첫 변수 판정, VERDICT_HEADLINE·UNMEASURABLE_HEADLINE/BODY·NO_EVIDENCE_HEADLINE export), prompts.ts(해석: 역할·[장면]·[날씨]·[두 팀 타자]·손잡이 14줄 '- id (label) 대상: subjects / 양수일 때: hint'·measuredAvailable일 때만 [실측 변수] 9줄과 measured 예시·규칙·JSON 예시·마지막 줄 '[시청자 변수] JSON.stringify(text)', 장면 문자열은 한 줄로 폄 / 판정: 도구로 최대 3개 조회·도구 결과 숫자만 인용·unmeasurable 규칙·JSON 형식 / VERDICT_TOOL{name lookupEvidence, inputSchema.properties.variable.enum = MEASURED id 10개} / evidenceToolResult: variable·label·unit·perLabel·meaning·runsPctPerUnit·runsPct95{low,high}((exp−1)×100)·train{seasons,games,teamGamesWithValue}·test{season,games,devianceGainPerGame,ci95}·verdict·note, 오류는 {error}(evidence 없음) / {error, available}), 테스트 도우미 src/ai/test-helpers.ts(fixtureContext·fixtureEvidence, 합성 픽스처만); AC 통과(lint·build, vitest 191 = 기존 71 + 신규 120, pytest 81)",
+      "completed_at": "2026-09-14T17:47:13+0900"
+    },
+    {
+      "step": 1,
+      "name": "ai-providers",
+      "status": "pending"
+    },
+    {
+      "step": 2,
+      "name": "api-functions",
+      "status": "pending"
+    }
+  ],
+  "created_at": "2026-09-14T17:29:19+0900"
 }
