@@ -1,0 +1,16 @@
+{
+  "project": "TMI 야구",
+  "phase": "interpreter",
+  "steps": [
+    { "step": 0, "name": "context-rosters", "status": "pending" },
+    { "step": 1, "name": "text-prep", "status": "pending" },
+    { "step": 2, "name": "safety-v2", "status": "pending" },
+    { "step": 3, "name": "targets", "status": "pending" },
+    { "step": 4, "name": "lexicon", "status": "pending" },
+    { "step": 5, "name": "rules-v2", "status": "pending" },
+    { "step": 6, "name": "ai-repair", "status": "pending" },
+    { "step": 7, "name": "api-handlers", "status": "pending" },
+    { "step": 8, "name": "session-refusal", "status": "pending" },
+    { "step": 9, "name": "verdict-rules", "status": "pending" }
+  ]
+}
