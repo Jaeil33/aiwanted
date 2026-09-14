@@ -1,0 +1,9 @@
+{
+  "project": "TMI 야구",
+  "phase": "ai",
+  "steps": [
+    { "step": 0, "name": "interpret-core", "status": "pending" },
+    { "step": 1, "name": "ai-providers", "status": "pending" },
+    { "step": 2, "name": "api-functions", "status": "pending" }
+  ]
+}

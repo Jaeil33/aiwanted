@@ -1,0 +1,10 @@
+{
+  "project": "TMI 야구",
+  "phase": "engine",
+  "steps": [
+    { "step": 0, "name": "engine-pa", "status": "pending" },
+    { "step": 1, "name": "engine-count", "status": "pending" },
+    { "step": 2, "name": "engine-game", "status": "pending" },
+    { "step": 3, "name": "engine-playout", "status": "pending" }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "project": "TMI 야구",
+  "phase": "data",
+  "steps": [
+    { "step": 0, "name": "pipeline-io", "status": "pending" },
+    { "step": 1, "name": "app-snapshot", "status": "pending" },
+    { "step": 2, "name": "game-context", "status": "pending" },
+    { "step": 3, "name": "evidence-model", "status": "pending" },
+    { "step": 4, "name": "trust-states", "status": "pending" }
+  ]
+}

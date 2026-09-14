@@ -1,0 +1,9 @@
+{
+  "project": "TMI 야구",
+  "phase": "stage",
+  "steps": [
+    { "step": 0, "name": "stage-math", "status": "pending" },
+    { "step": 1, "name": "stage-renderer", "status": "pending" },
+    { "step": 2, "name": "stage-component", "status": "pending" }
+  ]
+}
