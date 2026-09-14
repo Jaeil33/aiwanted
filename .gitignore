@@ -31,3 +31,6 @@ coverage/
 .env
 .env.*
 .claude/settings.local.json
+
+# isolated agent worktrees
+.claude/worktrees/
