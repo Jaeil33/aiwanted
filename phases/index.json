@@ -32,6 +32,10 @@
     {
       "dir": "6-release",
       "status": "pending"
+    },
+    {
+      "dir": "7-scene-data",
+      "status": "pending"
     }
   ]
 }

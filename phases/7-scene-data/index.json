@@ -1,0 +1,10 @@
+{
+  "project": "TMI 야구",
+  "phase": "scene-data",
+  "steps": [
+    { "step": 0, "name": "relay-fixes", "status": "pending" },
+    { "step": 1, "name": "scene-rebuild", "status": "pending" },
+    { "step": 2, "name": "trust-rebuild", "status": "pending" },
+    { "step": 3, "name": "swing-index", "status": "pending" }
+  ]
+}
