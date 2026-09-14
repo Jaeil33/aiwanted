@@ -31,6 +31,7 @@
 - `Platform { artifactSample: SampleLike | null; downloads: { save(req: { filename: string; data: Blob }): Promise<unknown> } | null; apiBase: string | null; createEngineClient(): EngineClient; today(): string }`
 - `detectPlatform(win: Window & typeof globalThis): Promise<Platform>` — `resolveArtifactSample(win)`, `win.claude?.use?.('downloads')`(없거나 null이면 null), `import.meta.env.VITE_AI_API_BASE ?? null`, 오늘 날짜(YYYY-MM-DD, Asia/Seoul).
 - `createEngineClient`: `typeof Worker !== 'undefined'`이면 **동적** `import('../game/engine.worker?worker&inline')`로 워커를 만들어 `createWorkerEngineClient`, 실패하거나 Worker가 없으면 `createLocalEngineClient()`. 워커 준비 전 요청은 지역 클라이언트로 처리해도 된다.
+  - 워커 생성자가 예외를 던지거나 워커가 `error` 이벤트를 내면(아티팩트 페이지의 CSP가 blob 워커를 막을 수 있다) 아직 응답을 못 받은 요청과 이후 요청을 지역 클라이언트로 처리한다. 이 전환은 `platform.ts` 안에서 두 클라이언트를 감싸는 클라이언트가 맡고, 테스트는 가짜 워커의 error 이벤트로 확인한다.
 - 테스트는 `win` 가짜 객체로 artifact 있음/없음, downloads null, Worker 없음 → 지역 클라이언트를 확인한다.
 
 ### 상태 공급자 — `src/app/GameProvider.tsx`
@@ -56,7 +57,7 @@
   - "오늘의 장면" 카드 하나(`todaySceneIndex(platform.today(), scenes.length)`)와 버튼 "이 장면에 TMI 걸기" → play 라우트.
   - 흐름 안내 세 단계(순서가 정보이므로 번호 사용 가능): 장면 고르기 → TMI 한 줄 → 다시 치르기.
   - 모든 장면 목록(날짜 최신순 SceneCard), 판정소·만든 이유 링크.
-- SceneCard(button 또는 링크): 날짜 "8월 25일", "KIA 4 : 4 롯데"(장면 시점 점수), 상황 문장, 구장, 승부처 지수 막대(`leverage` 0~60%p를 0~100% 폭으로). **실제 결과는 보여주지 않는다.** 팀 컬러는 작은 색 막대로만.
+- SceneCard(button 또는 링크): 날짜 "8월 25일", "KIA 4 : 4 롯데"(장면 시점 점수), 상황 문장, 구장, 승부처 지수 막대(`leverage` 0~60%p를 0~100% 폭으로, 60을 넘으면 100%로 자른다 — 실데이터에 90.3·70.8이 있다). **실제 결과는 보여주지 않는다.** 팀 컬러는 작은 색 막대로만.
 
 ### 테스트
 - appData: 픽스처 파일 레코드로 AppData, 필수 파일 누락 → null, 선택 파일 누락 → null 필드. todaySceneIndex 경계.

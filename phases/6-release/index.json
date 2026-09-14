@@ -2,7 +2,19 @@
   "project": "TMI 야구",
   "phase": "release",
   "steps": [
-    { "step": 0, "name": "trust-report", "status": "pending" },
-    { "step": 1, "name": "artifact-bundle", "status": "pending" }
-  ]
+    {
+      "step": 0,
+      "name": "trust-report",
+      "status": "completed",
+      "started_at": "2026-09-14T19:34:58+0900",
+      "completed_at": "2026-09-14T19:43:13+0900",
+      "summary": "scripts/trust-report.ts: TrustStates·TrustGame·TrustPlateAppearance 타입(trust_states.py 출력 모양) · startingLineup(pas, side)(타순마다 처음 알려진 타자, 끝까지 모르면 null) · evaluateTrust(states, {maxGames})→{trust, skipped}와 computeTrust(states, opts)→TrustData(무승부를 뺀 뒤 앞에서부터 maxGames경기(1 이상 정수가 아니면 RangeError), 경기마다 시작 라인업 2025 rel(없으면 1 벡터)·팀 불펜(없으면 1 벡터)·league로 createGame({effects: [], mode: 'real', countTable: null}) 한 번, 타석마다 투수 rel(없으면 1 벡터)로 evaluate(state, pitcher, {detail: false})의 winHome + tie/2, evaluate가 RangeError를 던진 타석은 세 예측 모두에서 빼고 note 끝에 개수, 그 밖의 예외는 그대로 던짐, Brier·로그 손실은 확률을 [1e-6, 1−1e-6]로 잘라 엔진·네이버·0.5에 대해 계산, 보정 10구간은 자르기 전 엔진 예측으로 나누고 n 0 구간 제외, 평가한 타석이 없으면 Error) · parseCli(--in 기본 data/build/trust/states.json·--out 기본 data/build/app/trust.json은 저장소 기준, 넘긴 경로는 cwd 기준, --max-games 양의 정수) · summaryLines(경기·타석·건너뛴 타석·세 Brier·세 로그 손실) · 직접 실행될 때만 CLI(입력이 없으면 npm run data -- --only trust 안내, 출력은 압축 JSON); package.json scripts.trust; scripts/trust-report.test.ts 16개(합성 states 홈 승·무승부·원정 승으로 무승부 제외, 상수 Brier 정확히 평균((0.5−y)²), 네이버 Brier·로그 손실 직접 계산값(잘라내기 포함), 보정 n 합 = 타석 수, startingLineup 규칙, 모든 확률 0~1, createGame 직접 호출값과 엔진 예측 일치, maxGames, RangeError 건너뛰기·다른 예외 전파, CLI 인자, 요약 문자열; 불펜 뒤바꿈·winHome만 쓰기 변이를 테스트가 잡는 것 확인); 실데이터(2025 기록 states, 2026 relay 140경기): --max-games 40은 40경기 타석 3,151, Brier 엔진 0.1473·네이버 0.1462·0.5 0.2500(로그 손실 0.4373·0.4374·0.6931), 전체는 137경기(무승부 3경기 제외) 타석 11,017, Brier 엔진 0.1567·네이버 0.1580·0.5 0.2500(로그 손실 0.4747·0.4778·0.6931), 보정 구간 10개 모두 채움, 두 실행 모두 건너뛴 타석 0개(전체 14.0초), data/build/app/trust.json(1.3KB)은 전체 경기 결과로 남김, 수치 보정·표본 선별 없음; AC 통과(lint, build, vitest 429, pytest 311, 40경기 검사)"
+    },
+    {
+      "step": 1,
+      "name": "artifact-bundle",
+      "status": "pending"
+    }
+  ],
+  "created_at": "2026-09-14T19:34:58+0900"
 }

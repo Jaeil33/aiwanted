@@ -26,6 +26,7 @@
   - Brier·로그 손실(확률은 [1e-6, 1 − 1e-6]로 자름)을 엔진·네이버(`naverHomeWp`)·항상 0.5에 대해 계산.
   - 보정: 엔진 예측 10구간(0.1 간격)마다 `{ lo, hi, predicted(평균), actual(홈 승률), n }`, n이 0인 구간은 뺀다.
   - `note`: "2025 시즌 기록만으로 만든 엔진을 2026 중계 타석에 적용했어요. 선수 교체는 시작 라인업으로 고정했어요."
+  - 엔진이 평가할 수 없는 상태라 `evaluate`가 RangeError를 던지는 타석(예: 점수 차가 엔진 한도 밖)은 건너뛴다. 건너뛴 수를 CLI 요약에 출력하고, 0보다 크면 note 끝에 " 엔진 범위 밖 타석 N개는 뺐어요."를 붙인다. 다른 예외는 그대로 던진다.
 - CLI(직접 실행될 때만): `--in`(기본 `data/build/trust/states.json`), `--out`(기본 `data/build/app/trust.json`), `--max-games`. 요약(경기·타석 수, 세 Brier)을 출력한다.
 - `package.json` scripts에 `"trust": "tsx scripts/trust-report.ts"` 추가.
 
