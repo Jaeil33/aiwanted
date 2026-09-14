@@ -1,0 +1,118 @@
+/* 첫 화면: 좌측 정렬 한 단, 장면 목록만 폭에 맞춰 여러 칸 (가로 스크롤 없음) */
+.home {
+  display: grid;
+  gap: 32px;
+  padding-block: 24px;
+  min-width: 0;
+}
+
+.intro {
+  display: grid;
+  gap: 8px;
+}
+
+.title {
+  margin: 0;
+  color: var(--chalk);
+  font: 400 28px/1.25 var(--display);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.lead {
+  max-width: 60ch;
+  margin: 0;
+  color: var(--chalk-2);
+  font: 400 15px/1.6 var(--body);
+}
+
+.section {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.sectionTitle {
+  margin: 0;
+  color: var(--chalk-2);
+  font: 600 15px/1.4 var(--body);
+}
+
+.primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  justify-self: start;
+  min-height: 48px;
+  padding: 0 24px;
+  border-radius: 6px;
+  background: var(--led);
+  color: var(--led-ink);
+  font: 700 16px/1 var(--body);
+  text-decoration: none;
+}
+
+.flow {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding-left: 32px;
+  color: var(--chalk-2);
+}
+
+.flow li::marker {
+  color: var(--led);
+  font: 400 22px/1 var(--led-font);
+}
+
+.stepName {
+  display: block;
+  color: var(--chalk);
+  font: 600 15px/1.5 var(--body);
+}
+
+.stepText {
+  display: block;
+  font: 400 15px/1.6 var(--body);
+}
+
+.list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: grid;
+  min-width: 0;
+}
+
+.more {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 24px;
+}
+
+.textLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  color: var(--chalk-3);
+  font: 500 15px/1.4 var(--body);
+  text-decoration: none;
+}
+
+.textLink:hover,
+.textLink:focus-visible {
+  color: var(--chalk);
+  text-decoration: underline;
+}
+
+@media (min-width: 1024px) {
+  .title {
+    font-size: 40px;
+  }
+}
