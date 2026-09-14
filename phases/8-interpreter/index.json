@@ -10,7 +10,14 @@
       "summary": "src/types/domain.ts에 RosterEntry{id,name,slot 1~9}·KnownPlayer{name,team,kind H|P}와 PromptContext.battingLineup·fieldingLineup·otherPlayers 추가(lineupNames 유지) · buildSceneSetup: 장면 시점 공격/수비 타순(기록 없으면 이름=id), otherPlayers = core.players − 두 타순 − 장면 투수(team은 장면 팀 이름 표기, 장면 밖 팀은 teams.ts 이름, 모르는 코드는 코드 그대로) · src/ai/test-helpers fixtureContext도 같은 모양(공격 홈타자1~9·수비 원정타자1~9·장면 밖 홈투수 1명, scene.test가 buildSceneSetup 결과와 일치 확인) · api parseContext는 새 필드를 선택 필드로 검증(없으면 [], 타순 ≤9·slot 1~9 정수, otherPlayers ≤20) · http 프로바이더는 otherPlayers를 비워 보냄(실데이터 장면 밖 선수 118명≈5.2KB라 해석 본문 4KB 제한 초과 방지; 서버 안전 판정은 두 팀 타순만 앎); AC 통과(lint·build, vitest src/game+src/ai+api 436)",
       "completed_at": "2026-09-15T01:09:06+0900"
     },
-    { "step": 1, "name": "text-prep", "status": "pending" },
+    {
+      "step": 1,
+      "name": "text-prep",
+      "status": "completed",
+      "started_at": "2026-09-15T01:22:48+0900",
+      "summary": "src/ai/text.ts(순수, index에서 prepareText·타입 내보냄): prepareText → {original, normalized, intensity, tokens, numbers, clauses ≤ MAX_CLAUSES(3)} · normalized = 줄바꿈→공백·보이지 않는 문자(ZWSP·VS16 등) 삭제·NFC 후 NFKC(호환 자모 ㄱ~ㆎ는 보존)·대시/U+2212→-·∕→/·소문자·같은 글자 3회+→2회(숫자 제외)·공백 하나 + 한 글자씩 띄운 음절 5개+ 붙이기 + 오타·띄어쓰기 바로잡기(머거따→먹었다, 곱배기→곱빼기, 잠못잠→잠 못 잠, 잠을못→잠을 못, 안떨림→안 떨림(안타·안경 보존), 넘 →너무, 피곤쓰→피곤) + 초성 낱말 치환(ㅌㅅ→투수, ㅌㅈ→타자, ㅍㄱ→피곤 등; ㅈㄴ·욕설 초성은 그대로) · tokens = 바로잡은 개념어 + tokensOf(normalized)(영어 약 300표현·이모지 약 150개·ㅋㅋ/ㅠㅠ 등 → 대표 한국어 한 낱말, 나온 순서·중복 없음; export tokensOf(text)로 절마다 다시 구할 수 있음) · intensityOf(text) export(강 2: ㅈㄴ·존나·완전·엄청·너무·진짜·정말·미친듯이·super/very/so·개-/핵-/초-/왕-(뒤 어간 목록일 때만), 약 1: 살짝·조금·좀·약간·slightly; 2가 이김) · numbers: 11단위(시간 반=+0.5, 잔/cups/coffees, 병/캔, 그릇/공기/인분, 도/°c/c/섭씨·영하(음수), km(구속 뒤·km/h는 unit null), m/s·초속 N미터, 마리/개/연전/도루 등 count, %/퍼센트/프로, 일/열흘) + 고유어 수(세 잔·한 그릇)·영어 수(three coffees), 체온 문맥은 raw에 '열이'/'체온' 포함, 나온 순서 · clauses: , ; + & 문장부호·그리고/근데/하지만·ㄴ받침+데(는데/은데)·연결 어미 '~고 '(최고·광고 등 명사와 '먹고 옴/들고 나왔다/치고 싶어서' 보조 동사는 제외)로 나누고 넘치면 마지막 절에 ', '로 합침 · subjectHint = 첫 '~은/는/이/가/께서' 앞 명사(한 글자 한글 줄기·관형형 동사·오늘/비/컨디션 같은 NON_SUBJECT 제외), 없으면 앞 절 hint 이어받음(주의: 첫 절에 조사가 없으면 null, 이어받은 hint는 절 text에 없을 수 있음) · 공백뿐이면 빈 결과, 기호뿐이면 절 1개; 테스트 68개(80자 1,000회 < 200ms, 3회 중 최솟값); AC 통과(lint·build, vitest src/ai 301)",
+      "completed_at": "2026-09-15T01:36:16+0900"
+    },
     { "step": 2, "name": "safety-v2", "status": "pending" },
     { "step": 3, "name": "targets", "status": "pending" },
     { "step": 4, "name": "lexicon", "status": "pending" },
