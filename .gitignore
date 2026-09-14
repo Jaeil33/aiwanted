@@ -1,0 +1,22 @@
+node_modules/
+.next/
+out/
+next-env.d.ts
+tsconfig.tsbuildinfo
+
+# phase execution outputs
+phases/**/phase*-output.json
+phases/**/step*-output.json
+
+# personal materials (자소서) — keep out of git
+/네이버 클라우드 자소서 작성/
+/네이버 클라우드 자소서 작성.zip
+
+# python
+__pycache__/
+*.pyc
+
+# local secrets & personal settings
+.env
+.env.*
+.claude/settings.local.json
