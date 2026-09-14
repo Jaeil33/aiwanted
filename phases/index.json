@@ -22,7 +22,8 @@
     },
     {
       "dir": "4-ai",
-      "status": "pending"
+      "status": "completed",
+      "completed_at": "2026-09-14T19:23:12+0900"
     },
     {
       "dir": "5-app",
