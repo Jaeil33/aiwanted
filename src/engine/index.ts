@@ -15,3 +15,6 @@ export type { PaContext } from './effects';
 export { sampleEvent, sampleInPlay, sampleTransition, transitions } from './transitions';
 export { calibrateCount, countChain, nextCount, outcomeAtCount, simulatePA } from './count';
 export type { CountModel } from './count';
+export { RMAX, halfInning, halfSummary } from './halfInning';
+export { DMAX, MAX_INN, applyTransition, createGame, gaugesAtCount, startNextHalf } from './game';
+export type { AfterEvent, EvaluateOptions, Evaluation, Game, GameConfig, LineupSlot, TeamConfig } from './game';
