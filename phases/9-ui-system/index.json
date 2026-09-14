@@ -2,9 +2,17 @@
   "project": "TMI 야구",
   "phase": "ui-system",
   "steps": [
-    { "step": 0, "name": "design-tokens", "status": "pending" },
+    {
+      "step": 0,
+      "name": "design-tokens",
+      "status": "completed",
+      "started_at": "2026-09-15T01:12:28+0900",
+      "summary": "src/styles/tokens.css를 UI_GUIDE 나이트게임 값 그대로 교체: 바탕 --ground #07090B·--plate #0F1418·--plate-2 #161C21·--hair #252D34·--hair-2 #333D45·--hud rgba(6,8,10,.92), 글자 --chalk #F2EFE6·--dust #9AA4AA·--dim #626D73, 행동 --flood #FFCF6B·--flood-ink #1C1406·--ball #3FD27E·--strike #FFC53D·--out #FF5043·--toon #FF8A2A·--bat/--fld(기본 KIA·롯데 색, 장면마다 덮어씀), 금속 --foil-real #E7C46B·--foil-maybe #C3CED4·--foil-fun #D98B67, 글꼴 --callout(Gasoek One)·--ui(Noto Sans KR)·--num(Archivo), --ease-out cubic-bezier(0.16,1,0.3,1), 반경 --r-board 2px·--r-control 6px·--r-slot 8px·--r-ticket 10px·--r-card 12px·--r-sheet 16px, UI_GUIDE 깊이 값을 토큰으로 추가(--shadow-lift 0 40px 80px -30px rgba(0,0,0,.8) 열·시트 외곽, --shadow-call 0 4px 0 rgba(0,0,0,.55) 콜 글자, --veil rgba(4,6,8,.55) 시트 뒤 경기장 어둡게); 옛 이름 16개(--night·--booth·--dugout·--rail·--board #05090D·--chalk-2 #C9CFCC·--chalk-3·--chalk-4·--led·--led-ink·--display·--body·--led-font·--evidence-*)는 새 값 별칭으로 남기고 '11-screens에서 제거' 주석; global.css(:root color-scheme dark, html·body 바탕 --ground·글자 --chalk·400 15px/1.6 --ui, body keep-all·break-word·antialiased·tap highlight 없음, h1~h4 text-wrap balance, :focus-visible 2px --flood offset 2px, [hidden] none !important, button·input font/color inherit·button cursor, .num 유틸 font-stretch 76%·tabular-nums, 동작 줄이기에서 animation·transition 1ms·delay 0으로 끝 이벤트는 유지); index.html(Archivo wdth 62..125·Gasoek One·Noto Sans KR 400~900 Google Fonts 링크, preconnect 2줄, theme-color #07090B); vitest.config.ts에 test.css.include [/\\.css\\?raw$/] 추가(Vitest 5가 CSS ?raw를 빈 문자열·모듈 프록시로 바꿔서, 원문 검사만 통과시킴 — 11-screens도 CSS 원문 검사에 ?raw를 쓸 수 있음); tokens.test.ts(WCAG 대비 순수 함수와 대비 기준, 토큰 값·별칭·var() 참조 무결성, src 모든 CSS·TSX의 var(--x)가 토큰이나 지역 선언으로 정의됐는지 — 새 컴포넌트가 지역 변수(--c 등)를 쓰려면 CSS 선언이나 style 키 '--이름'으로 정의해야 통과, global.css·index.html 원문); 기존 CSS 모듈은 옮기지 않음; AC 통과(vitest src/styles+main 20, lint, build)",
+      "completed_at": "2026-09-15T01:16:27+0900"
+    },
     { "step": 1, "name": "controls", "status": "pending" },
     { "step": 2, "name": "hud-parts", "status": "pending" },
     { "step": 3, "name": "game-frame", "status": "pending" }
-  ]
+  ],
+  "created_at": "2026-09-15T01:12:28+0900"
 }
