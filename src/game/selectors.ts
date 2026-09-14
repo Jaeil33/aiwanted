@@ -1,11 +1,12 @@
 import { formatDeltaPp, formatPct } from '../domain/format';
 import { KNOB_META, SUBJECT_LABEL } from '../domain/knobs';
 import { MEASURED } from '../domain/measured';
+import type { Evaluation } from '../engine';
 import type { EffectPart, GameState, Side, TmiEntry } from '../types/domain';
 import { batterFor, nameOf, pitcherFor, type SceneSetup } from './scene';
 
 /*
- * 화면용 파생 값. 확률 숫자는 엔진 결과(evaluate·gaugesAtCount)를 옮기고 뺄셈만 한다(CLAUDE.md CRITICAL).
+ * 화면용 파생 값. 확률 숫자는 엔진 결과(evaluate·gaugesAtCount)에서만 온다: 옮기거나 그 값끼리 빼고 더한다(CLAUDE.md CRITICAL).
  */
 
 /** Evaluation이나 gaugesAtCount 결과처럼 게이지로 쓸 수 있는 값 */
@@ -21,6 +22,22 @@ export interface GaugeLike {
 /** 공격 진영의 승리확률 */
 export function battingWin(g: GaugeLike, batSide: Side): number {
   return batSide === 'home' ? g.winHome : g.winAway;
+}
+
+/**
+ * 승부처 지수(ADR-014): 이번 타석이 끝났을 때 공격 팀 승리 가치가 평균적으로 얼마나 움직이는지(%p).
+ * 100 × Σ_e pa[e] × |B(after[e]) − B(지금)|, B = 공격 팀 승리 + 무승부 / 2.
+ * after가 비어 있으면(detail: false 평가) null. 실제 결과의 |WPA|(SceneRecord.leverage)는 쓰지 않는다.
+ */
+export function expectedSwing(ev: Pick<Evaluation, 'batSide' | 'pa' | 'after' | 'winHome' | 'winAway' | 'tie'>): number | null {
+  if (ev.after.length === 0) return null;
+  const value = (g: { winHome: number; tie: number; winAway: number }) => (ev.batSide === 'home' ? g.winHome : g.winAway) + g.tie / 2;
+  const now = value(ev);
+  let sum = 0;
+  ev.after.forEach((after, e) => {
+    sum += ev.pa[e] * Math.abs(value(after) - now);
+  });
+  return 100 * sum;
 }
 
 /** 3단 승률판 한 줄: 값은 TMI 반영(tmi) 기준, delta는 TMI 없음(base) 대비 왼쪽 값 차이 */

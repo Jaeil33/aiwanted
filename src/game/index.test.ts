@@ -20,6 +20,7 @@ const PUBLIC_API = [
   'selectTiers',
   'butterflyPp',
   'entryChips',
+  'expectedSwing',
   // share
   'encodeShare',
   'decodeShare',
