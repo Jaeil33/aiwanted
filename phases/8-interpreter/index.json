@@ -2,7 +2,14 @@
   "project": "TMI 야구",
   "phase": "interpreter",
   "steps": [
-    { "step": 0, "name": "context-rosters", "status": "pending" },
+    {
+      "step": 0,
+      "name": "context-rosters",
+      "status": "completed",
+      "started_at": "2026-09-15T01:05:37+0900",
+      "summary": "src/types/domain.ts에 RosterEntry{id,name,slot 1~9}·KnownPlayer{name,team,kind H|P}와 PromptContext.battingLineup·fieldingLineup·otherPlayers 추가(lineupNames 유지) · buildSceneSetup: 장면 시점 공격/수비 타순(기록 없으면 이름=id), otherPlayers = core.players − 두 타순 − 장면 투수(team은 장면 팀 이름 표기, 장면 밖 팀은 teams.ts 이름, 모르는 코드는 코드 그대로) · src/ai/test-helpers fixtureContext도 같은 모양(공격 홈타자1~9·수비 원정타자1~9·장면 밖 홈투수 1명, scene.test가 buildSceneSetup 결과와 일치 확인) · api parseContext는 새 필드를 선택 필드로 검증(없으면 [], 타순 ≤9·slot 1~9 정수, otherPlayers ≤20) · http 프로바이더는 otherPlayers를 비워 보냄(실데이터 장면 밖 선수 118명≈5.2KB라 해석 본문 4KB 제한 초과 방지; 서버 안전 판정은 두 팀 타순만 앎); AC 통과(lint·build, vitest src/game+src/ai+api 436)",
+      "completed_at": "2026-09-15T01:09:06+0900"
+    },
     { "step": 1, "name": "text-prep", "status": "pending" },
     { "step": 2, "name": "safety-v2", "status": "pending" },
     { "step": 3, "name": "targets", "status": "pending" },
