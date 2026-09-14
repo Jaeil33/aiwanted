@@ -29,12 +29,12 @@ def tmp_project(tmp_path):
     phases_dir.mkdir()
 
     claude_md = tmp_path / "CLAUDE.md"
-    claude_md.write_text("# Rules\n- rule one\n- rule two")
+    claude_md.write_text("# Rules\n- rule one\n- rule two", encoding="utf-8")
 
     docs_dir = tmp_path / "docs"
     docs_dir.mkdir()
-    (docs_dir / "arch.md").write_text("# Architecture\nSome content")
-    (docs_dir / "guide.md").write_text("# Guide\nAnother doc")
+    (docs_dir / "arch.md").write_text("# Architecture\nSome content", encoding="utf-8")
+    (docs_dir / "guide.md").write_text("# Guide\nAnother doc", encoding="utf-8")
 
     return tmp_path
 
@@ -54,8 +54,8 @@ def phase_dir(tmp_project):
             {"step": 2, "name": "ui", "status": "pending"},
         ],
     }
-    (d / "index.json").write_text(json.dumps(index, indent=2, ensure_ascii=False))
-    (d / "step2.md").write_text("# Step 2: UI\n\nUI를 구현하세요.")
+    (d / "index.json").write_text(json.dumps(index, indent=2, ensure_ascii=False), encoding="utf-8")
+    (d / "step2.md").write_text("# Step 2: UI\n\nUI를 구현하세요.", encoding="utf-8")
 
     return d
 
@@ -70,7 +70,7 @@ def top_index(tmp_project):
         ]
     }
     p = tmp_project / "phases" / "index.json"
-    p.write_text(json.dumps(top, indent=2))
+    p.write_text(json.dumps(top, indent=2), encoding="utf-8")
     return p
 
 
@@ -126,14 +126,14 @@ class TestJsonHelpers:
     def test_save_ensures_ascii_false(self, tmp_path):
         p = tmp_path / "test.json"
         ex.StepExecutor._write_json(p, {"한글": "테스트"})
-        raw = p.read_text()
+        raw = p.read_text(encoding="utf-8")
         assert "한글" in raw
         assert "\\u" not in raw
 
     def test_save_indented(self, tmp_path):
         p = tmp_path / "test.json"
         ex.StepExecutor._write_json(p, {"a": 1})
-        raw = p.read_text()
+        raw = p.read_text(encoding="utf-8")
         assert "\n" in raw
 
     def test_load_nonexistent_raises(self, tmp_path):
@@ -187,7 +187,7 @@ class TestLoadGuardrails:
             phases_dir = tmp_path / "phases" / "dummy"
             phases_dir.mkdir(parents=True)
             idx = {"project": "T", "phase": "t", "steps": []}
-            (phases_dir / "index.json").write_text(json.dumps(idx))
+            (phases_dir / "index.json").write_text(json.dumps(idx), encoding="utf-8")
             inst = ex.StepExecutor.__new__(ex.StepExecutor)
             result = inst._load_guardrails()
         assert result == ""
@@ -199,18 +199,18 @@ class TestLoadGuardrails:
 
 class TestBuildStepContext:
     def test_includes_completed_with_summary(self, phase_dir):
-        index = json.loads((phase_dir / "index.json").read_text())
+        index = json.loads((phase_dir / "index.json").read_text(encoding="utf-8"))
         result = ex.StepExecutor._build_step_context(index)
         assert "Step 0 (setup): 프로젝트 초기화 완료" in result
         assert "Step 1 (core): 핵심 로직 구현" in result
 
     def test_excludes_pending(self, phase_dir):
-        index = json.loads((phase_dir / "index.json").read_text())
+        index = json.loads((phase_dir / "index.json").read_text(encoding="utf-8"))
         result = ex.StepExecutor._build_step_context(index)
         assert "ui" not in result
 
     def test_excludes_completed_without_summary(self, phase_dir):
-        index = json.loads((phase_dir / "index.json").read_text())
+        index = json.loads((phase_dir / "index.json").read_text(encoding="utf-8"))
         del index["steps"][0]["summary"]
         result = ex.StepExecutor._build_step_context(index)
         assert "setup" not in result
@@ -222,7 +222,7 @@ class TestBuildStepContext:
         assert result == ""
 
     def test_has_header(self, phase_dir):
-        index = json.loads((phase_dir / "index.json").read_text())
+        index = json.loads((phase_dir / "index.json").read_text(encoding="utf-8"))
         result = ex.StepExecutor._build_step_context(index)
         assert result.startswith("## 이전 Step 산출물")
 
@@ -280,7 +280,7 @@ class TestUpdateTopIndex:
     def test_completed(self, executor, top_index):
         executor._top_index_file = top_index
         executor._update_top_index("completed")
-        data = json.loads(top_index.read_text())
+        data = json.loads(top_index.read_text(encoding="utf-8"))
         mvp = next(p for p in data["phases"] if p["dir"] == "0-mvp")
         assert mvp["status"] == "completed"
         assert "completed_at" in mvp
@@ -288,7 +288,7 @@ class TestUpdateTopIndex:
     def test_error(self, executor, top_index):
         executor._top_index_file = top_index
         executor._update_top_index("error")
-        data = json.loads(top_index.read_text())
+        data = json.loads(top_index.read_text(encoding="utf-8"))
         mvp = next(p for p in data["phases"] if p["dir"] == "0-mvp")
         assert mvp["status"] == "error"
         assert "failed_at" in mvp
@@ -296,7 +296,7 @@ class TestUpdateTopIndex:
     def test_blocked(self, executor, top_index):
         executor._top_index_file = top_index
         executor._update_top_index("blocked")
-        data = json.loads(top_index.read_text())
+        data = json.loads(top_index.read_text(encoding="utf-8"))
         mvp = next(p for p in data["phases"] if p["dir"] == "0-mvp")
         assert mvp["status"] == "blocked"
         assert "blocked_at" in mvp
@@ -304,16 +304,16 @@ class TestUpdateTopIndex:
     def test_other_phases_unchanged(self, executor, top_index):
         executor._top_index_file = top_index
         executor._update_top_index("completed")
-        data = json.loads(top_index.read_text())
+        data = json.loads(top_index.read_text(encoding="utf-8"))
         polish = next(p for p in data["phases"] if p["dir"] == "1-polish")
         assert polish["status"] == "pending"
 
     def test_nonexistent_dir_is_noop(self, executor, top_index):
         executor._top_index_file = top_index
         executor._phase_dir_name = "no-such-dir"
-        original = json.loads(top_index.read_text())
+        original = json.loads(top_index.read_text(encoding="utf-8"))
         executor._update_top_index("completed")
-        after = json.loads(top_index.read_text())
+        after = json.loads(top_index.read_text(encoding="utf-8"))
         for p_before, p_after in zip(original["phases"], after["phases"]):
             assert p_before["status"] == p_after["status"]
 
@@ -424,35 +424,44 @@ class TestCommitStep:
 # ---------------------------------------------------------------------------
 
 class TestInvokeClaude:
-    def test_invokes_claude_with_correct_args(self, executor):
-        mock_result = MagicMock(returncode=0, stdout='{"result": "ok"}', stderr="")
+    def _run(self, executor, result=None, side_effect=None):
         step = {"step": 2, "name": "ui"}
-        preamble = "PREAMBLE\n"
+        if side_effect is not None:
+            ctx = patch("subprocess.run", side_effect=side_effect)
+        else:
+            ctx = patch("subprocess.run", return_value=result or MagicMock(returncode=0, stdout="{}", stderr=""))
+        with ctx as mock_run:
+            output = executor._invoke_claude(step, "PREAMBLE\n")
+        return mock_run, output
 
-        with patch("subprocess.run", return_value=mock_result) as mock_run:
-            output = executor._invoke_claude(step, preamble)
-
+    def test_invokes_claude_with_correct_args(self, executor):
+        mock_run, _ = self._run(executor)
         cmd = mock_run.call_args[0][0]
-        assert cmd[0] == "claude"
+        assert Path(cmd[0]).stem.lower() == "claude"
         assert "-p" in cmd
         assert "--dangerously-skip-permissions" in cmd
         assert "--output-format" in cmd
-        assert "PREAMBLE" in cmd[-1]
-        assert "UI를 구현하세요" in cmd[-1]
+
+    def test_prompt_goes_through_stdin_not_argv(self, executor):
+        # Windows 명령줄은 32,767자가 한계라 가드레일이 붙은 긴 프롬프트는 stdin으로 넘긴다.
+        mock_run, _ = self._run(executor)
+        cmd = mock_run.call_args[0][0]
+        kwargs = mock_run.call_args[1]
+        assert all("PREAMBLE" not in part for part in cmd)
+        assert "PREAMBLE" in kwargs["input"]
+        assert "UI를 구현하세요" in kwargs["input"]
+        assert kwargs["encoding"] == "utf-8"
 
     def test_saves_output_json(self, executor):
-        mock_result = MagicMock(returncode=0, stdout='{"ok": true}', stderr="")
-        step = {"step": 2, "name": "ui"}
-
-        with patch("subprocess.run", return_value=mock_result):
-            executor._invoke_claude(step, "preamble")
-
+        _, output = self._run(executor, MagicMock(returncode=0, stdout='{"ok": "완료 ✓"}', stderr=""))
         output_file = executor._phase_dir / "step2-output.json"
         assert output_file.exists()
-        data = json.loads(output_file.read_text())
+        data = json.loads(output_file.read_text(encoding="utf-8"))
         assert data["step"] == 2
         assert data["name"] == "ui"
         assert data["exitCode"] == 0
+        assert "완료 ✓" in data["stdout"]
+        assert output["exitCode"] == 0
 
     def test_nonexistent_step_file_exits(self, executor):
         step = {"step": 99, "name": "nonexistent"}
@@ -460,14 +469,66 @@ class TestInvokeClaude:
             executor._invoke_claude(step, "preamble")
         assert exc_info.value.code == 1
 
-    def test_timeout_is_1800(self, executor):
-        mock_result = MagicMock(returncode=0, stdout="{}", stderr="")
-        step = {"step": 2, "name": "ui"}
+    def test_uses_step_timeout(self, executor):
+        mock_run, _ = self._run(executor)
+        assert mock_run.call_args[1]["timeout"] == ex.StepExecutor.STEP_TIMEOUT
+        assert ex.StepExecutor.STEP_TIMEOUT == 3600
 
-        with patch("subprocess.run", return_value=mock_result) as mock_run:
-            executor._invoke_claude(step, "preamble")
+    def test_timeout_is_reported_not_raised(self, executor):
+        err = subprocess.TimeoutExpired(cmd=["claude"], timeout=3600)
+        _, output = self._run(executor, side_effect=err)
+        assert output["exitCode"] == -1
+        assert "TIMEOUT" in output["stderr"]
+        assert (executor._phase_dir / "step2-output.json").exists()
 
-        assert mock_run.call_args[1]["timeout"] == 1800
+    def test_step_file_is_read_as_utf8(self, executor):
+        (executor._phase_dir / "step2.md").write_text("# Step 2\n\n한글 지시 ✓", encoding="utf-8")
+        mock_run, _ = self._run(executor)
+        assert "한글 지시 ✓" in mock_run.call_args[1]["input"]
+
+
+class TestUtf8Guardrails:
+    def test_reads_korean_claude_md(self, executor, tmp_project):
+        (tmp_project / "CLAUDE.md").write_text("# 규칙\n- 테스트 먼저 ✓", encoding="utf-8")
+        with patch.object(ex, "ROOT", tmp_project):
+            result = executor._load_guardrails()
+        assert "테스트 먼저 ✓" in result
+
+
+class TestClaudeCommand:
+    def test_prefers_path_lookup(self):
+        with patch("shutil.which", return_value="C:/bin/claude.exe"):
+            assert ex.claude_command() == "C:/bin/claude.exe"
+
+    def test_falls_back_to_user_local_bin(self, tmp_path):
+        exe = tmp_path / ".local" / "bin" / "claude.exe"
+        exe.parent.mkdir(parents=True)
+        exe.write_text("", encoding="utf-8")
+        with patch("shutil.which", return_value=None), patch.object(ex.Path, "home", return_value=tmp_path):
+            assert ex.claude_command() == str(exe)
+
+    def test_plain_name_when_nothing_found(self, tmp_path):
+        with patch("shutil.which", return_value=None), patch.object(ex.Path, "home", return_value=tmp_path):
+            assert ex.claude_command() == "claude"
+
+
+class TestExecuteSingleStep:
+    def test_process_failure_detail_reaches_error_message(self, executor, top_index):
+        executor._top_index_file = top_index
+        executor._invoke_claude = MagicMock(return_value={
+            "step": 2, "name": "ui", "exitCode": -1, "stdout": "",
+            "stderr": "TIMEOUT: claude did not finish within 3600s",
+        })
+        executor._commit_step = MagicMock()
+        step = {"step": 2, "name": "ui", "status": "pending"}
+        with pytest.raises(SystemExit) as exc_info:
+            executor._execute_single_step(step, "guardrails")
+        assert exc_info.value.code == 1
+        index = json.loads(executor._index_file.read_text(encoding="utf-8"))
+        failed = next(s for s in index["steps"] if s["step"] == 2)
+        assert failed["status"] == "error"
+        assert "TIMEOUT" in failed["error_message"]
+        assert executor._invoke_claude.call_count == ex.StepExecutor.MAX_RETRIES
 
 
 # ---------------------------------------------------------------------------
@@ -524,7 +585,7 @@ class TestCheckBlockers:
         d = tmp_project / "phases" / "test-phase"
         d.mkdir(exist_ok=True)
         index = {"project": "T", "phase": "test", "steps": steps}
-        (d / "index.json").write_text(json.dumps(index))
+        (d / "index.json").write_text(json.dumps(index), encoding="utf-8")
 
         with patch.object(ex, "ROOT", tmp_project):
             inst = ex.StepExecutor.__new__(ex.StepExecutor)
