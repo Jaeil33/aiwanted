@@ -363,8 +363,9 @@ def test_pitchers_of_the_third_inning(case_pas):
 def test_pitcher_ids_list_each_pitcher_during_the_plate_appearance(pas):
     mid = pas[6]  # 원정타자7: 2구 뒤 홈투수1 → 홈투수2
     assert (mid.pitcher_id, mid.pitcher_ids) == ("hp1", ["hp1", "hp2"])
-    # 첫 공에 currentGameState가 없으면 투수가 적힌 다음 공
-    assert (pas[8].pitcher_id, pas[8].pitcher_ids) == ("hp2", ["hp2"])
+    # 원정타자8: 첫 공에 currentGameState가 없으면 투수가 적힌 다음 공
+    assert pas[7].options[1]["type"] == 1 and "currentGameState" not in pas[7].options[1]
+    assert (pas[7].pitcher_id, pas[7].pitcher_ids) == ("hp2", ["hp2"])
     assert all(pa.pitcher_ids == [pa.pitcher_id] for pa in pas if pa.index != 6)
 
 

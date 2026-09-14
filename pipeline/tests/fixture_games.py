@@ -35,12 +35,9 @@ def shifted_game(base: dict, game_id: str, date: str, *, innings: int = 5, wpa_f
 
 
 def pa_relay(game: dict, index: int) -> dict:
-    """index번째 타석(타자 소개가 있는 relay)의 원본 relay dict."""
-    heads = [
-        r for r in relay.chrono(game)
-        if any(t.get("type") == 8 and t.get("batterRecord") for t in r["textOptions"])
-    ]
-    return heads[index]
+    """index번째 타석(relay.plate_appearances 번호: 투구도 결과도 없는 빈 타석은 세지 않는다)의 원본 relay dict."""
+    first = relay.plate_appearances(game)[index].options[0]
+    return next(r for r in relay.chrono(game) if any(t is first for t in r["textOptions"]))
 
 
 def make_raw_dir(root: Path, games: list[dict]) -> Path:
