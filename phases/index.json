@@ -44,6 +44,10 @@
     {
       "dir": "9-ui-system",
       "status": "pending"
+    },
+    {
+      "dir": "10-stage-broadcast",
+      "status": "pending"
     }
   ]
 }
