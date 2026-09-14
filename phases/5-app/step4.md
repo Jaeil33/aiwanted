@@ -20,7 +20,7 @@
 
 ### `src/app/useSceneEvaluations.ts`
 - `useSceneEvaluations(): { base: Evaluation | null; tmi: Evaluation | null; baseGauge: GaugeLike | null; tmiGauge: GaugeLike | null; pending: boolean }`
-  - `useGame()`의 setup·session·engine·data로 요청을 만든다: base = 효과 없음·현실 모드, tmi = `compileSessionEffects(session.tmis)`·`session.mode`. 둘 다 `live.state`와 `pitcherFor(setup, live.state)`, `first: live.paIndex === 0`.
+  - `useGame()`의 setup·session·engine·data로 요청을 만든다: base = 효과 없음·현실 모드, tmi = `compileSessionEffects(session.tmis)`·`session.mode`. 둘 다 `live.state`와 `pitcherFor(setup, live.state)`, `first: live.paIndex === 0`. live가 없거나 `session.status === 'finished'`면 요청하지 않고 마지막 값을 유지한다(엔진 `evaluate`는 끝난 경기·3아웃 상태에 RangeError를 던진다. 반이닝이 끝나면 `startNextHalf` 상태로 평가한다).
   - 요청 키(specKey + 상태 + first)가 바뀌면 다시 계산, 늦게 도착한 옛 결과는 버린다.
   - 게이지는 현재 카운트의 `gaugesAtCount`(count가 있을 때), 없으면 evaluation 값.
 
