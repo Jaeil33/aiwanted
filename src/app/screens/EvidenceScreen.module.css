@@ -1,0 +1,125 @@
+/* 판정소: 좌측 정렬 한 단 (UI_GUIDE 타이포: 화면 제목 28px 휴대폰 / 40px 1024px 이상). 가로 스크롤은 표 컨테이너만 */
+.screen {
+  display: grid;
+  gap: 32px;
+  padding-block: 24px;
+  min-width: 0;
+}
+
+.intro {
+  display: grid;
+  gap: 8px;
+}
+
+.title {
+  margin: 0;
+  color: var(--chalk);
+  font: 400 28px/1.25 var(--display);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.subtitle {
+  margin: 0;
+  color: var(--chalk);
+  font: 600 17px/1.4 var(--body);
+  word-break: keep-all;
+}
+
+.emphasis {
+  color: var(--led);
+  font-style: normal;
+}
+
+.lead,
+.method,
+.reading {
+  margin: 0;
+  color: var(--chalk-2);
+  font: 400 15px/1.6 var(--body);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.lead {
+  max-width: 60ch;
+}
+
+.method,
+.reading {
+  max-width: 72ch;
+}
+
+.section {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.sectionTitle {
+  margin: 0;
+  color: var(--chalk);
+  font: 600 17px/1.4 var(--body);
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: 12px;
+  margin: 0;
+}
+
+.fact {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  min-width: 0;
+  padding: 4px 0 4px 12px;
+  border-left: 2px solid var(--rail);
+}
+
+.factTerm {
+  color: var(--chalk-3);
+  font: 500 13px/1.5 var(--body);
+  letter-spacing: 0.02em;
+}
+
+.factValue {
+  margin: 0;
+  color: var(--chalk);
+  font: 600 15px/1.5 var(--body);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.summary {
+  margin: 0;
+  color: var(--chalk);
+  font: 600 15px/1.5 var(--body);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Secondary 버튼 (UI_GUIDE): 투명 바탕, 레일 테두리, 높이 48px */
+.back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  justify-self: start;
+  min-height: 48px;
+  padding: 0 24px;
+  border: 1px solid var(--rail);
+  border-radius: 6px;
+  color: var(--chalk);
+  font: 700 16px/1 var(--body);
+  text-decoration: none;
+}
+
+.back:hover {
+  border-color: var(--chalk-3);
+}
+
+@media (min-width: 1024px) {
+  .title {
+    font-size: 40px;
+  }
+}

@@ -1,0 +1,166 @@
+/* 실측 변수 판정표 (UI_GUIDE: 표만 자체 가로 스크롤, 숫자는 tabular-nums, 칩 테두리는 currentColor·반경 6px) */
+.empty {
+  margin: 0;
+  color: var(--chalk-3);
+  font: 400 15px/1.6 var(--body);
+}
+
+.scroll {
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--rail);
+  border-radius: 10px;
+  background: var(--dugout);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  color: var(--chalk-2);
+  font: 400 14px/1.5 var(--body);
+  font-variant-numeric: tabular-nums;
+}
+
+.caption {
+  padding: 12px 16px 8px;
+  color: var(--chalk-3);
+  font: 500 13px/1.5 var(--body);
+  letter-spacing: 0.02em;
+  text-align: left;
+}
+
+.table th,
+.table td {
+  padding: 12px;
+  border-top: 1px solid var(--rail);
+  text-align: left;
+  vertical-align: top;
+}
+
+.table th:first-child,
+.table td:first-child {
+  padding-left: 16px;
+}
+
+.table th:last-child,
+.table td:last-child {
+  padding-right: 16px;
+}
+
+.table thead th {
+  color: var(--chalk-3);
+  font: 500 13px/1.4 var(--body);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  vertical-align: bottom;
+}
+
+.headLabel {
+  display: block;
+}
+
+.axis {
+  display: block;
+  margin-top: 4px;
+}
+
+.axisLabel {
+  fill: var(--chalk-3);
+  font: 500 11px/1 var(--body);
+}
+
+.variable {
+  min-width: 10em;
+}
+
+.label {
+  display: block;
+  color: var(--chalk);
+  font: 600 15px/1.4 var(--body);
+  white-space: nowrap;
+}
+
+.per {
+  display: block;
+  color: var(--chalk-3);
+  font: 400 13px/1.5 var(--body);
+  word-break: keep-all;
+}
+
+.variable .chip {
+  margin-top: 8px;
+}
+
+.pct {
+  display: block;
+  color: var(--chalk);
+  font: 600 15px/1.4 var(--body);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.missing {
+  color: var(--chalk-3);
+}
+
+.ci {
+  display: block;
+  margin-top: 4px;
+}
+
+.ciTrack {
+  stroke: var(--rail);
+  stroke-width: 2;
+}
+
+.ciZero {
+  stroke: var(--chalk-3);
+  stroke-width: 1;
+}
+
+.ciBar,
+.ciArrow {
+  fill: var(--led);
+}
+
+.ciPoint {
+  fill: var(--chalk);
+  stroke: var(--board);
+  stroke-width: 1;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid currentColor;
+  border-radius: 6px;
+  font: 500 13px/1 var(--body);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.real,
+.improved {
+  color: var(--ball);
+}
+
+.maybe {
+  color: var(--strike);
+}
+
+.useless,
+.notImproved,
+.baseline {
+  color: var(--chalk-3);
+}
+
+.note {
+  min-width: 18em;
+  max-width: 32em;
+  color: var(--chalk-2);
+  font: 400 13px/1.6 var(--body);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}

@@ -1,0 +1,59 @@
+/* 만든 이유: 좌측 정렬 한 단, 섹션마다 제목 + 짧은 문단 (UI_GUIDE 타이포: 화면 제목 28px / 40px 1024px 이상) */
+.screen {
+  display: grid;
+  gap: 32px;
+  padding-block: 24px;
+  min-width: 0;
+}
+
+.title {
+  margin: 0;
+  color: var(--chalk);
+  font: 400 28px/1.25 var(--display);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.section {
+  display: grid;
+  gap: 8px;
+  max-width: 68ch;
+  min-width: 0;
+}
+
+.sectionTitle {
+  margin: 0;
+  color: var(--chalk);
+  font: 600 17px/1.4 var(--body);
+  word-break: keep-all;
+}
+
+.body {
+  margin: 0;
+  color: var(--chalk-2);
+  font: 400 15px/1.6 var(--body);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.textLink {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  min-height: 48px;
+  color: var(--chalk-3);
+  font: 500 15px/1.4 var(--body);
+  text-decoration: none;
+}
+
+.textLink:hover,
+.textLink:focus-visible {
+  color: var(--chalk);
+  text-decoration: underline;
+}
+
+@media (min-width: 1024px) {
+  .title {
+    font-size: 40px;
+  }
+}

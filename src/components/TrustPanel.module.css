@@ -1,0 +1,207 @@
+/* 엔진 신뢰도: Brier 막대·로그 손실 표·보정 차트(SVG). 색은 토큰만, 표만 자체 가로 스크롤 */
+.empty {
+  margin: 0;
+  color: var(--chalk-3);
+  font: 400 15px/1.6 var(--body);
+}
+
+.panel {
+  display: grid;
+  gap: 24px;
+  min-width: 0;
+}
+
+.lead,
+.note {
+  max-width: 72ch;
+  margin: 0;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.lead {
+  color: var(--chalk-2);
+  font: 400 15px/1.6 var(--body);
+}
+
+.note {
+  color: var(--chalk-3);
+  font: 400 13px/1.6 var(--body);
+}
+
+.block {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.blockTitle {
+  margin: 0;
+  color: var(--chalk-2);
+  font: 600 15px/1.4 var(--body);
+}
+
+.hint {
+  margin: 0;
+  color: var(--chalk-3);
+  font: 500 13px/1.5 var(--body);
+  letter-spacing: 0.02em;
+}
+
+.bars {
+  display: grid;
+  gap: 8px;
+  max-width: 560px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bar {
+  display: grid;
+  grid-template-columns: 8.5em minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.barLabel {
+  color: var(--chalk-2);
+  font: 500 13px/1.4 var(--body);
+  letter-spacing: 0.02em;
+}
+
+.track {
+  display: block;
+  height: 12px;
+  overflow: hidden;
+  border: 1px solid var(--rail);
+  border-radius: 2px;
+  background: var(--board);
+}
+
+.fill {
+  display: block;
+  height: 100%;
+}
+
+.engine {
+  background: var(--led);
+}
+
+.naver {
+  background: var(--chalk-3);
+}
+
+.constant {
+  background: var(--chalk-4);
+}
+
+.value {
+  min-width: 3.5em;
+  color: var(--chalk);
+  font: 600 15px/1 var(--body);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.scroll {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.table {
+  border-collapse: collapse;
+  color: var(--chalk-2);
+  font: 400 14px/1.5 var(--body);
+  font-variant-numeric: tabular-nums;
+}
+
+.caption {
+  padding-bottom: 8px;
+  color: var(--chalk-2);
+  font: 600 15px/1.4 var(--body);
+  text-align: left;
+}
+
+.table th,
+.table td {
+  padding: 8px 24px 8px 0;
+  border-top: 1px solid var(--rail);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.table th:last-child,
+.table td:last-child {
+  padding-right: 0;
+}
+
+.table thead th {
+  color: var(--chalk-3);
+  font: 500 13px/1.4 var(--body);
+  letter-spacing: 0.02em;
+}
+
+.table tbody th {
+  font-weight: 500;
+}
+
+.table td {
+  color: var(--chalk);
+  font-weight: 600;
+  text-align: right;
+}
+
+.figure {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+}
+
+.chart {
+  display: block;
+  width: 100%;
+  max-width: 360px;
+  height: auto;
+}
+
+.frame {
+  fill: var(--board);
+  stroke: var(--rail);
+  stroke-width: 1;
+}
+
+.grid {
+  stroke: var(--rail);
+  stroke-width: 1;
+}
+
+.diagonal {
+  stroke: var(--chalk-3);
+  stroke-width: 1;
+  stroke-dasharray: 4 4;
+}
+
+.point {
+  fill: var(--led);
+  stroke: var(--board);
+  stroke-width: 1;
+}
+
+.tick {
+  fill: var(--chalk-3);
+  font: 500 12px/1 var(--body);
+}
+
+.axisTitle {
+  fill: var(--chalk-2);
+  font: 500 12px/1 var(--body);
+}
+
+.figcaption {
+  max-width: 60ch;
+  color: var(--chalk-3);
+  font: 400 13px/1.6 var(--body);
+  word-break: keep-all;
+}

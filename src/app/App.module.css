@@ -1,0 +1,117 @@
+/* 앱 셸: 중계석 머리말·본문 컨테이너·출처 푸터 (UI_GUIDE 레이아웃: 좌측 정렬, max-width 1180px, 좌우 16px) */
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.header {
+  background: var(--booth);
+  border-bottom: 1px solid var(--rail);
+}
+
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0 16px;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+.brand {
+  margin: 0;
+  font: 400 24px/1 var(--display);
+}
+
+.brandLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  color: var(--led);
+  text-decoration: none;
+}
+
+.nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 4px;
+}
+
+.navLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 0 12px;
+  border-bottom: 2px solid transparent;
+  color: var(--chalk-3);
+  font: 500 15px/1 var(--body);
+  text-decoration: none;
+}
+
+.navLink:hover,
+.navLink:focus-visible {
+  color: var(--chalk);
+  text-decoration: underline;
+}
+
+.navLink[aria-current='page'] {
+  border-bottom-color: var(--led);
+  color: var(--chalk);
+}
+
+.main {
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 16px 32px;
+}
+
+.footer {
+  border-top: 1px solid var(--rail);
+  background: var(--booth);
+}
+
+.sources {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 16px;
+  color: var(--chalk-3);
+  font: 400 13px/1.6 var(--body);
+}
+
+.notice {
+  display: grid;
+  gap: 8px;
+  padding-block: 24px;
+  color: var(--chalk-2);
+}
+
+.notice p {
+  margin: 0;
+}
+
+.notice code {
+  padding: 0 6px;
+  border: 1px solid var(--rail);
+  border-radius: 2px;
+  background: var(--board);
+  color: var(--led);
+  font: 400 20px/1.2 var(--led-font);
+}
+
+.noticeTitle {
+  margin: 0;
+  color: var(--chalk);
+  font: 400 28px/1.25 var(--display);
+}
+
+@media (min-width: 1024px) {
+  .noticeTitle {
+    font-size: 40px;
+  }
+}

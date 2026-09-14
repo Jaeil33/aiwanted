@@ -1,0 +1,83 @@
+/* 장면 카드: 더그아웃 시트(반경 10px, 그림자 없음), 팀 컬러는 작은 막대로만 */
+.card {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--rail);
+  border-radius: 10px;
+  background: var(--dugout);
+  color: var(--chalk);
+  text-decoration: none;
+}
+
+a.card:hover {
+  border-color: var(--chalk-3);
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 6px;
+  color: var(--chalk-3);
+  font: 500 13px/1.5 var(--body);
+  letter-spacing: 0.02em;
+}
+
+.teams {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.swatch {
+  flex: none;
+  width: 4px;
+  height: 20px;
+  border-radius: 2px;
+}
+
+.score {
+  min-width: 0;
+  color: var(--chalk);
+  font: 600 16px/1.4 var(--body);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.title {
+  color: var(--chalk-2);
+  font: 600 15px/1.5 var(--body);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.leverage {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  color: var(--chalk-3);
+  font: 500 13px/1 var(--body);
+  letter-spacing: 0.02em;
+}
+
+.leverageLabel {
+  white-space: nowrap;
+}
+
+.track {
+  display: block;
+  height: 8px;
+  overflow: hidden;
+  border: 1px solid var(--rail);
+  border-radius: 2px;
+  background: var(--board);
+}
+
+.fill {
+  display: block;
+  height: 100%;
+  background: var(--led);
+}
