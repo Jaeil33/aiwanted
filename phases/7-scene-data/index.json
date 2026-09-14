@@ -2,9 +2,28 @@
   "project": "TMI 야구",
   "phase": "scene-data",
   "steps": [
-    { "step": 0, "name": "relay-fixes", "status": "pending" },
-    { "step": 1, "name": "scene-rebuild", "status": "pending" },
-    { "step": 2, "name": "trust-rebuild", "status": "pending" },
-    { "step": 3, "name": "swing-index", "status": "pending" }
+    {
+      "step": 0,
+      "name": "relay-fixes",
+      "status": "completed",
+      "started_at": "2026-09-15T00:50:51+0900",
+      "completed_at": "2026-09-15T01:12:11+0900",
+      "summary": "pipeline/tmi_pipeline/relay.py: PlateAppearance에 pitcher_ids(투구마다 투수 id, 시간순·연속 중복 없이, 투수 적힌 투구가 없으면 [pitcher_id])·complete(결과 옵션 13·23이 있으면 True) 추가, 기존 필드 이름 유지 · pitcher_id = 첫 투구 currentGameState.pitcher(투수 적힌 투구가 없으면 타자 소개 투수) · plate_appearances는 투구도 결과도 없는 relay(빈 대타 타석)를 건너뛰고 index를 매기지 않음(미완료 타석은 남기고 complete False, result_text '', event는 OUT 기본값) · event_of: 공백을 뺀 문장에 '낫아웃'이 있으면 K(출루해도 K, 엔진 사건 벡터 한계 주석) · Substitution(frozen: seq = 교체 옵션 seqno, inning, half, side, slot, in_id, out_id, kind)·substitutions(game): type 2 중 playerChange.inPlayer·outPlayer의 playerId가 모두 있는 교체만 seqno 순(shift·text 교체 제외), slot = inPlayer.outPlayerTurn % 10(1~9, 아니면 None), kind = 문장 ':' 뒤 첫 단어(대타 pinch_hitter·대주자 pinch_runner·투수 pitcher·수비 위치 9개 defense·그 밖 other, ':'가 없으면 inPlayer.playerPos), side = 대타·대주자는 relay 공격 팀, 나머지는 수비 팀; 원자료 사실: 선수 교체는 모두 타자 소개 뒤(대타는 바뀌기 전 타자 relay = 빈 타석, 투수·대주자·수비는 다음 타자 소개 뒤 첫 공 전, 첫 공 뒤 39건), 빈 타석·미완료 타석의 네이버 승리확률은 모두 무효 / 테스트: fixture_games.cases_game(game_id, date) = 픽스처 경기 + 3회(27 a5 소개 뒤 hp2→hp3, 28 a6 소개 뒤 대주자 a5→a5r 5번, 29 a7 낫 아웃, 30 a8 견제사 3아웃 미완료, 건너뛰는 빈 타석 h6(수비 a7→a7d 7번·대타 h6→h6b 6번), 31 h6b 2구 뒤 ap1→ap2, 32 h7 병살, 33 h8 삼진; 타석 34개, 교체 7건), 기본 픽스처 교체 2건에 outPlayerTurn(a3b 13, hp2 10) 추가, test_relay 34개 추가 / 실데이터 140경기: 첫 투구 투수가 기존 값과 다른 타석 1,000(예 20260818WOLT02026 타석 67: 56337→76118), 건너뛴 빈 타석 435(타석 11,434→10,999), K로 바뀐 낫 아웃 201('낫 아웃' 191 + '낫아웃' 10), 교체 기록 2,282건 중 slot 있는 교체 1,195건(종류: 투수 1,095·수비 546·대타 422·대주자 219), 투수 2명 이상 타석 15, 미완료 타석 40; relay.py 밖 코드 변경 없음(snapshot·trust_states 그대로); AC 통과(pytest 345)"
+    },
+    {
+      "step": 1,
+      "name": "scene-rebuild",
+      "status": "pending"
+    },
+    {
+      "step": 2,
+      "name": "trust-rebuild",
+      "status": "pending"
+    },
+    {
+      "step": 3,
+      "name": "swing-index",
+      "status": "pending"
+    }
   ]
 }
