@@ -32,6 +32,9 @@
   - `finishPa`: 타석이 끝날 때까지 `throwPitch` 반복.
   - `finishGame`: 타석 중간이면 먼저 `finishPa`. 그다음 `engine.playout({ spec, start: live.state, scenePitcher: pitcherFor(setup, live.state), seed })` — **장면 첫 타석이 이미 끝났으면 `scope: 'pa'` 효과를 spec에서 뺀다**. `pickHighlights(result)`로 고른 타석은 `PlayoutPA.pitches`(던지기 전 카운트와 code)를 차례로 연출(마지막 공만 보통 속도, 앞 공은 `fast`, 결과는 그 타석의 `event`·`transition`·`over`), 나머지 타석은 연출 없이 log만 추가하고 `sleep(150)`. 끝나면 `gameFinished`.
   - 진행 중 다시 부르면 무시한다(busy).
+  - 새 타석의 첫 공을 던지기 전에 `stage.clearMarkers()`를 부른다(스테이지는 존 표시를 스스로 지우지 않는다).
+  - 컴포넌트가 언마운트되면 진행 중인 반복을 멈춘다. 언마운트 때 `destroy`가 기다리던 `playPitch`를 모두 resolve하므로 `await` 뒤마다 취소 여부를 확인한다.
+  - 훅·화면 테스트는 가짜 StageController를 쓴다(jsdom 캔버스는 즉시 resolve되거나 실제 프레임 시간을 기다린다).
 
 ### `src/app/screens/PlayScreen.tsx` (자리 표시 교체)
 - 구성(휴대폰 순서): 장면 머리(제목, "8월 25일 · 사직", "실제 결과는 경기가 끝나면 공개돼요") → `BallparkStage`(`forwardRef<StageController>`라 `ref`를 usePlayback의 stageRef로 준다. `scene`은 `stageSceneFor(setup, live.state)`를 useMemo로, `bases`는 live.state.bases. `board` prop은 넘기지 않는다 — 넘기면 usePlayback의 setBoard를 덮어쓴다) → `Scorebug` → `ProbabilityTiers`(base/tmi 게이지 → `selectTiers`) → `ModeToggle` → `TmiComposer`(예시 4개: `josa`로 "`<투수>`이/가 경기 전 짜장면 곱빼기를 먹었다", "`<타자>`이/가 새 배트를 들고 나왔다", "오늘 기온 35도, 폭염", "원정팀이 버스로 5시간 이동했다") → `InterpretationCard` 목록 → `WpChart`(시작 tmi 승리확률 + log의 wpHomeAfter를 공격 팀 기준으로, baseline은 시작 base 값) → `PlayLog` → `PlayControls`(하단 고정).
