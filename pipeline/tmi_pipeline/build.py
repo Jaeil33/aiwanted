@@ -10,13 +10,14 @@ from typing import Callable
 
 import tmi_pipeline
 
-from . import context, evidence, snapshot
+from . import context, evidence, snapshot, trust_states
 
 # stage 이름 → fn(raw_dir, out_dir) -> 요약 dict. 등록 순서가 실행 순서다(뒤 stage가 앞 stage 산출물을 읽는다).
 STAGES: dict[str, Callable[[Path, Path], dict]] = {
     "snapshot": snapshot.write_snapshot,  # app/core.json, pitches.json, scenes.json
     "context": context.write_context,  # context/team_games.json (+ app/scenes.json 날씨)
     "evidence": evidence.write_evidence,  # context/team_games.json → app/evidence.json
+    "trust": trust_states.write_trust_states,  # trust/states.json (2025 기록 + 2026 중계 타석)
 }
 
 
