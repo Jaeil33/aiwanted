@@ -1,0 +1,8 @@
+{
+  "project": "TMI 야구",
+  "phase": "tally",
+  "steps": [
+    { "step": 0, "name": "api-tally", "status": "pending" },
+    { "step": 1, "name": "tally-client", "status": "pending" }
+  ]
+}
