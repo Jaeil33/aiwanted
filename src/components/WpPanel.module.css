@@ -1,0 +1,208 @@
+/* 승부 확률 판 (시안 .wp·.seg·.mode·.wp-main·.wp-num·.delta·.wp-sub) */
+.wp {
+  flex: none;
+  padding: 12px 16px;
+  background: var(--surface);
+  box-shadow: inset 0 1px 0 var(--line);
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.seg,
+.mode {
+  display: inline-flex;
+  padding: 2px;
+  border-radius: 9px;
+  background: var(--surface-2);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+.seg button,
+.mode button {
+  height: 28px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-3);
+  font: 800 12px/1 var(--ui);
+  white-space: nowrap;
+}
+
+.seg button[aria-selected='true'],
+.mode button[aria-checked='true'] {
+  background: var(--surface-3);
+  color: var(--text);
+  box-shadow: inset 0 0 0 1px var(--line-2);
+}
+
+.mode button[data-mode='toon'][aria-checked='true'] {
+  color: var(--g-fun);
+}
+
+.mode button:disabled {
+  cursor: not-allowed;
+}
+
+.mode button:disabled:not([aria-checked='true']) {
+  opacity: 0.5;
+}
+
+.main {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.lead {
+  min-width: 0;
+}
+
+.labelRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 20px;
+}
+
+.label {
+  margin: 0;
+  overflow: hidden;
+  color: var(--text-2);
+  font: 700 13px/1.5 var(--ui);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.grade {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border-radius: 99px;
+  font: 800 11px/1.4 var(--ui);
+}
+
+.grade::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.grade[data-grade='fun'] {
+  color: var(--g-fun);
+  background: rgba(255, 138, 91, 0.12);
+}
+
+.grade[data-grade='plausible'] {
+  color: var(--g-plausible);
+  background: rgba(185, 195, 205, 0.12);
+}
+
+.grade[data-grade='measured'] {
+  color: var(--g-measured);
+  background: rgba(77, 163, 255, 0.12);
+}
+
+.num {
+  margin: 0;
+  font: 800 58px/0.92 var(--num);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  animation: num-in 360ms var(--ease-out) both;
+}
+
+.num small {
+  margin-left: 2px;
+  color: var(--text-2);
+  font-size: 26px;
+}
+
+.side {
+  display: grid;
+  flex: none;
+  justify-items: end;
+  gap: 8px;
+  padding-bottom: 4px;
+}
+
+.delta {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font: 700 15px/1.2 var(--num);
+  font-variant-numeric: tabular-nums;
+}
+
+.delta small {
+  font: 700 10px var(--ui);
+  opacity: 0.8;
+}
+
+.delta[data-trend='up'] {
+  color: var(--up);
+  background: rgba(47, 210, 122, 0.12);
+}
+
+.delta[data-trend='down'] {
+  color: var(--down);
+  background: rgba(255, 107, 107, 0.12);
+}
+
+.delta[data-trend='flat'] {
+  color: var(--text-2);
+  background: var(--surface-2);
+}
+
+.bar {
+  margin-top: 12px;
+}
+
+.sub {
+  margin: 8px 0 0;
+  color: var(--text-3);
+  font: 600 12px/1.5 var(--ui);
+}
+
+.sub b {
+  color: var(--text-2);
+  font-weight: 700;
+}
+
+.pending {
+  display: grid;
+  align-items: center;
+  min-height: 112px;
+  margin: 10px 0 0;
+  color: var(--text-3);
+  font: 700 13px/1.5 var(--ui);
+}
+
+@keyframes num-in {
+  from {
+    opacity: 0.4;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .num {
+    animation: none;
+  }
+}

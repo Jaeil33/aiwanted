@@ -10,7 +10,8 @@ import { formatRoute } from './router';
 import { AboutScreen } from './screens/AboutScreen';
 import { EvidenceScreen } from './screens/EvidenceScreen';
 import { LobbyScreen } from './screens/LobbyScreen';
-import { PaScreen } from './screens/PaScreen';
+import { PlayScreen } from './screens/PlayScreen';
+import { ResultScreen } from './screens/ResultScreen';
 import { useHashRoute } from './useHashRoute';
 
 /** 출처 한 줄(ADR-005): MenuFrame에 둔다. 타석 화면의 출처는 결과 카드가 싣는다 */
@@ -95,7 +96,7 @@ function MenuFrame({ current, meta, children }: MenuFrameProps) {
   );
 }
 
-/** 타석: 머리말·푸터·탭바 없는 전체 화면. 문서 제목(h1)은 스크린리더에만 둔다 */
+/** 플레이·결과: 머리말·푸터·탭바 없는 전체 화면. 문서 제목(h1)은 스크린리더에만 둔다 */
 function GameFrame({ children }: { children: ReactNode }) {
   return (
     <div className={styles.column}>
@@ -105,18 +106,22 @@ function GameFrame({ children }: { children: ReactNode }) {
   );
 }
 
-/** 해시 라우트 → 틀과 화면. 타석 라우트는 장면을 열고(같은 장면이 열려 있으면 그대로), 결과 해시는 열린 타석으로, 모르는 장면은 첫 화면으로 보낸다 */
+/**
+ * 해시 라우트 → 틀과 화면. 장면 라우트는 장면을 열고(같은 장면이 열려 있으면 그대로), 결과 해시는 끝난 판이 있으면 결과 화면,
+ * 없으면 열린 장면으로, 모르는 장면은 첫 화면으로 되돌려 보낸다(되돌려 보내기는 방문 기록을 쌓지 않는다)
+ */
 function Shell() {
   const { data, session, dispatch, actions } = useGame();
   const [route, setRoute] = useHashRoute();
   /** 이미 열기를 요청한 타석 해시 (StrictMode에서 effect가 두 번 돌아도 한 번만 연다) */
   const openedFor = useRef<string | null>(null);
   const openSceneId = session.sceneId;
+  const finished = session.final !== null;
 
   useEffect(() => {
     if (route.screen === 'play') {
       if (!data.scenes.some((scene) => scene.id === route.sceneId)) {
-        setRoute({ screen: 'home' });
+        setRoute({ screen: 'home' }, { replace: true });
         return;
       }
       const key = formatRoute(route);
@@ -131,11 +136,15 @@ function Shell() {
       return;
     }
     if (route.screen === 'result') {
-      setRoute(openSceneId === null ? { screen: 'home' } : { screen: 'play', sceneId: openSceneId, share: null });
+      if (openSceneId !== null && finished) {
+        dispatch({ type: 'navigate', screen: 'result' });
+        return;
+      }
+      setRoute(openSceneId === null ? { screen: 'home' } : { screen: 'play', sceneId: openSceneId, share: null }, { replace: true });
       return;
     }
     dispatch({ type: 'navigate', screen: route.screen });
-  }, [route, data, openSceneId, dispatch, actions, setRoute]);
+  }, [route, data, openSceneId, finished, dispatch, actions, setRoute]);
 
   const lobby = (
     <MenuFrame current="lobby" meta="2026 시즌 명장면">
@@ -147,19 +156,14 @@ function Shell() {
     case 'play':
       return data.scenes.some((scene) => scene.id === route.sceneId) ? (
         <GameFrame>
-          <PaScreen />
+          <PlayScreen />
         </GameFrame>
       ) : (
         lobby
       );
     case 'result':
-      return openSceneId === null ? (
-        lobby
-      ) : (
-        <GameFrame>
-          <PaScreen />
-        </GameFrame>
-      );
+      if (openSceneId === null) return lobby;
+      return <GameFrame>{finished ? <ResultScreen /> : <PlayScreen />}</GameFrame>;
     case 'evidence':
       return (
         <MenuFrame current="evidence">

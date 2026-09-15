@@ -55,6 +55,7 @@ const PERSON_RULES: readonly PersonRule[] = [
   { re: /로또|당첨|생일|칭찬|용돈|기분 ?좋|축하|결혼|득남|득녀|첫 ?아이|보너스/, batter: ['focus', 1], pitcher: ['nerve', 1], scope: 'game', evidence: 'fun', why: '기분이 좋으면 집중이 잘 된다는 가정' },
   { re: /이별|헤어(?:졌|진|지|짐)|차였|싸웠|혼났|악플|우울|긴장|떨려|떨고|멘붕/, batter: ['focus', -1], pitcher: ['nerve', -1], scope: 'game', evidence: 'fun', why: '마음이 흔들리면 실수가 늘어난다는 가정' },
   { re: /징크스|루틴|수염|염색|양말|속옷|부적|행운/, batter: ['focus', 1], pitcher: ['nerve', 1], scope: 'game', evidence: 'fun', why: '징크스는 믿는 만큼 통한다는 가정' },
+  { re: /똥|화장실|대변|소변|오줌|방귀|볼일이?\s*급/, batter: ['focus', -2], pitcher: ['control', -2], scope: 'pa', evidence: 'fun', why: '급한 신호가 오면 온 신경이 거기로 간다는 가정' },
   { re: /딸꾹질|재채기|기침|하품|먼지|모기|벌레|나방|잠자리|파리/, batter: ['focus', -1], pitcher: ['control', -1], scope: 'pa', evidence: 'fun', why: '순간 집중이 깨지는 방해 요소' },
   { re: /새 ?배트|배트를? ?바꿨|방망이/, batter: ['contact', 1], pitcher: null, scope: 'game', evidence: 'fun', why: '새 장비 효과라는 가정' },
   { re: /장갑|글러브|신발|스파이크|모자(?!라|란|랐|람)|헬멧|유니폼|벨트/, batter: ['contact', -1], pitcher: ['control', -1], scope: 'pa', evidence: 'fun', why: '장비가 신경 쓰이면 동작이 흐트러진다는 가정' },

@@ -1,0 +1,96 @@
+/* 걸린 TMI 줄 (시안 .rail·.pills·.pill) */
+.rail {
+  flex: none;
+  padding: 10px 0 0;
+  background: var(--surface);
+}
+
+.pills {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 0 16px 2px;
+  scrollbar-width: none;
+}
+
+.pills::-webkit-scrollbar {
+  display: none;
+}
+
+.pill {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--surface-2);
+  color: var(--text);
+  box-shadow: inset 0 0 0 1px var(--line-2);
+}
+
+.pill:active {
+  background: var(--surface-3);
+}
+
+.pill i {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-3);
+}
+
+.pill[data-tone='fun'] i {
+  background: var(--g-fun);
+}
+
+.pill[data-tone='plausible'] i {
+  background: var(--g-plausible);
+}
+
+.pill[data-tone='measured'] i {
+  background: var(--g-measured);
+}
+
+.pill[data-tone='refused'] i {
+  background: var(--out);
+}
+
+.text {
+  max-width: 9.5em;
+  overflow: hidden;
+  font: 800 13px/1.2 var(--ui);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.effect {
+  color: var(--text-2);
+  font: 600 12px/1.2 var(--ui);
+  white-space: nowrap;
+}
+
+.pill b {
+  color: var(--text-2);
+  font: 700 14px/1 var(--num);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.pill b[data-trend='up'] {
+  color: var(--up);
+}
+
+.pill b[data-trend='down'] {
+  color: var(--down);
+}
+
+.add {
+  background: transparent;
+  color: var(--text-2);
+  font: 800 13px/1 var(--ui);
+  white-space: nowrap;
+}

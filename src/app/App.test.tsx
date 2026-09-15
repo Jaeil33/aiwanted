@@ -133,6 +133,25 @@ describe('App', () => {
     expectGameFrame();
   });
 
+  it('"경기 끝까지"로 판이 끝나면 결과 화면(GameFrame)으로 가고, 끝난 판이 있으면 결과 해시를 그대로 둔다', { timeout: 180_000 }, async () => {
+    goto('#/scene/fixture-walkoff');
+    render(<App data={fixtureAppData} />);
+    expect(await screen.findByRole('heading', { level: 2, name: SCENE.title })).toBeInTheDocument();
+    const dock = screen.getByRole('navigation', { name: '다시 치르기' });
+    await waitFor(() => expect(within(dock).getByRole('button', { name: '경기 끝까지' })).toBeEnabled(), { timeout: 60_000 });
+    act(() => {
+      within(dock).getByRole('button', { name: '경기 끝까지' }).click();
+    });
+    await waitFor(() => expect(window.location.hash).toBe('#/result'), { timeout: 150_000 });
+    expect(await screen.findByText('경기 종료 · 다시 치른 결과')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: /^(KIA 승리|롯데 승리|무승부)$/ })).toBeInTheDocument();
+    // 결과 화면은 GameFrame이고, 출처 한 줄은 결과 카드 아래에 스스로 싣는다
+    expect(document.querySelector(`.${styles.topbar}`)).toBeNull();
+    expect(screen.queryByRole('navigation', { name: '주 메뉴' })).toBeNull();
+    expect(screen.getByRole('main')).toHaveClass(styles.gameMain);
+    expect(within(screen.getByRole('main')).getByText(SOURCES)).toBeInTheDocument();
+  });
+
   it('모르는 장면 해시는 첫 화면(MenuFrame)으로 보낸다', async () => {
     goto('#/scene/nope');
     render(<App data={fixtureAppData} />);

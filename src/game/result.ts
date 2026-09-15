@@ -42,8 +42,8 @@ interface HalfBlock {
  * 결과 머리말 한 줄: "<장면 상황>에서 <그 반이닝 득점>, <마지막 반이닝>".
  * 끝내기면 "…회말 끝내기 …", 마지막 반이닝이 세 타석 모두 아웃이고 무득점이면 "삼자범퇴", 무승부면 "<이닝>회 무승부".
  */
-export function deciderLine(args: { title: string; start: GameState; log: readonly PlayLogEntry[]; final: Final }): string {
-  const { start, log, final } = args;
+export function deciderLine(args: { title: string; start: GameState; log: readonly PlayLogEntry[]; final: Final; teams?: { away: string; home: string } }): string {
+  const { start, log, final, teams } = args;
   const situation = args.title.split(',')[0].trim() || `${start.inning}회${HALF_NAME[start.half]}`;
   if (log.length === 0) return situation;
 
@@ -78,7 +78,7 @@ export function deciderLine(args: { title: string; start: GameState; log: readon
   const label = `${lastBlock.inning}회${HALF_NAME[lastBlock.half]}`;
   if (final.walkoff) return `${head}, ${label} ${walkoffText()}`;
   const runs = runsOf(lastBlock);
-  if (runs > 0) return `${head}, ${label} ${runs}점`;
+  if (runs > 0) return `${head}, ${label} ${teams ? `${teams[sideOf(lastBlock.half)]} ` : ''}${runs}점`;
   const clean = lastBlock.entries.length === 3 && lastBlock.entries.every((entry) => CLEAN_OUTS.has(entry.headline));
   return `${head}, ${label} ${clean ? '삼자범퇴' : '무득점'}`;
 }

@@ -1,0 +1,24 @@
+/* 추이선 (시안 .spark, drawSpark) */
+.spark {
+  display: block;
+  width: 112px;
+  height: 34px;
+  overflow: visible;
+}
+
+.base {
+  stroke: var(--line-2);
+  stroke-width: 1;
+}
+
+.line {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.dot {
+  fill: var(--accent);
+}

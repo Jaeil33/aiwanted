@@ -56,6 +56,8 @@ describe('ruleInterpret', () => {
     ['타격왕이 배트를 바꿨다', { knob: 'contact', subject: 'batter', strength: 1, scope: 'game', evidence: 'fun' }],
     ['타격왕이 새 장갑이 신경 쓰인다', { knob: 'contact', subject: 'batter', strength: -1, scope: 'pa', evidence: 'fun' }],
     ['투구왕의 부모님이 경기장에 오셨다', { knob: 'nerve', subject: 'pitcher', strength: 1, scope: 'game', evidence: 'fun' }],
+    ['타격왕이 갑자기 똥이 마려웠다', { knob: 'focus', subject: 'batter', strength: -2, scope: 'pa', evidence: 'fun' }],
+    ['투구왕이 화장실이 너무 급했다', { knob: 'control', subject: 'pitcher', strength: -2, scope: 'pa', evidence: 'fun' }],
   ])('사람 규칙: %s', (text, expected) => {
     expect(parts(text)).toMatchObject([{ kind: 'knob', ...expected }]);
   });

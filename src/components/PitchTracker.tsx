@@ -23,6 +23,8 @@ export interface PitchTrackerProps {
   zone: { top: number; bottom: number } | null;
   batter: PlayerCaption;
   pitcher: PlayerCaption;
+  /** 화면이 높이를 정할 때(시안처럼 남은 높이를 채우기) */
+  className?: string;
 }
 
 /** usePlayback이 쓰는 StageController + 실제 투구 다시 보기·미리 찍기·건너뛰기 */
@@ -45,7 +47,7 @@ const CALL_MS = 1600;
 const REPLAY_GAP_MS = 380;
 
 /** 포수 뒤 트래커(캔버스) + 구종·구속 판, 콜, 타자·투수 자막(DOM). 문서가 숨겨지면 연출을 바로 끝낸다(ADR-018) */
-export const PitchTracker = forwardRef<PitchTrackerHandle, PitchTrackerProps>(function PitchTracker({ bases, zone, batter, pitcher }, ref) {
+export const PitchTracker = forwardRef<PitchTrackerHandle, PitchTrackerProps>(function PitchTracker({ bases, zone, batter, pitcher, className }, ref) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const trackerRef = useRef<Tracker | null>(null);
   const reduced = useReducedMotion();
@@ -215,7 +217,7 @@ export const PitchTracker = forwardRef<PitchTrackerHandle, PitchTrackerProps>(fu
   }, [bases, clearCall, getTracker, showCall]);
 
   return (
-    <div className={styles.tracker}>
+    <div className={[styles.tracker, className].filter(Boolean).join(' ')}>
       <canvas ref={canvasRef} className={styles.canvas} aria-hidden="true" />
       {info && (
         <div className={styles.info} style={{ '--c': PITCH_COLORS[info.type] ?? PITCH_COLORS[8] } as CSSProperties}>

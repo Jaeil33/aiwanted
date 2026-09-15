@@ -200,6 +200,13 @@ describe('sessionReducer — TMI 편집', () => {
     expect(failed).toMatchObject({ interpreting: false, notice: 'TMI를 한 줄 적어 주세요.', tmis: [] });
   });
 
+  it('거부된 해석은 TMI 칸을 차지하지 않고 거부 이유를 알림으로 남긴다', () => {
+    const refused = addTmi(open(), tmi('tmi-1', true), 'AI 해석을 쓸 수 없어 규칙으로 계산했어요.', true);
+    expect(refused).toMatchObject({ tmis: [], interpreting: false, notice: '민감한 내용', providerDisabled: true });
+    const next = addTmi(refused, tmi('tmi-2'));
+    expect(next.tmis.map((e) => e.id)).toEqual(['tmi-2']);
+  });
+
   it('이미 해석 중이면 interpretStart를 무시한다', () => {
     const s = sessionReducer(open(), { type: 'interpretStart' });
     expect(sessionReducer(s, { type: 'interpretStart' })).toBe(s);

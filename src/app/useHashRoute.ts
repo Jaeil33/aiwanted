@@ -16,14 +16,20 @@ function subscribe(listener: () => void): () => void {
 const readHash = () => window.location.hash;
 const serverHash = () => '';
 
+export interface SetRouteOptions {
+  /** 방문 기록을 쌓지 않는다: 모르는 장면·결과 없음 같은 되돌려 보내기에서 뒤로 가기가 다시 같은 곳에 갇히지 않게 */
+  replace?: boolean;
+}
+
 /** 지금 해시 라우트와 라우트를 바꾸는 함수. hashchange를 구독한다 */
-export function useHashRoute(): [Route, (route: Route) => void] {
+export function useHashRoute(): [Route, (route: Route, opts?: SetRouteOptions) => void] {
   const hash = useSyncExternalStore(subscribe, readHash, serverHash);
   const route = useMemo(() => parseHash(hash), [hash]);
-  const setRoute = useCallback((next: Route) => {
+  const setRoute = useCallback((next: Route, opts: SetRouteOptions = {}) => {
     const target = formatRoute(next);
     if (window.location.hash === target) return;
-    window.location.hash = target;
+    if (opts.replace) window.history.replaceState(window.history.state, '', target);
+    else window.location.hash = target;
     for (const listener of [...listeners]) listener();
   }, []);
   return [route, setRoute];

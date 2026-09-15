@@ -30,7 +30,7 @@ describe('TmiCard', () => {
     expect(within(card).getByText('“박투수가 짜장면 곱빼기를 먹었다”')).toBeInTheDocument();
     const row = within(card).getByRole('listitem');
     expect(row).toHaveAttribute('data-dir', 'down');
-    expect(within(row).getByText('체력')).toBeInTheDocument();
+    expect(within(row).getByText('투수 체력')).toBeInTheDocument();
     expect(within(row).getByText('투수 · 경기 내내')).toBeInTheDocument();
     expect(within(row).getByLabelText('세기 −2')).toBeInTheDocument();
     expect(within(card).getByText('배가 부르면 몸이 무거워진다는 가정이에요.')).toBeInTheDocument();

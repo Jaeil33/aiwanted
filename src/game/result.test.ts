@@ -82,6 +82,8 @@ describe('deciderLine', () => {
     ];
     const final = { winner: 'away' as const, walkoff: false, state: { ...TOP9, inning: 10, half: 1 as const, away: 5, home: 4 } };
     expect(deciderLine({ title, start: TOP9, log, final })).toBe('9회초 2사 만루에서 무득점, 10회말 1점');
+    // 팀 이름을 주면 마지막 반이닝 득점에 어느 팀 점수인지 붙인다(이긴 팀이 아닐 수 있다)
+    expect(deciderLine({ title, start: TOP9, log, final, teams: { away: 'KIA', home: '롯데' } })).toBe('9회초 2사 만루에서 무득점, 10회말 롯데 1점');
   });
 
   it('11회 무승부, 기록이 없으면 상황만', () => {

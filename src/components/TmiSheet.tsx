@@ -1,28 +1,37 @@
 import { useId, useState, type FormEvent } from 'react';
-import { formatDeltaPp, formatPct } from '../domain/format';
-import type { OddsHeadline } from '../game/headline';
+import { formatPct } from '../domain/format';
+import { deltaText } from '../game/broadcast';
 import type { TmiEntry, VerdictResult } from '../types/domain';
 import controls from './controls.module.css';
-import { trendOf } from './OddsPanel';
 import { Sheet } from './Sheet';
-import { TmiCard } from './TmiCard';
+import { TmiCard, type CardNames } from './TmiCard';
 import styles from './TmiSheet.module.css';
+import { trendOfText } from './WpPanel';
+
+/** 시트 위 승률 한 줄: 지금 탭의 라벨과 TMI 없음 → 반영 값 */
+export interface SheetOdds {
+  label: string;
+  base: number;
+  value: number;
+  hasTmi: boolean;
+}
 
 export interface TmiSheetProps {
   open: boolean;
   onClose(): void;
-  headline: OddsHeadline | null;
-  hasTmi: boolean;
+  /** null이면 계산 중 */
+  odds: SheetOdds | null;
   tmis: TmiEntry[];
   verdicts: Record<string, VerdictResult>;
   judgingId: string | null;
-  /** TMI를 바꿀 수 있다(쳐보기 전) */
+  /** TMI를 바꿀 수 있다(첫 공을 던지기 전) */
   canEdit: boolean;
   /** 해석 중 */
   busy: boolean;
   max: number;
   notice: string;
   examples: string[];
+  names?: CardNames;
   onSubmit(text: string): void;
   onRemove(id: string): void;
   onJudge(id: string): void;
@@ -31,7 +40,7 @@ export interface TmiSheetProps {
 /** TMI 입력 최대 글자 수(UTF-16 단위, 공유 링크 한도와 같다) */
 const MAX_LENGTH = 80;
 
-/** TMI 시트: 작은 확률 판(전 → 후) · 걸린 TMI 카드 · 입력 줄(거부·실패 때 지우지 않는다) · 예시 칩 */
+/** TMI 시트(시안 3번 화면): 승률 한 줄 → TMI 카드 → 입력 줄 → 예시 칩. 거부·실패 때 입력을 지우지 않는다 */
 export function TmiSheet(p: TmiSheetProps) {
   const titleId = useId();
   const inputId = useId();
@@ -54,39 +63,46 @@ export function TmiSheet(p: TmiSheetProps) {
   const status = p.busy
     ? '해석 중…'
     : !p.canEdit
-      ? '쳐본 뒤에는 TMI를 바꿀 수 없어요. "같은 TMI로 다시"를 누르면 처음부터 할 수 있어요.'
+      ? '공을 던진 뒤에는 TMI를 바꿀 수 없어요. "처음부터"를 누르면 다시 걸 수 있어요.'
       : full
         ? `TMI는 ${p.max}개까지 걸 수 있어요.`
         : '';
 
-  const mini = p.headline ? (
-    <div className={styles.mini}>
-      <span className={styles.miniLabel}>{p.headline.label}</span>
-      <b className={styles.miniValue}>{p.hasTmi ? `${formatPct(p.headline.base)} → ${formatPct(p.headline.tmi)}` : formatPct(p.headline.base)}</b>
-      {p.hasTmi && (
-        <span className={styles.miniDelta} data-trend={trendOf(p.headline.tmi - p.headline.base)}>
-          {formatDeltaPp(p.headline.tmi - p.headline.base)}
-        </span>
-      )}
-    </div>
-  ) : (
-    <div className={styles.mini}>
-      <span className={styles.miniLabel}>계산 중…</span>
-    </div>
-  );
+  const { odds } = p;
+  const delta = odds ? deltaText((odds.value - odds.base) * 100) : '';
 
   return (
-    <Sheet open={p.open} onClose={p.onClose} labelledBy={titleId} dimStage above={mini}>
-      <div className={styles.head}>
-        <h2 id={titleId} className={styles.title}>
-          TMI 걸기
-        </h2>
-        <span className={styles.count}>{`${count}/${p.max}`}</span>
-        <button type="button" className={`${controls.icon} ${styles.close}`} onClick={p.onClose} aria-label="닫기">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M6 6l12 12M18 6L6 18" />
-          </svg>
-        </button>
+    <Sheet open={p.open} onClose={p.onClose} labelledBy={titleId} dimStage>
+      <h2 id={titleId} className={controls.srOnly}>
+        TMI 걸기
+      </h2>
+      <button type="button" className={`${controls.icon} ${styles.close}`} onClick={p.onClose} aria-label="닫기">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M6 6l12 12M18 6L6 18" />
+        </svg>
+      </button>
+      <div className={styles.odds}>
+        {odds ? (
+          <>
+            <span className={styles.oddsLabel}>{odds.label}</span>
+            <b className={styles.oddsValue}>
+              {odds.hasTmi ? (
+                <>
+                  {formatPct(odds.base)} <i>→</i> {formatPct(odds.value)}
+                </>
+              ) : (
+                formatPct(odds.value)
+              )}
+            </b>
+            {odds.hasTmi && (
+              <span className={styles.delta} data-trend={trendOfText(delta)}>
+                {delta}
+              </span>
+            )}
+          </>
+        ) : (
+          <span className={styles.oddsLabel}>계산 중…</span>
+        )}
       </div>
       {count > 0 && (
         <ul className={styles.cards}>
@@ -94,6 +110,7 @@ export function TmiSheet(p: TmiSheetProps) {
             <li key={entry.id}>
               <TmiCard
                 entry={entry}
+                names={p.names}
                 verdict={Object.hasOwn(p.verdicts, entry.id) ? p.verdicts[entry.id] : null}
                 judging={p.judgingId === entry.id}
                 canRemove={p.canEdit}
@@ -124,16 +141,11 @@ export function TmiSheet(p: TmiSheetProps) {
           걸기
         </button>
       </form>
-      <div className={styles.meta}>
-        <span className={styles.status} aria-live="polite">
-          {status}
-        </span>
-        <span className={styles.length}>{`${text.length}/${MAX_LENGTH}`}</span>
-      </div>
-      {p.notice && (
-        <p className={styles.notice} aria-live="polite">
-          {p.notice}
-        </p>
+      {(status || p.notice) && (
+        <div className={styles.meta} aria-live="polite">
+          {status && <p className={styles.status}>{status}</p>}
+          {p.notice && <p className={styles.notice}>{p.notice}</p>}
+        </div>
       )}
       {p.examples.length > 0 && (
         <div className={styles.examples} role="group" aria-label="예시 TMI">

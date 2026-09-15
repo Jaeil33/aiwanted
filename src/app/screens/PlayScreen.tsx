@@ -1,0 +1,239 @@
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { BroadcastBug } from '../../components/BroadcastBug';
+import controls from '../../components/controls.module.css';
+import { PitchTracker, type PitchTrackerHandle, type PlayerCaption } from '../../components/PitchTracker';
+import { TmiRail, type RailPill } from '../../components/TmiRail';
+import { TmiSheet } from '../../components/TmiSheet';
+import { WpPanel } from '../../components/WpPanel';
+import { josa } from '../../domain/format';
+import { batterFor, canEditTmi, pitcherFor, type SceneSetup } from '../../game';
+import { sparkSeries, tierReadout, tmiPill, type Tier } from '../../game/broadcast';
+import { gradeOf, statLine } from '../../game/headline';
+import { tmiShortLabel } from '../../game/result';
+import { nameOf } from '../../game/scene';
+import type { Side } from '../../types/domain';
+import { useGame } from '../GameProvider';
+import { formatRoute } from '../router';
+import { useHashRoute } from '../useHashRoute';
+import { usePlayback } from '../usePlayback';
+import { useSceneEvaluations } from '../useSceneEvaluations';
+import { useSparkHistory } from '../useSparkHistory';
+import { useTmiContributions } from '../useTmiContributions';
+import styles from './PlayScreen.module.css';
+
+const MAX_TMIS = 3;
+/** 경기가 끝난 뒤 마지막 콜을 보여주고 결과 화면으로 가는 간격 */
+const RESULT_DELAY_MS = 1400;
+const BATS_LABEL = { L: '좌타', R: '우타', S: '양타' } as const;
+const THROWS_LABEL = { L: '좌투', R: '우투' } as const;
+
+/** 플레이(시안 2번 화면, ADR-025): 스코어버그 → 포수 뒤 트래커 → 승부 확률 판 → 걸린 TMI 줄 → 세 버튼 도크. TMI는 시트 */
+export function PlayScreen() {
+  const { setup, session } = useGame();
+  if (!setup || !session.live) {
+    return (
+      <section className={styles.opening} aria-labelledby="play-opening-title">
+        <h2 id="play-opening-title" className={styles.openingTitle}>
+          장면을 여는 중…
+        </h2>
+      </section>
+    );
+  }
+  return <PlayBoard key={setup.scene.id} setup={setup} />;
+}
+
+function PlayBoard({ setup }: { setup: SceneSetup }) {
+  const { session, actions, data } = useGame();
+  const trackerRef = useRef<PitchTrackerHandle>(null);
+  const evaluations = useSceneEvaluations();
+  const playback = usePlayback(trackerRef);
+  const contributions = useTmiContributions();
+  const history = useSparkHistory(evaluations.tmiGauge, evaluations.pending);
+  const [, setRoute] = useHashRoute();
+  const [tier, setTier] = useState<Tier>('game');
+  const [sheetOpen, setSheetOpen] = useState(false);
+
+  const { scene, promptContext } = setup;
+  const live = session.live;
+  const state = live ? live.state : scene.state;
+  const batSide: Side = state.half === 0 ? 'away' : 'home';
+  const fieldSide: Side = batSide === 'away' ? 'home' : 'away';
+  const player = (id: string) => (Object.hasOwn(data.core.players, id) ? data.core.players[id] : undefined);
+  const batter = batterFor(setup, state);
+  const batterRecord = player(batter.id);
+  const pitcherId = pitcherFor(setup, state).id;
+  const pitcherName = nameOf(setup, pitcherId);
+  const pitcherRecord = player(pitcherId);
+  const pitcherThrows = Object.hasOwn(setup.hands, pitcherId) ? setup.hands[pitcherId].throws : undefined;
+
+  const batterCaption = useMemo<PlayerCaption>(
+    () => ({ role: '타자', name: batter.name, hand: BATS_LABEL[batterRecord?.bats ?? 'R'], stats: statLine(batterRecord, 'H'), color: setup.teamColors[batSide] }),
+    [batter.name, batterRecord, setup, batSide],
+  );
+  const pitcherCaption = useMemo<PlayerCaption>(
+    () => ({ role: '투수', name: pitcherName, hand: THROWS_LABEL[pitcherThrows ?? 'R'], stats: statLine(pitcherRecord, 'P'), color: setup.teamColors[fieldSide] }),
+    [pitcherName, pitcherThrows, pitcherRecord, setup, fieldSide],
+  );
+  const zone = useMemo(() => {
+    const first = scene.actual.pitches[0];
+    return first ? { top: first[14], bottom: first[15] } : null;
+  }, [scene]);
+  const names = useMemo(
+    () => ({
+      batter: promptContext.batter.name,
+      pitcher: promptContext.pitcher.name,
+      battingTeam: promptContext.battingTeam,
+      fieldingTeam: promptContext.fieldingTeam,
+    }),
+    [promptContext],
+  );
+  const examples = useMemo(
+    () => [
+      `${josa(promptContext.pitcher.name, '이/가')} 경기 전 짜장면 곱빼기를 먹었다`,
+      `${josa(promptContext.batter.name, '이/가')} 어젯밤 3시간밖에 못 잤다`,
+      '오늘 기온 35도, 폭염',
+      '원정팀이 버스로 5시간 이동했다',
+    ],
+    [promptContext],
+  );
+
+  const { baseGauge, tmiGauge } = evaluations;
+  const readout = baseGauge && tmiGauge ? tierReadout({ tier, setup, state, base: baseGauge, tmi: tmiGauge }) : null;
+  const hasTmi = session.tmis.length > 0;
+  const grade = gradeOf(session.tmis);
+  const spark = live ? sparkSeries(history, tier, setup, { paIndex: live.paIndex, inning: state.inning, half: state.half }) : [];
+  const pills: RailPill[] = session.tmis.map((entry) => ({
+    ...tmiPill(entry),
+    short: tmiShortLabel(entry.text, [promptContext.batter.name, promptContext.pitcher.name], 40),
+    deltaPp: contributions[entry.id] ?? null,
+  }));
+
+  const editable = canEditTmi(session);
+  const finished = session.status === 'finished';
+  const playing = playback.busy || session.status === 'animating';
+  const canPlay = session.status === 'ready' && !session.interpreting && !playback.busy;
+
+  // 연출이 끝나면 건너뛰기를 끈다
+  useEffect(() => {
+    if (!playing) trackerRef.current?.setSkipping(false);
+  }, [playing]);
+
+  // 이 화면에서 경기가 끝나면 마지막 콜을 보여준 뒤 결과 화면으로 간다(이미 끝난 판으로 들어오면 그대로 둔다)
+  const previousStatus = useRef(session.status);
+  useEffect(() => {
+    const was = previousStatus.current;
+    previousStatus.current = session.status;
+    if (session.status !== 'finished' || was === 'finished') return;
+    const timer = setTimeout(() => setRoute({ screen: 'result' }), RESULT_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [session.status, setRoute]);
+
+  const reset = () => {
+    trackerRef.current?.setSkipping(false);
+    trackerRef.current?.clearMarkers();
+    actions.resetPlay();
+  };
+
+  const railAction = finished
+    ? null
+    : editable
+      ? session.tmis.length < MAX_TMIS
+        ? { label: '+ TMI 걸기', onClick: () => setSheetOpen(true) }
+        : null
+      : playing
+        ? null
+        : { label: '↺ 처음부터', onClick: reset };
+
+  let dock: ReactNode;
+  if (finished) {
+    dock = (
+      <>
+        <button type="button" className={controls.secondary} onClick={reset}>
+          처음부터
+        </button>
+        <button type="button" className={controls.primary} onClick={() => setRoute({ screen: 'result' })}>
+          결과 보기
+        </button>
+      </>
+    );
+  } else if (playing) {
+    dock = (
+      <>
+        <button type="button" className={controls.secondary} disabled>
+          타석 끝까지
+        </button>
+        <button type="button" className={controls.primary} onClick={() => trackerRef.current?.setSkipping(true)}>
+          건너뛰기
+        </button>
+        <button type="button" className={controls.secondary} disabled>
+          경기 끝까지
+        </button>
+      </>
+    );
+  } else {
+    dock = (
+      <>
+        <button type="button" className={controls.secondary} disabled={!canPlay} onClick={() => void playback.finishPa()}>
+          타석 끝까지
+        </button>
+        <button type="button" className={controls.primary} disabled={!canPlay} onClick={() => void playback.throwPitch()}>
+          한 구 던지기
+        </button>
+        <button type="button" className={controls.secondary} disabled={!canPlay} onClick={() => void playback.finishGame()}>
+          경기 끝까지
+        </button>
+      </>
+    );
+  }
+
+  return (
+    <div className={styles.screen}>
+      <h2 className={controls.srOnly}>{scene.title}</h2>
+      <BroadcastBug
+        away={{ name: scene.away.name, color: setup.teamColors.away, score: state.away }}
+        home={{ name: scene.home.name, color: setup.teamColors.home, score: state.home }}
+        inning={state.inning}
+        half={state.half}
+        outs={state.outs}
+        bases={state.bases}
+        balls={live ? live.balls : 0}
+        strikes={live ? live.strikes : 0}
+        backHref={formatRoute({ screen: 'home' })}
+      />
+      <PitchTracker ref={trackerRef} className={styles.tracker} bases={state.bases} zone={zone} batter={batterCaption} pitcher={pitcherCaption} />
+      <WpPanel
+        readout={readout}
+        tier={tier}
+        onTier={setTier}
+        mode={session.mode}
+        onMode={actions.setMode}
+        modeLocked={!editable || playing}
+        hasTmi={hasTmi}
+        grade={grade}
+        spark={spark}
+      />
+      <TmiRail pills={pills} onOpen={() => setSheetOpen(true)} action={railAction} />
+      <nav className={styles.dock} data-count={finished ? 2 : 3} aria-label="다시 치르기">
+        {dock}
+      </nav>
+
+      <TmiSheet
+        open={sheetOpen}
+        onClose={() => setSheetOpen(false)}
+        odds={readout ? { label: readout.label, base: readout.base, value: readout.value, hasTmi } : null}
+        tmis={session.tmis}
+        verdicts={session.verdicts}
+        judgingId={session.judgingId}
+        canEdit={editable && !playing}
+        busy={session.interpreting}
+        max={MAX_TMIS}
+        notice={session.notice}
+        examples={examples}
+        names={names}
+        onSubmit={(text) => void actions.submitTmi(text)}
+        onRemove={(id) => actions.removeTmi(id)}
+        onJudge={(id) => void actions.judge(id)}
+      />
+    </div>
+  );
+}

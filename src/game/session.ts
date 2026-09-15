@@ -133,13 +133,14 @@ export function sessionReducer(s: SessionState, a: SessionAction): SessionState 
 
     case 'interpretDone': {
       if (!s.interpreting) return s;
-      // 해석을 기다리는 사이 공을 던졌거나 가득 찼으면 넣지 않는다
-      const add = canEditTmi(s) && s.tmis.length < MAX_TMIS && !s.tmis.some((e) => e.id === a.entry.id);
+      // 해석을 기다리는 사이 공을 던졌거나 가득 찼으면 넣지 않는다. 거부된 문장은 TMI 칸을 차지하지 않고 이유만 알린다(UI_GUIDE)
+      const { refused, reason } = a.entry.interpretation;
+      const add = !refused && canEditTmi(s) && s.tmis.length < MAX_TMIS && !s.tmis.some((e) => e.id === a.entry.id);
       return {
         ...s,
         tmis: add ? [...s.tmis, a.entry] : s.tmis,
         interpreting: false,
-        notice: a.note,
+        notice: refused ? reason || a.note : a.note,
         providerDisabled: s.providerDisabled || a.disableProvider,
       };
     }

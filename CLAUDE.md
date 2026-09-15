@@ -18,10 +18,10 @@
 - CRITICAL: 네이버 API는 `api/_lib/naver.ts`에서만 부른다. 브라우저에서 직접 부르지 말고, 원문 대신 `LiveGame`·`GameSummary` 요약만 돌려준다(ADR-017).
 - 인기 TMI 집계에는 효과 키만 저장한다. TMI 문장·IP·기기 정보는 저장하지 마라(ADR-022).
 - 실존 선수에 대한 범죄·음주·도박·폭력·질병·부상·사망·사생활·성적 내용·비하 TMI는 계산하지 않고 거부한다.
-- 확률을 보여주는 곳에는 근거 등급(실측/그럴듯함/상상)을 함께 둔다. 만화 모드 값은 결과 카드의 한 줄에만 두고 모드 라벨을 붙인다(ADR-019).
+- 확률을 보여주는 곳에는 근거 등급(실측/그럴듯함/상상)을 함께 둔다. 만화 모드 값은 모드 라벨("만화 ×6", "만화 모드 · 효과 6배 과장")과 함께만 보여준다(ADR-025).
 - 의존성은 ADR-007 목록만 쓴다. 외부 서비스(Upstash 등)는 SDK 없이 REST(`fetch`)로 부른다. 새 패키지가 필요하면 설치하지 말고 step을 blocked로 보고한다.
 - `reference/tmi-prototype/`는 이식 참고용이다. 수정하거나 import하지 마라.
-- `docs/design/broadcast/`는 UI 시각 기준 시안이다(ADR-018). 앱 코드에서 import하지 말고 토큰·구성·동작만 옮겨라. `docs/design/nightgame/`은 폐기된 시안이다.
+- `docs/design/broadcast/`는 UI 시각 기준 시안이다(ADR-018, ADR-025). 앱 화면은 이 시안의 구성·크기·정보량을 줄이지 말고 그대로 옮긴다. 앱 코드에서 import하지 말고 토큰·구성·동작만 옮겨라. `docs/design/nightgame/`은 폐기된 시안이다.
 - 공용 타입은 `src/types/`, 런타임 상수는 `src/domain/`에 둔다. 실측 변수 정의의 원본은 `src/domain/measured.json` 하나다(TS와 Python이 함께 읽는다).
 
 ## 개발 프로세스

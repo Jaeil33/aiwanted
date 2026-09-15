@@ -31,6 +31,17 @@ describe('useHashRoute', () => {
     expect(result.current[0]).toEqual({ screen: 'play', sceneId: 'fixture-walkoff', share: null });
   });
 
+  it('replace면 방문 기록을 쌓지 않고 해시와 라우트만 바꾼다 (되돌려 보내기용)', () => {
+    const { result } = renderHook(() => useHashRoute());
+    const length = window.history.length;
+    act(() => {
+      result.current[1]({ screen: 'about' }, { replace: true });
+    });
+    expect(window.location.hash).toBe('#/about');
+    expect(window.history.length).toBe(length);
+    expect(result.current[0]).toEqual({ screen: 'about' });
+  });
+
   it('같은 라우트로 다시 부르면 해시를 그대로 둔다', () => {
     window.history.replaceState(null, '', '/#/evidence');
     const { result } = renderHook(() => useHashRoute());

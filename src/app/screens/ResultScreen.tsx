@@ -55,7 +55,7 @@ function ResultBoard({ setup, final }: { setup: SceneSetup; final: Final }) {
   const winner = final.winner;
   const winColor = winner === 'tie' ? TIE_COLOR : setup.teamColors[winner];
   const heading = winner === 'tie' ? '무승부' : `${scene[winner].name} 승리`;
-  const decider = deciderLine({ title: scene.title, start: scene.state, log: session.log, final });
+  const decider = deciderLine({ title: scene.title, start: scene.state, log: session.log, final, teams: { away: scene.away.name, home: scene.home.name } });
 
   const legend =
     pair.base && pair.tmi

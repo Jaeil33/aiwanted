@@ -2,12 +2,21 @@ import { EVIDENCE_LABEL } from '../domain/format';
 import { KNOB_META, SUBJECT_LABEL } from '../domain/knobs';
 import { MEASURED } from '../domain/measured';
 import { gradeOf } from '../game/headline';
-import type { EffectPart, TmiEntry, VerdictResult } from '../types/domain';
+import type { EffectPart, Subject, TmiEntry, VerdictResult } from '../types/domain';
 import controls from './controls.module.css';
 import styles from './TmiCard.module.css';
 
+/** 손잡이 대상의 화면 이름(시안 "이용준 · 경기 내내"). 없으면 "투수" 같은 역할 이름 */
+export interface CardNames {
+  batter: string;
+  pitcher: string;
+  battingTeam: string;
+  fieldingTeam: string;
+}
+
 export interface TmiCardProps {
   entry: TmiEntry;
+  names?: CardNames;
   verdict: VerdictResult | null;
   judging: boolean;
   canRemove: boolean;
@@ -27,7 +36,13 @@ const PIPS = [-3, -2, -1, 0, 1, 2, 3];
 const MEASURED_BY_ID = new Map(MEASURED.map((def) => [def.id, def] as const));
 const formatValue = (value: number) => (Number.isInteger(value) ? String(value) : value.toFixed(1));
 
-function PartRow({ part }: { part: EffectPart }) {
+function subjectName(subject: Subject, names: CardNames | undefined): string {
+  const role = Object.hasOwn(SUBJECT_LABEL, subject) ? SUBJECT_LABEL[subject] : String(subject);
+  if (!names || subject === 'everyone') return role;
+  return names[subject] || role;
+}
+
+function PartRow({ part, names }: { part: EffectPart; names?: CardNames }) {
   if (part.kind === 'measured') {
     const def = MEASURED_BY_ID.get(part.variable);
     const label = def ? def.label : String(part.variable);
@@ -47,8 +62,10 @@ function PartRow({ part }: { part: EffectPart }) {
   }
   const strength = Math.max(-3, Math.min(3, Math.round(part.strength)));
   const up = strength > 0;
-  const knob = Object.hasOwn(KNOB_META, part.knob) ? KNOB_META[part.knob].label : String(part.knob);
-  const subject = Object.hasOwn(SUBJECT_LABEL, part.subject) ? SUBJECT_LABEL[part.subject] : String(part.subject);
+  const knobName = Object.hasOwn(KNOB_META, part.knob) ? KNOB_META[part.knob].label : String(part.knob);
+  // 선수 손잡이는 "투수 체력"처럼 역할을 붙이고, 팀·환경 손잡이는 이름만
+  const knob = part.subject === 'batter' || part.subject === 'pitcher' ? `${SUBJECT_LABEL[part.subject]} ${knobName}` : knobName;
+  const subject = subjectName(part.subject, names);
   const scope = part.scope === 'pa' ? SCOPE_LABEL.pa : SCOPE_LABEL.game;
   return (
     <li className={styles.part} data-dir={up ? 'up' : 'down'}>
@@ -70,7 +87,7 @@ function PartRow({ part }: { part: EffectPart }) {
 }
 
 /** TMI 카드: 출처·등급 → 인용 → 손잡이·실측 행 → 이유와 "진짜야?" → 판정. 거부면 --out 테두리와 이유 */
-export function TmiCard({ entry, verdict, judging, canRemove, onRemove, onJudge }: TmiCardProps) {
+export function TmiCard({ entry, names, verdict, judging, canRemove, onRemove, onJudge }: TmiCardProps) {
   const { interpretation } = entry;
   const refused = interpretation.refused;
   const grade = refused ? null : gradeOf([entry]);
@@ -101,7 +118,7 @@ export function TmiCard({ entry, verdict, judging, canRemove, onRemove, onJudge 
         interpretation.parts.length > 0 && (
           <ul className={styles.parts}>
             {interpretation.parts.map((part, index) => (
-              <PartRow key={index} part={part} />
+              <PartRow key={index} part={part} names={names} />
             ))}
           </ul>
         )

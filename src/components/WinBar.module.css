@@ -1,0 +1,49 @@
+/* 승률 막대 (시안 .wp-bar): 8px, 구간 사이 2px, 기준선은 위아래로 4px 넘친다 */
+.bar {
+  position: relative;
+  display: flex;
+  gap: 2px;
+  height: 8px;
+}
+
+.bar i {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  transition: flex-basis 700ms var(--ease-out);
+}
+
+.a {
+  background: var(--a);
+  border-radius: 4px 2px 2px 4px;
+}
+
+.t {
+  background: repeating-linear-gradient(135deg, var(--line-2) 0 3px, var(--surface-2) 3px 6px);
+}
+
+.t[data-empty='true'] {
+  display: none;
+}
+
+.b {
+  background: var(--b);
+  border-radius: 2px 4px 4px 2px;
+}
+
+.ghost {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--text);
+  transition: left 700ms var(--ease-out);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bar i,
+  .ghost {
+    transition: none;
+  }
+}
