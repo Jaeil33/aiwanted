@@ -1,17 +1,66 @@
 import type { PitchRow } from '../types/data';
 import type { Bases, PitchCode } from '../types/domain';
-import { pitchAt, timeToY } from './math/pitch';
+import { TRACK_Y0, pitchAt, timeToY } from './math/pitch';
 
 /*
- * 포수 뒤 망원 시점 투구 트래커(ADR-018, 시안 docs/design/broadcast/tracker.mjs 이식).
+ * 포수 뒤 시점 투구 트래커(ADR-018, 시안 docs/design/broadcast/tracker.mjs 이식).
  * 캔버스는 경기장·존·궤적·번호 원만 그린다. 콜·결과 글자는 DOM이 맡는다. 시계·프레임·오프스크린 캔버스는 deps로 주입한다.
+ * 카메라는 시안(30ft 뒤·4.6ft 망원)과 달리 포수 눈높이다. 시안 카메라는 공이 존보다 존 높이만큼 위, 관중석 쪽에서 떨어져 보였다.
  */
 
 /** 존 판정 면: 홈플레이트 앞면(ft) */
 export const PLATE_FRONT_Y = 1.417;
 const HALF_PLATE = 0.708;
 const BALL_R = 0.121;
-const CAM = { y: -30, z: 4.6 };
+/** 포수 눈높이 카메라(ft): 홈플레이트 10ft 뒤, 높이 4ft. 공이 투수 손에서 작게 나와 커지며 날아온다 */
+const CAM = { y: -10, z: 4 };
+/** 아래 자막이 가리는 높이(px). 존 아래 끝은 이 위에 둔다 */
+export const CAPTION_PX = 120;
+/** 가운데 외야 뒤 어두운 백스크린(ft): 낮은 카메라에서 투수 손은 지평선 위라 관중석 대신 이 판 앞에 보여야 한다 */
+export const BACKSCREEN = { y: 400, halfWidth: 45, top: 40 };
+/** 캔버스 위 여백(높이 비율)과, 그 안에 보여야 하는 가장 높은 릴리스 높이(ft) */
+const TOP_MARGIN = 0.1;
+const RELEASE_Z_MAX = 6.3;
+
+export interface TrackerFrame {
+  /** 초점 거리(px) */
+  f: number;
+  cx: number;
+  /** 지평선 높이(px) */
+  cy: number;
+}
+
+export interface ScreenPoint {
+  x: number;
+  y: number;
+  /** 그 깊이에서 1ft가 몇 px인지 */
+  s: number;
+}
+
+/**
+ * 캔버스 크기에 맞춘 구도: 홈플레이트 폭은 캔버스 폭의 27%, 지평선은 높이의 14%(시안).
+ * 존 아래 끝이 자막 위에 오도록 지평선을 올리되 투수 손(55ft, 6.3ft)은 위 여백 안에 남긴다. 높이가 모자라면 f를 줄여 둘 다 담는다.
+ */
+export function frameTracker(width: number, height: number, zoneBottom: number): TrackerFrame {
+  const plateD = PLATE_FRONT_Y - CAM.y;
+  const releaseD = TRACK_Y0 - CAM.y;
+  const top = height * TOP_MARGIN;
+  const bottom = height - CAPTION_PX;
+  // f 1당 투수 손부터 존 아래 끝까지 화면 높이
+  const span = (CAM.z - zoneBottom) / plateD - (CAM.z - RELEASE_Z_MAX) / releaseD;
+  const f = Math.min((width * 0.27 * plateD) / (2 * HALF_PLATE), Math.max(bottom - top, 1) / span);
+  const cy = Math.max(Math.min(height * 0.14, bottom - ((CAM.z - zoneBottom) * f) / plateD), top - ((CAM.z - RELEASE_Z_MAX) * f) / releaseD);
+  return { f, cx: width / 2, cy };
+}
+
+/** 경기장 좌표(ft)를 구도 위 화면 좌표(px)로. 카메라 바로 앞(0.25ft 이내)은 null */
+export function projectOnFrame(frame: TrackerFrame, x: number, y: number, z: number): ScreenPoint | null {
+  const d = y - CAM.y;
+  if (d <= 0.25) return null;
+  const s = frame.f / d;
+  return { x: frame.cx + x * s, y: frame.cy - (z - CAM.z) * s, s };
+}
+
 /** 궤적 시간 1초를 몇 ms로 그리나: 보통 1배, 느린 공 2.4배(UI_GUIDE 움직임) */
 const MS_NORMAL = 1000;
 const MS_SLOW = 2400;
@@ -73,9 +122,7 @@ export function createTracker(canvas: HTMLCanvasElement, deps: TrackerDeps): Tra
   let W = 0;
   let H = 0;
   let dpr = 1;
-  let f = 1;
-  let cx = 0;
-  let cy = 0;
+  let view: TrackerFrame = { f: 1, cx: 0, cy: 0 };
   let backdrop: HTMLCanvasElement | null = null;
   let bases: Bases = 0;
   let zone = { top: 3.4, bottom: 1.6 };
@@ -84,12 +131,7 @@ export function createTracker(canvas: HTMLCanvasElement, deps: TrackerDeps): Tra
   let frame = 0;
   let pending: { finish(): void } | null = null;
 
-  function project(x: number, y: number, z: number): Pt | null {
-    const d = y - CAM.y;
-    if (d <= 0.25) return null;
-    const s = f / d;
-    return { x: cx + x * s, y: cy - (z - CAM.z) * s, s };
-  }
+  const project = (x: number, y: number, z: number): Pt | null => projectOnFrame(view, x, y, z);
 
   const groundPts = (pts: Array<[number, number]>) => pts.map(([x, y]) => project(x, y, 0)).filter((p): p is Pt => p !== null);
 
@@ -159,6 +201,12 @@ export function createTracker(canvas: HTMLCanvasElement, deps: TrackerDeps): Tra
       c.fillStyle = 'rgba(0,0,0,0.35)';
       c.fillRect(0, wallTop - i * 13, W, 1.5);
     }
+    const eyeTopLeft = project(-BACKSCREEN.halfWidth, BACKSCREEN.y, BACKSCREEN.top);
+    const eyeBottomRight = project(BACKSCREEN.halfWidth, BACKSCREEN.y, 0);
+    if (eyeTopLeft && eyeBottomRight) {
+      c.fillStyle = '#030806';
+      c.fillRect(eyeTopLeft.x, eyeTopLeft.y, eyeBottomRight.x - eyeTopLeft.x, eyeBottomRight.y - eyeTopLeft.y);
+    }
     for (const lx of [W * 0.06, W * 0.94]) {
       const rg = c.createRadialGradient(lx, -10, 0, lx, -10, W * 0.75);
       rg.addColorStop(0, 'rgba(255,241,214,0.18)');
@@ -198,7 +246,7 @@ export function createTracker(canvas: HTMLCanvasElement, deps: TrackerDeps): Tra
     // 마운드·투수판
     const moundCenter = project(0, 60.5, 0);
     if (moundCenter) {
-      const mound = c.createRadialGradient(cx, moundCenter.y, 0, cx, moundCenter.y, 70);
+      const mound = c.createRadialGradient(view.cx, moundCenter.y, 0, view.cx, moundCenter.y, moundCenter.s * 2.7);
       mound.addColorStop(0, '#8a6143');
       mound.addColorStop(1, '#6a4a31');
       poly(c, groundPts(arc(0, 60.5, 9)), mound);
@@ -364,12 +412,7 @@ export function createTracker(canvas: HTMLCanvasElement, deps: TrackerDeps): Tra
       H = cssHeight;
       canvas.width = Math.round(W * dpr);
       canvas.height = Math.round(H * dpr);
-      // 망원 구도(시안): 홈플레이트 폭이 캔버스 폭의 27%, 지평선은 높이의 14%.
-      // 캔버스가 낮으면 존 아래가 자막(아래 약 120px) 위에 오도록 지평선을 올린다
-      f = (W * 0.27 * (PLATE_FRONT_Y - CAM.y)) / (2 * HALF_PLATE);
-      cx = W / 2;
-      const zoneScale = f / (PLATE_FRONT_Y - CAM.y);
-      cy = Math.min(H * 0.14, H - 120 - (CAM.z - zone.bottom) * zoneScale);
+      view = frameTracker(W, H, zone.bottom);
       backdrop = g ? paintBackdrop() : null;
       draw();
     },

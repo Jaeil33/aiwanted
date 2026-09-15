@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { pitchAt } from './math/pitch';
-import { createTracker, plateLocation, PLATE_FRONT_Y, type TrackerDeps } from './tracker';
+import { BACKSCREEN, CAPTION_PX, createTracker, frameTracker, plateLocation, PLATE_FRONT_Y, projectOnFrame, type TrackerDeps } from './tracker';
 import type { PitchRow } from '../types/data';
 
 const ROW: PitchRow = [0, 147, 1, 0, 0, 1, -1.645, 5.942, 5.386, -133.458, -5.875, -12.96, 30.399, -12.37, 3.29, 1.596];
@@ -69,6 +69,57 @@ describe('plateLocation', () => {
     expect(loc.z).toBeCloseTo(at.z, 10);
     expect(loc.t).toBeGreaterThan(0.3);
     expect(loc.t).toBeLessThan(0.6);
+  });
+});
+
+describe('frameTracker', () => {
+  const SIZES: Array<[number, number]> = [[390, 240], [390, 300], [480, 385], [390, 440], [720, 440]];
+  const ZONE = { top: 3.3, bottom: 1.6 };
+
+  it('어느 크기에서도 투수 손(55ft, 높이 6.3ft까지)이 캔버스 위 여백 안에서 보이고, 존 아래 끝은 자막 위에 있다', () => {
+    for (const [w, h] of SIZES) {
+      const frame = frameTracker(w, h, ZONE.bottom);
+      const release = projectOnFrame(frame, -1.6, 55, 6.3);
+      const zoneBottom = projectOnFrame(frame, 0, PLATE_FRONT_Y, ZONE.bottom);
+      expect(release?.y).toBeGreaterThanOrEqual(h * 0.1 - 0.5);
+      expect(zoneBottom?.y).toBeLessThanOrEqual(h - CAPTION_PX + 0.5);
+    }
+  });
+
+  it('높이가 넉넉하면 시안처럼 홈플레이트 폭이 캔버스 폭의 27%다', () => {
+    const frame = frameTracker(390, 440, ZONE.bottom);
+    const left = projectOnFrame(frame, -0.708, PLATE_FRONT_Y, 0);
+    const right = projectOnFrame(frame, 0.708, PLATE_FRONT_Y, 0);
+    expect(((right?.x ?? 0) - (left?.x ?? 0)) / 390).toBeCloseTo(0.27, 3);
+  });
+
+  it('포수 눈높이 시점: 공은 존 윗변에서 존 높이의 0.7배 안쪽 위에서 나와 5배 넘게 커지며 날아온다', () => {
+    for (const [w, h] of SIZES) {
+      const frame = frameTracker(w, h, ZONE.bottom);
+      const start = pitchAt(ROW, 0);
+      const release = projectOnFrame(frame, start.x, start.y, start.z);
+      const top = projectOnFrame(frame, 0, PLATE_FRONT_Y, ZONE.top);
+      const bottom = projectOnFrame(frame, 0, PLATE_FRONT_Y, ZONE.bottom);
+      if (!release || !top || !bottom) throw new Error('projection failed');
+      expect((top.y - release.y) / (bottom.y - top.y)).toBeLessThan(0.7);
+      expect(top.s / release.s).toBeGreaterThan(5);
+    }
+  });
+
+  it('투수 손은 관중석이 아니라 가운데 외야 백스크린 앞에서 보인다', () => {
+    for (const [w, h] of SIZES) {
+      const frame = frameTracker(w, h, ZONE.bottom);
+      const eyeTopLeft = projectOnFrame(frame, -BACKSCREEN.halfWidth, BACKSCREEN.y, BACKSCREEN.top);
+      const eyeBottomRight = projectOnFrame(frame, BACKSCREEN.halfWidth, BACKSCREEN.y, 0);
+      for (const [x0, z0] of [[-1.6, 5.9], [-3.2, 5.0], [2.5, 6.3]]) {
+        const hand = projectOnFrame(frame, x0, 55, z0);
+        if (!hand || !eyeTopLeft || !eyeBottomRight) throw new Error('projection failed');
+        expect(hand.x).toBeGreaterThan(eyeTopLeft.x);
+        expect(hand.x).toBeLessThan(eyeBottomRight.x);
+        expect(hand.y).toBeGreaterThan(eyeTopLeft.y);
+        expect(hand.y).toBeLessThan(eyeBottomRight.y);
+      }
+    }
   });
 });
 
