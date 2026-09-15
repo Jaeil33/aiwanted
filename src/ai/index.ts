@@ -2,6 +2,8 @@
  * src/ai 공개 API. providers를 뺀 모듈은 순수하다(네트워크·타이머·브라우저 전역 없음). 외부 호출은 src/ai/providers에서만 한다.
  * AI 원문은 항상 normalize를 거친 뒤에만 엔진에 들어가고, 실패·오류·AI 없음이면 rules로 대신한다(ADR-003).
  */
+export { prepareText } from './text';
+export type { Clause, NumberMention, NumberUnit, PreparedText } from './text';
 export { checkSensitive } from './safety';
 export { normalizeInterpretation, normalizeVerdict } from './normalize';
 export { ruleInterpret, rulesVerdict } from './rules';

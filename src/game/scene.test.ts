@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { fixtureContext } from '../ai/test-helpers';
 import { startNextHalf } from '../engine';
 import { fixtureAppData } from '../test/fixtures/appData';
 import type { AppData, PlayerRecord, SceneRecord } from '../types/data';
@@ -50,8 +51,61 @@ describe('buildSceneSetup', () => {
         ...Array.from({ length: 9 }, (_, i) => `원정타자${i + 1}`),
         ...Array.from({ length: 9 }, (_, i) => `홈타자${i + 1}`),
       ],
+      battingLineup: Array.from({ length: 9 }, (_, i) => ({ id: `h${i + 1}`, name: `홈타자${i + 1}`, slot: i + 1 })),
+      fieldingLineup: Array.from({ length: 9 }, (_, i) => ({ id: `a${i + 1}`, name: `원정타자${i + 1}`, slot: i + 1 })),
+      otherPlayers: [{ name: '홈투수', team: '롯데', kind: 'P' }],
       weather: { tempC: 27.5, windMs: 2.1, dayGame: false, dome: false },
     });
+  });
+
+  it('src/ai 테스트 도우미 fixtureContext와 같은 장면 설명이다', () => {
+    expect(fixtureContext()).toEqual(setup.promptContext);
+  });
+
+  it('두 팀 타순을 공격·수비로 나눈다: 초 공격이면 원정이 공격, slot은 1~9, 기록이 없는 선수 이름은 id', () => {
+    const top: SceneRecord = { ...SCENE, id: 'fixture-top', batter: 'a4', pitcher: 'hp', state: { ...SCENE.state, half: 0, slotAway: 3 } };
+    const players: Record<string, PlayerRecord> = { ...fixtureAppData.core.players };
+    delete players.h3;
+    const ctx = buildSceneSetup({ ...fixtureAppData, core: { ...fixtureAppData.core, players }, scenes: [top] }, top.id).promptContext;
+    expect(ctx.battingTeam).toBe('KIA');
+    expect(ctx.battingLineup.map((entry) => entry.id)).toEqual(['a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'a7', 'a8', 'a9']);
+    expect(ctx.fieldingLineup.map((entry) => entry.id)).toEqual(['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'h7', 'h8', 'h9']);
+    for (const lineup of [ctx.battingLineup, ctx.fieldingLineup]) {
+      expect(lineup.map((entry) => entry.slot)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    }
+    expect(ctx.battingLineup[3]).toEqual({ id: 'a4', name: '원정타자4', slot: 4 });
+    expect(ctx.fieldingLineup[2]).toEqual({ id: 'h3', name: 'h3', slot: 3 });
+    // 장면 투수가 hp이므로 원정투수(ap)가 장면 밖 선수로 남는다
+    expect(ctx.otherPlayers).toEqual([{ name: '원정투수', team: 'KIA', kind: 'P' }]);
+    expect(ctx.lineupNames).toHaveLength(18);
+  });
+
+  it('otherPlayers: 두 타순과 장면 투수를 뺀 데이터 선수, 팀은 장면 팀 이름 표기(장면 밖 팀은 teams.ts 이름)', () => {
+    const extra: PlayerRecord[] = [
+      { id: 'x1', name: '김외부', team: 'HH', kind: 'H', bats: 'R', rel: ONE, line: {} },
+      { id: 'x2', name: '박외부', team: 'OB', kind: 'P', throws: 'L', rel: ONE, line: {} },
+      { id: 'x3', name: '최원정', team: 'HT', kind: 'H', bats: 'L', rel: ONE, line: {} },
+      { id: 'x4', name: '정코드', team: 'ZZ' as PlayerRecord['team'], kind: 'H', rel: ONE, line: {} },
+    ];
+    // 장면 원정 팀 이름 표기를 teams.ts('KIA')와 다르게 둔다
+    const renamed: SceneRecord = { ...SCENE, away: { ...SCENE.away, name: '기아' } };
+    const data: AppData = {
+      ...fixtureAppData,
+      core: { ...fixtureAppData.core, players: { ...fixtureAppData.core.players, ...Object.fromEntries(extra.map((p) => [p.id, p])) } },
+      scenes: [renamed],
+    };
+    const ctx = buildSceneSetup(data, SCENE.id).promptContext;
+    expect(ctx.otherPlayers).toEqual([
+      { name: '홈투수', team: '롯데', kind: 'P' },
+      { name: '김외부', team: '한화', kind: 'H' },
+      { name: '박외부', team: '두산', kind: 'P' },
+      { name: '최원정', team: '기아', kind: 'H' },
+      { name: '정코드', team: 'ZZ', kind: 'H' },
+    ]);
+    expect(ctx.fieldingTeam).toBe('기아');
+    const otherNames = ctx.otherPlayers.map((p) => p.name);
+    expect(otherNames).not.toContain(ctx.pitcher.name);
+    for (const entry of [...ctx.battingLineup, ...ctx.fieldingLineup]) expect(otherNames).not.toContain(entry.name);
   });
 
   it('선수 id·불펜 id → 이름 표와 두 팀 색을 만든다', () => {

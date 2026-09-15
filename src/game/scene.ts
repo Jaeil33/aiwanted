@@ -2,7 +2,7 @@ import { situationText } from '../domain/format';
 import { TEAMS, isTeamCode } from '../domain/teams';
 import type { LineupSlot, TeamConfig } from '../engine';
 import type { AppData, PlayerRecord, SceneRecord } from '../types/data';
-import type { EventVector, GameState, PromptContext, SceneContext, Side } from '../types/domain';
+import type { EventVector, GameState, KnownPlayer, PromptContext, RosterEntry, SceneContext, Side } from '../types/domain';
 
 /** 선수 손 기록. 없으면 우타·우투로 본다 */
 export interface Hands {
@@ -84,6 +84,18 @@ export function buildSceneSetup(data: AppData, sceneId: string): SceneSetup {
 
   const batSide = batSideOf(scene.state);
   const fieldSide = otherSide(batSide);
+  /** 장면 시점 타순: slot 1~9, 이름은 names(기록이 없으면 id) */
+  const rosterOf = (side: Side): RosterEntry[] => scene.lineups[side].map((id, i) => ({ id, name: names[id], slot: i + 1 }));
+  /** 팀 코드 → 장면 팀 이름 표기. 장면 두 팀이 아니면 teams.ts 이름, 모르는 코드면 코드 그대로 */
+  const teamNameOf = (code: string): string => {
+    if (code === scene.away.code) return scene.away.name;
+    if (code === scene.home.code) return scene.home.name;
+    return isTeamCode(code) ? TEAMS[code].name : code;
+  };
+  const inScene = new Set([...scene.lineups.away, ...scene.lineups.home, scene.pitcher]);
+  const otherPlayers: KnownPlayer[] = Object.entries(core.players)
+    .filter(([id]) => !inScene.has(id))
+    .map(([, p]) => ({ name: p.name, team: teamNameOf(p.team), kind: p.kind }));
   const promptContext: PromptContext = {
     date: scene.date,
     stadium: scene.stadium,
@@ -102,6 +114,9 @@ export function buildSceneSetup(data: AppData, sceneId: string): SceneSetup {
     battingTeam: scene[batSide].name,
     fieldingTeam: scene[fieldSide].name,
     lineupNames: [...away.lineup, ...home.lineup].map((slot) => names[slot.id]),
+    battingLineup: rosterOf(batSide),
+    fieldingLineup: rosterOf(fieldSide),
+    otherPlayers,
     weather: { ...scene.context },
   };
   const colorOf = (side: Side) => {

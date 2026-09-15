@@ -2,11 +2,46 @@
   "project": "TMI 야구",
   "phase": "interpreter",
   "steps": [
-    { "step": 0, "name": "context-rosters", "status": "pending" },
-    { "step": 1, "name": "text-prep", "status": "pending" },
-    { "step": 2, "name": "safety-v2", "status": "pending" },
-    { "step": 3, "name": "targets", "status": "pending" },
-    { "step": 4, "name": "lexicon", "status": "pending" },
+    {
+      "step": 0,
+      "name": "context-rosters",
+      "status": "completed",
+      "started_at": "2026-09-15T01:05:37+0900",
+      "summary": "src/types/domain.ts에 RosterEntry{id,name,slot 1~9}·KnownPlayer{name,team,kind H|P}와 PromptContext.battingLineup·fieldingLineup·otherPlayers 추가(lineupNames 유지) · buildSceneSetup: 장면 시점 공격/수비 타순(기록 없으면 이름=id), otherPlayers = core.players − 두 타순 − 장면 투수(team은 장면 팀 이름 표기, 장면 밖 팀은 teams.ts 이름, 모르는 코드는 코드 그대로) · src/ai/test-helpers fixtureContext도 같은 모양(공격 홈타자1~9·수비 원정타자1~9·장면 밖 홈투수 1명, scene.test가 buildSceneSetup 결과와 일치 확인) · api parseContext는 새 필드를 선택 필드로 검증(없으면 [], 타순 ≤9·slot 1~9 정수, otherPlayers ≤20) · http 프로바이더는 otherPlayers를 비워 보냄(실데이터 장면 밖 선수 118명≈5.2KB라 해석 본문 4KB 제한 초과 방지; 서버 안전 판정은 두 팀 타순만 앎); AC 통과(lint·build, vitest src/game+src/ai+api 436)",
+      "completed_at": "2026-09-15T01:09:06+0900"
+    },
+    {
+      "step": 1,
+      "name": "text-prep",
+      "status": "completed",
+      "started_at": "2026-09-15T01:22:48+0900",
+      "summary": "src/ai/text.ts(순수, index에서 prepareText·타입 내보냄): prepareText → {original, normalized, intensity, tokens, numbers, clauses ≤ MAX_CLAUSES(3)} · normalized = 줄바꿈→공백·보이지 않는 문자(ZWSP·VS16 등) 삭제·NFC 후 NFKC(호환 자모 ㄱ~ㆎ는 보존)·대시/U+2212→-·∕→/·소문자·같은 글자 3회+→2회(숫자 제외)·공백 하나 + 한 글자씩 띄운 음절 5개+ 붙이기 + 오타·띄어쓰기 바로잡기(머거따→먹었다, 곱배기→곱빼기, 잠못잠→잠 못 잠, 잠을못→잠을 못, 안떨림→안 떨림(안타·안경 보존), 넘 →너무, 피곤쓰→피곤) + 초성 낱말 치환(ㅌㅅ→투수, ㅌㅈ→타자, ㅍㄱ→피곤 등; ㅈㄴ·욕설 초성은 그대로) · tokens = 바로잡은 개념어 + tokensOf(normalized)(영어 약 300표현·이모지 약 150개·ㅋㅋ/ㅠㅠ 등 → 대표 한국어 한 낱말, 나온 순서·중복 없음; export tokensOf(text)로 절마다 다시 구할 수 있음) · intensityOf(text) export(강 2: ㅈㄴ·존나·완전·엄청·너무·진짜·정말·미친듯이·super/very/so·개-/핵-/초-/왕-(뒤 어간 목록일 때만), 약 1: 살짝·조금·좀·약간·slightly; 2가 이김) · numbers: 11단위(시간 반=+0.5, 잔/cups/coffees, 병/캔, 그릇/공기/인분, 도/°c/c/섭씨·영하(음수), km(구속 뒤·km/h는 unit null), m/s·초속 N미터, 마리/개/연전/도루 등 count, %/퍼센트/프로, 일/열흘) + 고유어 수(세 잔·한 그릇)·영어 수(three coffees), 체온 문맥은 raw에 '열이'/'체온' 포함, 나온 순서 · clauses: , ; + & 문장부호·그리고/근데/하지만·ㄴ받침+데(는데/은데)·연결 어미 '~고 '(최고·광고 등 명사와 '먹고 옴/들고 나왔다/치고 싶어서' 보조 동사는 제외)로 나누고 넘치면 마지막 절에 ', '로 합침 · subjectHint = 첫 '~은/는/이/가/께서' 앞 명사(한 글자 한글 줄기·관형형 동사·오늘/비/컨디션 같은 NON_SUBJECT 제외), 없으면 앞 절 hint 이어받음(주의: 첫 절에 조사가 없으면 null, 이어받은 hint는 절 text에 없을 수 있음) · 공백뿐이면 빈 결과, 기호뿐이면 절 1개; 테스트 68개(80자 1,000회 < 200ms, 3회 중 최솟값); AC 통과(lint·build, vitest src/ai 301)",
+      "completed_at": "2026-09-15T01:36:16+0900"
+    },
+    {
+      "step": 2,
+      "name": "safety-v2",
+      "status": "completed",
+      "started_at": "2026-09-15T01:36:57+0900",
+      "summary": "src/ai/safety.ts 다시 씀: assessSafety(prepared, ctx|null) → {level block|review|allow, category(crime·alcohol·gambling·violence·drugs·illness·injury·death·privacy·sexual·slur)|null, reason, matched} · 순서: 허용 관용구를 같은 길이 공백으로 지움(마약김밥/떡볶이 등 음식, 자살 스퀴즈, 타격감·구위·방망이·주자·공…이 죽었다, 이별 노래, 누드김밥, 벙어리장갑, 대머리독수리, 등신대, 도박 같은/도박수, 술술, 죽겠다, 새끼손가락, 돼지국밥, 뚱뚱한 배트, 시발점, 헤어스타일, 장애인석, 키스톤, 와인드업) → 욕설·혐오(초성 ㅂㅅ·ㅅㅂ, 짱깨·흑형 등)는 문장+토큰 어디서든 block(SLUR_REASON '사람을 깎아내리는 말은 계산하지 않아요.') → 절마다 범주 사전(야구 낱말과 겹치는 구속·사기·배팅·담장·고소한·게이지 등은 앞뒤 글자로 제외, 체온은 prepared.numbers의 celsius raw에 열/체온) + 외모 비하(뚱뚱·돼지·못생, 사람일 때만) · 절 주체: 이름(batter·pitcher·lineupNames·battingLineup·fieldingLineup·otherPlayers 성+이름, 세 글자 이름의 이름만; ctx별 WeakMap 캐시)·역할어(투수·타자·선수·포수·감독·코치·심판…)·가족어가 있으면 사람 → block, 관중·팬·치어리더·캐스터·동물·사물만 있으면 allow, 없으면 이 절 주어 낱말(모르면 review)·이어받은 주어·앞 절 주체, 끝까지 모르면 review · block/review reason = SENSITIVE_REASON(UI_GUIDE '선수 건강·사생활·범죄 이야기는 계산하지 않아요. 음식·잠·날씨·징크스로 바꿔 보세요.'로 바꿈) · checkSensitive(text) = assessSafety(prepareText(text), null)이 block일 때만 막음(호환, interpret·verdict·api는 그대로 씀) · 테스트: 범주별 block 37개(범주당 3개+), 욕설 6, 관용구 12 + 경계 32, 사람 아닌 주체 allow 11('키우던 강아지가 죽었다' 포함), review 5, 체온 vs 기온, 절 주체·이어받기, ctx null; AC 통과(lint·build, vitest src/ai+api 420)",
+      "completed_at": "2026-09-15T01:58:33+0900"
+    },
+    {
+      "step": 3,
+      "name": "targets",
+      "status": "completed",
+      "started_at": "2026-09-15T02:12:04+0900",
+      "summary": "src/ai/targets.ts(순수): resolveTarget(clause, prepared, ctx) → {subject, label, via name|recipient|lineup|role|team|verb|default, teamOnly} + export TEAM_ALIASES(10구단 한글·영문·별명, teams.ts 공식 이름도 함께 찾음; 영문은 \\b, 곰·쓱은 뒤 조사만) · 순서: 1 받는 사람('X에게/한테/께', 'X 위해/향해', 'X 칭찬·응원·야유·선물·문자…'; X는 이름·타순·사람 역할어만, 주어 조사 붙은 낱말 제외) → 주어 낱말이 절 안에 있으면 그 낱말에 규칙 2~5, 그다음 절 문장(+tokensOf)에 2~5, 이어받은 주어는 절 문장 다음, 그래도 없으면 앞 절(주어 표시 없이 사람을 말한 절)을 이어받음 → 6 동사 → 7 지금 타자 · 2 이름: 타자·투수 성+이름, 세 글자 이름의 이름만(역할어와 같으면 제외), '성+선수'는 장면(타자·투수·두 타순)에서 그 성이 한 명일 때만 · 3 타순: 공격 타순 다른 선수 battingTeam·수비 타순 fieldingTeam(teamOnly, label=이름), otherPlayers는 team이 장면 팀이면 그 팀, 장면 밖 팀이면 역할어·팀 규칙 뒤 everyone(via team, label=선수 이름) · 4 역할어(가장 먼저 나온 것, 같은 자리면 '투수 코치' 복합어 먼저): 투수·선발·마무리·불펜·에이스→pitcher, 타자·대타→batter, 포수·유격수·…·수비→fieldingTeam(teamOnly, 앞에 '롯데/원정/홈' 있으면 그 팀), 감독·코치·벤치·더그아웃→팀 없으면 battingTeam '공격 팀 벤치'·있으면 '<팀> 벤치', 주심·심판·캐스터·해설→everyone, 관중·팬·응원단·치어리더→홈 팀('원정 팬/원정 응원'·'<팀> 팬'이면 그 팀, label '홈 팬'/'원정 팬'; 공격/수비는 battingTeam vs homeName·awayName), 가족어→바로 앞 낱말(이름·역할어)의 선수 · 5 팀: 장면 팀 별칭→그 팀(teamOnly, label=ctx 팀 이름), 장면 밖→everyone, '원정팀/홈팀'→'원정 팀'/'홈 팀' · 6 동사(가장 먼저, 같은 자리면 투수→타자→수비): 던지·투구·구속·볼넷 내주·홈런 맞·제구·마운드→pitcher, 쳐/쳤/치고·스윙·타격·홈런·안타·볼넷 골라·삼진 당·도루→batter, 실책·송구·포구·잡다→fieldingTeam('수비 팀', teamOnly) · ctx별 사람 색인 WeakMap 캐시; 테스트 28개(가상 이름: 옛이야기·전래동화·서유기 인물, 원정/홈 공격 뒤집기 포함); AC 통과(lint·build, vitest src/ai 360)",
+      "completed_at": "2026-09-15T02:15:09+0900"
+    },
+    {
+      "step": 4,
+      "name": "lexicon",
+      "status": "completed",
+      "started_at": "2026-09-15T02:15:47+0900",
+      "summary": "src/ai/lexicon.ts(순수 데이터+매칭): Concept{id,category(13),patterns,knob,defaultSubject,strength ±1·±2,negation flip|cancel,evidence plausible|fun,scope,measured?{variable,defaultValue,unit?},comment({what}{who}),why≤60, group?(같은 표현의 대상별 변형: person()=타자 손잡이 id + 투수 손잡이 `${id}-p`, pitcherFirst()=투수 id + 타자 `${id}-b`, teamMood()=mood 팀 id + focus `-b` + nerve `-p`), excludes?(더 넓은 개념 id·group 빼기), quantity?{unit,min,max,near}(숫자 구간: 커피 4잔+·잠 4.5시간 이하/8시간 이상)} · CONCEPTS 159개(group 48개), 손잡이별 focus 46·nerve 27·mood 15·stamina 13·control 11·contact 8·stuff 6·carry 6·power 5·slick 5·defense 5·eye 4·speed 4·glare 4, 범주별 slang 25·weather 15·mood 15·luck 15·food 14·body 14·gear 13·jinx 10·family 10·sleep 8·command 8·travel 6·crowd 6 · 실측 개념 12개가 applicable 9변수 모두 덮음(weather-rain/downpour rain_pre3h 3/8, weather-wind wind_ms 9 ms, weather-heat/cold/temp temp_c 32/8/20 celsius, weather-day-game day_game 1, crowd-weekend weekend 1, travel-long travel_km 350 km, travel-rest after_off_day 1, starter-short-rest·starter-long-rest 1) · matchConcepts(clause, prepared): 절 문장+tokensOf 토큰에서 개념마다 가장 앞 매칭 1개, 매칭 위치→사전 순서로 정렬, excludes 제거, negated = 매칭 앞 6글자 끝의 안·못·전혀·절대·별로·하나도·결코 또는 뒤 6글자의 '(조사) 안/못'·'~지 않/못'·'아니'·'없'(개념 안의 부정 '못 잤다'는 세지 않음) · sentimentOf(text) 긍정·부정 사전 합(부정어 붙으면 뒤집음) → 1/0/−1 · 민감 주제는 개념 아님(테스트) · 테스트 147개(대표 문장 124개 영어·이모지 포함); AC 통과(lint·build, vitest src/ai 507)",
+      "completed_at": "2026-09-15T12:24:53+0900"
+    },
     { "step": 5, "name": "rules-v2", "status": "pending" },
     { "step": 6, "name": "ai-repair", "status": "pending" },
     { "step": 7, "name": "api-handlers", "status": "pending" },
