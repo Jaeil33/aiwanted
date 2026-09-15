@@ -1,4 +1,5 @@
 import type { KnobId, MeasuredId, Scope, Subject } from '../types/domain';
+import { DB_CONCEPTS } from './lexiconDb';
 import { tokensOf } from './text';
 import type { Clause, NumberUnit, PreparedText } from './text';
 
@@ -10,7 +11,9 @@ import type { Clause, NumberUnit, PreparedText } from './text';
 
 export type ConceptCategory =
   | 'food' | 'sleep' | 'mood' | 'gear' | 'jinx' | 'family' | 'travel'
-  | 'weather' | 'crowd' | 'command' | 'slang' | 'body' | 'luck';
+  | 'weather' | 'crowd' | 'command' | 'slang' | 'body' | 'luck'
+  | 'daily' | 'hobby' | 'animal' | 'tech' | 'event' | 'baseball' | 'ballpark'
+  | 'meme' | 'fortune' | 'study' | 'fashion' | 'money';
 
 type Strength = 1 | 2 | -1 | -2;
 
@@ -78,7 +81,8 @@ function teamMood(id: string, base: Base, strength: Strength, team: 'battingTeam
 const SLEEP_NEAR = /잤|자고|잠|수면|slept|sleep/;
 const CAFFEINE_NEAR = /커피|아메리카노|라떼|에스프레소|카페인|에너지|핫식스|레드불/;
 
-export const CONCEPTS: readonly Concept[] = [
+/** 손으로 다듬은 핵심 개념 */
+export const CORE_CONCEPTS: readonly Concept[] = [
   // ---------- 음식 ----------
   ...person(
     'food-heavy',
@@ -1489,6 +1493,9 @@ export const CONCEPTS: readonly Concept[] = [
     ["'{what}'에 {who} 기세가 오른다고 봤어요", "'{what}' 들은 {who}, 신이 나서 방망이가 돈다고 봤어요", "'{what}' 들은 {who}, 기분 좋게 공을 뿌린다고 봤어요"],
   ),
 ];
+
+/** 핵심 개념 + 일상 낱말 DB(lexiconDb.ts). 매칭은 이 순서대로 본다 */
+export const CONCEPTS: readonly Concept[] = [...CORE_CONCEPTS, ...DB_CONCEPTS];
 
 // ---------- 매칭 ----------
 
