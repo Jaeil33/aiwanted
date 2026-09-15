@@ -9,7 +9,7 @@ import appCss from './App.module.css?raw';
 import type { Platform } from './platform';
 
 const SOURCES = '기록·중계: 네이버 스포츠(KBO) · 날씨: Open-Meteo · 확률: TMI 야구 엔진 계산값';
-const TITLE = '방금 그 타석, 만약 그랬다면?';
+const TAGLINE = '쓸모없는 변수, 진짜 쓸모없을까?';
 const SCENE = fixtureAppData.scenes[0];
 
 const goto = (hash: string) => window.history.replaceState(null, '', `/${hash}`);
@@ -64,37 +64,37 @@ describe('App', () => {
     render(<App data={null} />);
     expectMenuFrame();
     expect(screen.getByRole('main')).toHaveTextContent('앱 데이터가 없어요. npm run data로 만든 뒤 다시 빌드하세요.');
-    expect(tabCurrents()).toEqual(['page', null]);
+    expect(tabCurrents()).toEqual(['page', null, null]);
   });
 
-  it('로비(#/)는 MenuFrame: 상단 바에 브랜드와 오늘 날짜, 본문에 로비, 탭바는 경기가 지금 탭', () => {
+  it('로비(#/)는 MenuFrame: 상단 바에 브랜드와 "2026 시즌 명장면", 본문에 로비, 탭바는 명장면이 지금 탭', () => {
     render(<App data={fixtureAppData} />);
     expectMenuFrame();
-    expect(within(screen.getByRole('banner')).getByText(/^\d{1,2}월 \d{1,2}일 \([일월화수목금토]\)$/)).toBeInTheDocument();
-    expect(within(screen.getByRole('main')).getByText(TITLE)).toBeInTheDocument();
-    expect(within(tabBar()).getByRole('link', { name: '경기' })).toHaveAttribute('href', '#/');
-    expect(tabCurrents()).toEqual(['page', null]);
+    expect(within(screen.getByRole('banner')).getByText('2026 시즌 명장면')).toBeInTheDocument();
+    expect(within(screen.getByRole('main')).getByText(TAGLINE)).toBeInTheDocument();
+    expect(within(tabBar()).getByRole('link', { name: '명장면' })).toHaveAttribute('href', '#/');
+    expect(tabCurrents()).toEqual(['page', null, null]);
   });
 
-  it('만든 이유와 변수 판정표도 MenuFrame이고, 해시가 바뀌면 화면과 탭바의 지금 탭이 바뀐다', async () => {
+  it('만든 이유와 판정소도 MenuFrame이고, 해시가 바뀌면 화면과 탭바의 지금 탭이 바뀐다', async () => {
     goto('#/about');
     render(<App data={fixtureAppData} />);
     expect(screen.getByRole('heading', { level: 2, name: '만든 이유' })).toBeInTheDocument();
     expectMenuFrame();
-    expect(tabCurrents()).toEqual([null, 'page']);
+    expect(tabCurrents()).toEqual([null, null, 'page']);
 
     act(() => {
       window.location.hash = '#/evidence';
     });
     expect(await screen.findByRole('heading', { level: 2, name: '판정소' })).toBeInTheDocument();
     expectMenuFrame();
-    expect(tabCurrents()).toEqual([null, 'page']);
+    expect(tabCurrents()).toEqual([null, 'page', null]);
 
     act(() => {
       window.location.hash = '#/';
     });
-    expect(await screen.findByText(TITLE)).toBeInTheDocument();
-    expect(tabCurrents()).toEqual(['page', null]);
+    expect(await screen.findByText(TAGLINE)).toBeInTheDocument();
+    expect(tabCurrents()).toEqual(['page', null, null]);
   });
 
   it('타석 해시로 들어오면 GameFrame(머리말·탭바·출처 없음)에 그 타석을 연다', async () => {
@@ -119,14 +119,14 @@ describe('App', () => {
     goto('#/result');
     render(<App data={fixtureAppData} />);
     await waitFor(() => expect(window.location.hash).toBe('#/'));
-    expect(screen.getByText(TITLE)).toBeInTheDocument();
+    expect(screen.getByText(TAGLINE)).toBeInTheDocument();
     expectMenuFrame();
   });
 
-  it('오늘의 타석 카드를 누르면 그 타석 화면으로 간다', async () => {
+  it('오늘의 명장면 카드의 "이 장면 다시 치르기"를 누르면 그 장면 화면으로 간다', async () => {
     render(<App data={fixtureAppData} />);
     act(() => {
-      within(screen.getByRole('region', { name: '오늘의 타석' })).getByRole('link').click();
+      within(screen.getByRole('region', { name: '오늘의 명장면' })).getByRole('link', { name: '이 장면 다시 치르기' }).click();
     });
     expect(await screen.findByRole('heading', { level: 2, name: SCENE.title })).toBeInTheDocument();
     expect(window.location.hash).toBe('#/scene/fixture-walkoff');
@@ -137,7 +137,7 @@ describe('App', () => {
     goto('#/scene/nope');
     render(<App data={fixtureAppData} />);
     await waitFor(() => expect(window.location.hash).toBe('#/'));
-    expect(screen.getByText(TITLE)).toBeInTheDocument();
+    expect(screen.getByText(TAGLINE)).toBeInTheDocument();
     expectMenuFrame();
   });
 
@@ -149,16 +149,15 @@ describe('App', () => {
       resolvePlatform = resolve;
     });
     render(<App data={data} platformPromise={platformPromise} />);
-    expect(screen.getByText(TITLE)).toBeInTheDocument();
+    expect(screen.getByText(TAGLINE)).toBeInTheDocument();
 
     // todaySceneIndex('2026-01-02', 2) = 1
     await act(async () => {
       resolvePlatform(fakePlatform({ today: () => '2026-01-02' }));
       await platformPromise;
     });
-    const today = screen.getByRole('region', { name: '오늘의 타석' });
-    expect(within(today).getByText('8.20 (목)')).toBeInTheDocument();
-    expect(within(screen.getByRole('banner')).getByText('1월 2일 (금)')).toBeInTheDocument();
+    const today = screen.getByRole('region', { name: '오늘의 명장면' });
+    expect(within(today).getByText('오늘의 명장면 · 8월 20일 (목) · 픽스처 구장')).toBeInTheDocument();
   });
 
   it('게임 열 CSS: 가운데 최대 480px·폭 100%·최소 높이 100dvh·가로 넘침 자름, 1024px 이상 그림자와 1px --hair-2', () => {

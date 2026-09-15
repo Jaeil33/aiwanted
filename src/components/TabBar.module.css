@@ -1,23 +1,23 @@
-/* 하단 탭바 (UI_GUIDE 로비): 68px(+안전 영역), 위 1px --hair, 바탕 --ground. 지금 탭 --chalk, 나머지 --dim */
+/* 하단 탭바 (docs/design/broadcast 시안 .tabbar): 68px(+안전 영역), 위 1px --line, 바탕 거의 불투명 --bg. 지금 탭 --text, 나머지 --text-3 */
 .bar {
   position: sticky;
   bottom: 0;
   z-index: 10;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   height: calc(68px + env(safe-area-inset-bottom, 0px));
-  padding: 0 12px calc(6px + env(safe-area-inset-bottom, 0px));
-  border-top: 1px solid var(--hair);
-  background: var(--ground);
+  padding: 0 0 calc(8px + env(safe-area-inset-bottom, 0px));
+  background: rgba(5, 7, 10, 0.97);
+  box-shadow: inset 0 1px 0 var(--line);
 }
 
 .link {
   display: grid;
   justify-items: center;
   align-content: center;
-  gap: 4px;
-  color: var(--dim);
-  font: 600 11px/1 var(--ui);
+  gap: 3px;
+  color: var(--text-3);
+  font: 700 11px/1.5 var(--ui);
   text-decoration: none;
   touch-action: manipulation;
 }
@@ -25,12 +25,16 @@
 .link svg {
   width: 22px;
   height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linejoin: round;
 }
 
 .link:hover {
-  color: var(--dust);
+  color: var(--text-2);
 }
 
 .link[aria-current='page'] {
-  color: var(--chalk);
+  color: var(--text);
 }

@@ -1,5 +1,5 @@
 /* 게임 틀 (UI_GUIDE 화면 구성·데스크톱, ADR-011): 두 틀 모두 가운데 게임 열(최대 480px, 폭 100%, 최소 높이 100dvh).
-   MenuFrame = 상단 바 52px(브랜드) + 본문(좌우 18px) + 출처 한 줄 + 하단 탭바 / GameFrame = 본문만(여백 0, 화면이 둔다).
+   MenuFrame = 상단 바 56px(브랜드, 중계 시안 .app-bar) + 본문(좌우 18px) + 출처 한 줄 + 하단 탭바 / GameFrame = 본문만(여백 0, 화면이 둔다).
    2단 레이아웃은 없다. 열 밖으로 넘친 가로 폭은 잘라 페이지 가로 스크롤을 막는다(clip은 스크롤 컨테이너를 만들지 않아 sticky 탭바가 산다) */
 .column {
   position: relative;
@@ -20,13 +20,13 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  height: 52px;
+  height: 56px;
   padding: 0 18px;
 }
 
 .brand {
   margin: 0;
-  font: 900 17px/1 var(--ui);
+  font: 900 19px/1 var(--ui);
   letter-spacing: -0.03em;
 }
 

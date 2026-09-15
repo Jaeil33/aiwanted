@@ -107,7 +107,7 @@ function GameFrame({ children }: { children: ReactNode }) {
 
 /** 해시 라우트 → 틀과 화면. 타석 라우트는 장면을 열고(같은 장면이 열려 있으면 그대로), 결과 해시는 열린 타석으로, 모르는 장면은 첫 화면으로 보낸다 */
 function Shell() {
-  const { data, session, dispatch, actions, platform } = useGame();
+  const { data, session, dispatch, actions } = useGame();
   const [route, setRoute] = useHashRoute();
   /** 이미 열기를 요청한 타석 해시 (StrictMode에서 effect가 두 번 돌아도 한 번만 연다) */
   const openedFor = useRef<string | null>(null);
@@ -138,7 +138,7 @@ function Shell() {
   }, [route, data, openSceneId, dispatch, actions, setRoute]);
 
   const lobby = (
-    <MenuFrame current="lobby" meta={todayText(platform.today())}>
+    <MenuFrame current="lobby" meta="2026 시즌 명장면">
       <LobbyScreen />
     </MenuFrame>
   );
@@ -162,7 +162,7 @@ function Shell() {
       );
     case 'evidence':
       return (
-        <MenuFrame current="about">
+        <MenuFrame current="evidence">
           <EvidenceScreen />
         </MenuFrame>
       );
