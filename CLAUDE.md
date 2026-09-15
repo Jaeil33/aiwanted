@@ -13,7 +13,7 @@
 - CRITICAL: 확률 숫자는 항상 `src/engine`이 계산한다. AI는 문장을 조절값으로 번역하고 설명만 한다. AI 응답에 담긴 숫자를 확률로 쓰지 마라.
 - CRITICAL: AI 응답은 `src/ai/normalize.ts` 검증을 통과해야 엔진에 들어간다. 검증 실패·오류·AI 없음이면 `src/ai/rules.ts` 규칙 해석으로 대신한다.
 - CRITICAL: `src/engine`, `src/stage/math`, `src/game`, `src/ai`(단 `src/ai/providers` 제외), `src/live`(단 `src/live/providers` 제외)는 순수 모듈이다. DOM, `window`, `fetch`, 타이머, `Math.random`을 직접 쓰지 마라. 난수는 인자로 받는다.
-- CRITICAL: `data/`(네이버·Open-Meteo 원자료와 생성물)는 절대 커밋하지 않는다. 테스트는 `src/test/fixtures`, `pipeline/tests/fixtures`의 합성 데이터만 쓴다.
+- CRITICAL: `data/`(네이버·Open-Meteo 원자료와 생성물)는 절대 커밋하지 않는다. 예외는 앱 번들에 들어가는 `data/build/app/*.json`뿐이다(Vercel GitHub 빌드용, ADR-023). `data/raw`·`data/build`의 나머지는 커밋하지 마라. 테스트는 `src/test/fixtures`, `pipeline/tests/fixtures`의 합성 데이터만 쓴다.
 - CRITICAL: API 키·저장소 토큰(`ANTHROPIC_API_KEY`, `KV_REST_API_URL`, `KV_REST_API_TOKEN`)은 `api/` 함수에서 환경변수로만 읽는다. 클라이언트 코드·저장소·로그·응답에 넣지 마라.
 - CRITICAL: 네이버 API는 `api/_lib/naver.ts`에서만 부른다. 브라우저에서 직접 부르지 말고, 원문 대신 `LiveGame`·`GameSummary` 요약만 돌려준다(ADR-017).
 - 인기 TMI 집계에는 효과 키만 저장한다. TMI 문장·IP·기기 정보는 저장하지 마라(ADR-022).
