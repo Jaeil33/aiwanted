@@ -1,0 +1,77 @@
+/* 공용 버튼 (UI_GUIDE 컴포넌트 규격): 주요 = --accent 52px 800 16px, 보조 = --surface-2 + 1px --line-2, 아이콘 = 투명 36px */
+.primary,
+.secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 52px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: var(--r-card);
+  font: 800 16px/1 var(--ui);
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: transform 120ms var(--ease-out), background-color 120ms var(--ease-out);
+}
+
+.primary {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.secondary {
+  background: var(--surface-2);
+  color: var(--text);
+  font-weight: 700;
+  box-shadow: inset 0 0 0 1px var(--line-2);
+}
+
+.primary:active:not(:disabled),
+.secondary:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.secondary:active:not(:disabled) {
+  background: var(--surface-3);
+}
+
+.primary:disabled,
+.secondary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: var(--r-row);
+  background: transparent;
+  color: var(--text-2);
+}
+
+.icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.icon:active {
+  background: var(--surface-3);
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}

@@ -1,0 +1,156 @@
+/* 중계 스코어버그 56px (UI_GUIDE 타석 화면, 시안 .bug) */
+.bug {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 12px;
+  height: 56px;
+  padding: 0 16px 0 4px;
+  background: #080b10;
+  box-shadow: inset 0 -1px 0 var(--line);
+}
+
+.back {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--r-row);
+  color: var(--text-2);
+}
+
+.back svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.back:active {
+  background: var(--surface-2);
+}
+
+.teams {
+  display: grid;
+  gap: 2px;
+  min-width: 96px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.team {
+  display: grid;
+  grid-template-columns: 3px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  height: 20px;
+}
+
+.bar {
+  height: 16px;
+  border-radius: 2px;
+  background: var(--c);
+}
+
+.name {
+  overflow: hidden;
+  color: var(--text-2);
+  font: 800 13px/1 var(--ui);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.team[data-batting='true'] .name {
+  color: var(--text);
+}
+
+.team[data-batting='true'] .name::after {
+  content: '';
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  margin-left: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+  vertical-align: 2px;
+}
+
+.score {
+  min-width: 2ch;
+  font: 700 19px/1 var(--num);
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.sep {
+  width: 1px;
+  height: 30px;
+  background: var(--line-2);
+}
+
+.inning {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font: 700 20px/1 var(--num);
+  font-variant-numeric: tabular-nums;
+}
+
+.inning small {
+  color: var(--accent);
+  font-size: 11px;
+}
+
+.bases {
+  width: 32px;
+  height: 26px;
+}
+
+.baseCell {
+  fill: none;
+  stroke: #3a4553;
+  stroke-width: 1.5;
+}
+
+.baseCell[data-on='true'] {
+  fill: var(--accent);
+  stroke: var(--accent);
+}
+
+.count {
+  display: grid;
+  justify-items: end;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.count b {
+  font: 700 20px/1 var(--num);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+.outs {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.outs i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--line-2);
+}
+
+.outs i[data-on='true'] {
+  background: var(--out);
+}

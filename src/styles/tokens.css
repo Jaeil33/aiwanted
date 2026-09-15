@@ -1,69 +1,90 @@
-/* docs/UI_GUIDE.md 나이트게임 토큰(ADR-011). 조명탑 아래 그라파이트 바탕, 조명 금색은 행동과 결과에만. 단일 다크 테마 */
+/* docs/UI_GUIDE.md 중계 트래커 토큰(ADR-018). 값의 원본은 docs/design/broadcast/style.css. 단일 다크 테마 */
 :root {
-  /* 바탕 */
-  --ground: #07090B; /* 페이지·경기장 밖 바탕 */
-  --plate: #0F1418; /* HUD 판·시트·도크 버튼 */
-  --plate-2: #161C21; /* 올라온 판(카드 안 행, 티켓, 선택된 탭) */
-  --hair: #252D34; /* 구분선 */
-  --hair-2: #333D45; /* 강한 구분선·버튼 테두리 */
-  --hud: rgba(6, 8, 10, 0.92); /* 경기장 위에 겹치는 판(스코어버그·아이콘 버튼) */
+  /* 바탕·판 */
+  --bg: #05070A; /* 페이지 바탕 */
+  --surface: #0C1016; /* 판·카드 */
+  --surface-2: #121821; /* 올라온 행·선택된 칩 */
+  --surface-3: #1A222D; /* 눌린 상태 */
+  --line: #1D2530; /* 구분선 */
+  --line-2: #2A3441; /* 버튼·입력 테두리 */
+  --hud: rgba(6, 9, 13, 0.86); /* 트래커 위에 겹치는 판 */
 
   /* 글자 */
-  --chalk: #F2EFE6; /* 주 텍스트 */
-  --dust: #9AA4AA; /* 보조 텍스트(바탕 대비 7:1 이상) */
-  --dim: #626D73; /* 비활성·장식 라벨(본문 금지, 대비 3:1) */
+  --text: #F3F5F7;
+  --text-2: #A3ADB8; /* 보조(대비 7:1 이상) */
+  --text-3: #6A7581; /* 비활성·장식(본문 금지) */
 
-  /* 행동·시맨틱 */
-  --flood: #FFCF6B; /* 조명 금색: 주요 버튼, 공격 팀 표시, 포커스 링, 강조 숫자 */
-  --flood-ink: #1C1406; /* 금색 위 글자 */
-  --ball: #3FD27E; /* 볼·출루·유리한 변화 */
-  --strike: #FFC53D; /* 스트라이크·주의 */
-  --out: #FF5043; /* 아웃·불리한 변화·거부 */
-  --toon: #FF8A2A; /* 만화 모드 칩(점선 테두리) */
-  --bat: #F0474B; /* 공격 팀: 장면마다 src/domain/teams.ts 팀 색으로 덮어쓴다 */
-  --fld: #5C8DF6; /* 수비 팀 */
+  /* 행동·콜·변화 */
+  --accent: #FFD23F; /* 주요 버튼·포커스 링·공격 팀 표시 */
+  --accent-ink: #141005;
+  --ball: #2FD27A;
+  --strike: #FFB020;
+  --out: #FF4D4F;
+  --inplay: #4DA3FF;
+  --up: #2FD27A;
+  --down: #FF6B6B;
 
-  /* 근거 등급 금속색 */
-  --foil-real: #E7C46B; /* 실측(금) */
-  --foil-maybe: #C3CED4; /* 그럴듯함(은) */
-  --foil-fun: #D98B67; /* 상상(구리) */
+  /* 근거 등급 */
+  --g-measured: #4DA3FF;
+  --g-plausible: #B9C3CD;
+  --g-fun: #FF8A5B;
+
+  /* 공격·수비 팀 색: 화면이 src/domain/teams.ts 색으로 덮어쓴다 */
+  --bat: #F0474B;
+  --fld: #5C8DF6;
 
   /* 글꼴 */
-  --callout: "Gasoek One", "Black Han Sans", "Noto Sans KR", sans-serif; /* 상황 제목·콜·헤드라인, 한 화면 한두 곳 */
-  --ui: "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif; /* 본문·라벨·버튼 */
-  --num: "Archivo", "Noto Sans KR", system-ui, sans-serif; /* 점수·확률·카운트: font-stretch 72~80%, tabular-nums */
+  --num: "Barlow Semi Condensed", "Noto Sans KR", system-ui, sans-serif; /* 점수·확률·카운트·기록 */
+  --ui: "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
 
-  /* 움직임 */
+  /* 반경: 이 값 밖은 쓰지 않는다 */
+  --r-chip: 6px;
+  --r-row: 8px;
+  --r-card: 12px;
+  --r-sheet: 16px;
+  --r-pill: 999px;
+
+  /* 움직임·깊이 */
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --shadow-sheet: 0 -20px 60px -20px rgba(0, 0, 0, 0.8);
+  --shadow-lift: 0 40px 80px -30px rgba(0, 0, 0, 0.9);
+  --veil: rgba(2, 3, 5, 0.6);
 
-  /* 반경: 이 값 밖은 쓰지 않는다(던지기 버튼만 50%) */
-  --r-board: 2px; /* 스코어버그·LED */
-  --r-control: 6px; /* 버튼·칩·입력·탭 */
-  --r-slot: 8px; /* 도크 버튼·TMI 칸·HUD 판 */
-  --r-ticket: 10px; /* 티켓·결과 판 */
-  --r-card: 12px; /* TMI 카드 */
-  --r-sheet: 16px; /* 시트 위쪽 모서리 */
-
-  /* 깊이 */
-  --shadow-lift: 0 40px 80px -30px rgba(0, 0, 0, 0.8); /* 휴대폰 열 외곽·떠 있는 시트만 */
-  --shadow-call: 0 4px 0 rgba(0, 0, 0, 0.55); /* 콜 글자의 딱딱한 그림자 */
-  --veil: rgba(4, 6, 8, 0.55); /* 시트 뒤 경기장을 55% 어둡게 덮는 판 */
-
-  /* 옛 토큰 별칭: 기존 화면이 깨지지 않게만 남긴다. 11-screens에서 제거 */
-  --night: var(--ground);
-  --booth: var(--plate);
-  --dugout: var(--plate-2);
-  --rail: var(--hair);
-  --board: #05090D;
-  --chalk-2: #C9CFCC;
-  --chalk-3: var(--dust);
-  --chalk-4: var(--dim);
-  --led: var(--flood);
-  --led-ink: var(--flood-ink);
-  --display: var(--callout);
+  /* 옛 이름 별칭: 판정표·신뢰도·시트 같은 기존 컴포넌트가 새 색으로 그려지게만 남긴다 */
+  --ground: var(--bg);
+  --plate: var(--surface);
+  --plate-2: var(--surface-2);
+  --hair: var(--line);
+  --hair-2: var(--line-2);
+  --chalk: var(--text);
+  --dust: var(--text-2);
+  --dim: var(--text-3);
+  --flood: var(--accent);
+  --flood-ink: var(--accent-ink);
+  --toon: var(--g-fun);
+  --foil-real: var(--g-measured);
+  --foil-maybe: var(--g-plausible);
+  --foil-fun: var(--g-fun);
+  --callout: var(--ui);
+  --display: var(--ui);
   --body: var(--ui);
   --led-font: var(--num);
-  --evidence-measured: var(--foil-real);
-  --evidence-plausible: var(--foil-maybe);
-  --evidence-fun: var(--foil-fun);
+  --r-board: 6px;
+  --r-control: 6px;
+  --r-slot: 8px;
+  --r-ticket: 12px;
+  --shadow-call: 0 2px 0 rgba(0, 0, 0, 0.5);
+  --night: var(--bg);
+  --booth: var(--surface);
+  --dugout: var(--surface-2);
+  --rail: var(--line);
+  --board: #05090D;
+  --chalk-2: #C9CFD6;
+  --chalk-3: var(--text-2);
+  --chalk-4: var(--text-3);
+  --led: var(--accent);
+  --led-ink: var(--accent-ink);
+  --evidence-measured: var(--g-measured);
+  --evidence-plausible: var(--g-plausible);
+  --evidence-fun: var(--g-fun);
 }

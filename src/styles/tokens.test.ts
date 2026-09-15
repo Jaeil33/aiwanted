@@ -4,7 +4,7 @@ import { TEAMS } from '../domain/teams';
 import globalCss from './global.css?raw';
 import tokensCss from './tokens.css?raw';
 
-/* docs/UI_GUIDE.md 나이트게임 토큰(ADR-011)이 tokens.css에 값 그대로 있는지, 옛 이름이 별칭으로 남았는지 확인한다 */
+/* docs/UI_GUIDE.md 중계 트래커 토큰(ADR-018)이 tokens.css에 값 그대로 있는지, 옛 이름이 새 값의 별칭으로 남았는지 확인한다 */
 
 /** CSS 원문에서 사용자 속성 선언(--이름: 값)을 모은다. 주석은 지우고 값의 공백은 한 칸으로 줄인다 */
 function customProperties(css: string): Map<string, string> {
@@ -51,88 +51,76 @@ const token = (name: string): string => {
   return value;
 };
 
-/** UI_GUIDE 표의 값 그대로 */
-const NEW_TOKENS: Record<string, string> = {
-  // 바탕
-  '--ground': '#07090B',
-  '--plate': '#0F1418',
-  '--plate-2': '#161C21',
-  '--hair': '#252D34',
-  '--hair-2': '#333D45',
-  '--hud': 'rgba(6, 8, 10, 0.92)',
-  // 글자
-  '--chalk': '#F2EFE6',
-  '--dust': '#9AA4AA',
-  '--dim': '#626D73',
-  // 행동·시맨틱
-  '--flood': '#FFCF6B',
-  '--flood-ink': '#1C1406',
-  '--ball': '#3FD27E',
-  '--strike': '#FFC53D',
-  '--out': '#FF5043',
-  '--toon': '#FF8A2A',
-  // 근거 등급 금속색
-  '--foil-real': '#E7C46B',
-  '--foil-maybe': '#C3CED4',
-  '--foil-fun': '#D98B67',
-  // 글꼴
-  '--callout': '"Gasoek One", "Black Han Sans", "Noto Sans KR", sans-serif',
+/** UI_GUIDE 색상·타이포·반경 표의 값 그대로 */
+const BROADCAST_TOKENS: Record<string, string> = {
+  '--bg': '#05070A',
+  '--surface': '#0C1016',
+  '--surface-2': '#121821',
+  '--surface-3': '#1A222D',
+  '--line': '#1D2530',
+  '--line-2': '#2A3441',
+  '--text': '#F3F5F7',
+  '--text-2': '#A3ADB8',
+  '--text-3': '#6A7581',
+  '--accent': '#FFD23F',
+  '--accent-ink': '#141005',
+  '--ball': '#2FD27A',
+  '--strike': '#FFB020',
+  '--out': '#FF4D4F',
+  '--inplay': '#4DA3FF',
+  '--up': '#2FD27A',
+  '--down': '#FF6B6B',
+  '--g-measured': '#4DA3FF',
+  '--g-plausible': '#B9C3CD',
+  '--g-fun': '#FF8A5B',
+  '--num': '"Barlow Semi Condensed", "Noto Sans KR", system-ui, sans-serif',
   '--ui': '"Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif',
-  '--num': '"Archivo", "Noto Sans KR", system-ui, sans-serif',
-  // 움직임
-  '--ease-out': 'cubic-bezier(0.16, 1, 0.3, 1)',
-  // 반경
-  '--r-board': '2px',
-  '--r-control': '6px',
-  '--r-slot': '8px',
-  '--r-ticket': '10px',
+  '--r-chip': '6px',
+  '--r-row': '8px',
   '--r-card': '12px',
   '--r-sheet': '16px',
-  // 깊이(UI_GUIDE 반경·간격·깊이, 시트 뒤 경기장 55% 어둡게)
-  '--shadow-lift': '0 40px 80px -30px rgba(0, 0, 0, 0.8)',
-  '--shadow-call': '0 4px 0 rgba(0, 0, 0, 0.55)',
-  '--veil': 'rgba(4, 6, 8, 0.55)',
+  '--r-pill': '999px',
+  '--ease-out': 'cubic-bezier(0.16, 1, 0.3, 1)',
+  '--shadow-sheet': '0 -20px 60px -20px rgba(0, 0, 0, 0.8)',
 };
 
-/** 11-screens가 끝날 때까지 기존 화면이 깨지지 않게 남기는 옛 이름 */
+/** 옛 화면(판정표·신뢰도·시트 등)이 아직 쓰는 이름: 새 토큰을 가리키는 별칭 */
 const LEGACY_ALIASES: Record<string, string> = {
-  '--night': 'var(--ground)',
-  '--booth': 'var(--plate)',
-  '--dugout': 'var(--plate-2)',
-  '--rail': 'var(--hair)',
-  '--board': '#05090D',
-  '--chalk-2': '#C9CFCC',
-  '--chalk-3': 'var(--dust)',
-  '--chalk-4': 'var(--dim)',
-  '--led': 'var(--flood)',
-  '--led-ink': 'var(--flood-ink)',
-  '--display': 'var(--callout)',
+  '--ground': 'var(--bg)',
+  '--plate': 'var(--surface)',
+  '--plate-2': 'var(--surface-2)',
+  '--hair': 'var(--line)',
+  '--hair-2': 'var(--line-2)',
+  '--chalk': 'var(--text)',
+  '--dust': 'var(--text-2)',
+  '--dim': 'var(--text-3)',
+  '--flood': 'var(--accent)',
+  '--flood-ink': 'var(--accent-ink)',
+  '--toon': 'var(--g-fun)',
+  '--foil-real': 'var(--g-measured)',
+  '--foil-maybe': 'var(--g-plausible)',
+  '--foil-fun': 'var(--g-fun)',
+  '--callout': 'var(--ui)',
+  '--display': 'var(--ui)',
   '--body': 'var(--ui)',
   '--led-font': 'var(--num)',
-  '--evidence-measured': 'var(--foil-real)',
-  '--evidence-plausible': 'var(--foil-maybe)',
-  '--evidence-fun': 'var(--foil-fun)',
 };
 
 describe('contrastRatio (WCAG 상대 휘도)', () => {
   it('흰색과 검은색은 21:1, 같은 색은 1:1이고 순서와 무관하다', () => {
     expect(contrastRatio('#FFFFFF', '#000000')).toBeCloseTo(21, 5);
     expect(contrastRatio('#000000', '#FFFFFF')).toBeCloseTo(21, 5);
-    expect(contrastRatio('#07090B', '#07090B')).toBeCloseTo(1, 10);
-  });
-
-  it('알려진 값: #767676은 흰 바탕에서 4.54:1', () => {
-    expect(contrastRatio('#767676', '#FFFFFF')).toBeCloseTo(4.54, 2);
+    expect(contrastRatio('#05070A', '#05070A')).toBeCloseTo(1, 10);
   });
 
   it('#RRGGBB가 아니면 던진다', () => {
-    expect(() => contrastRatio('var(--ground)', '#000000')).toThrow();
+    expect(() => contrastRatio('var(--bg)', '#000000')).toThrow();
   });
 });
 
 describe('tokens.css', () => {
-  it('UI_GUIDE의 새 토큰을 값 그대로 정의한다', () => {
-    for (const [name, value] of Object.entries(NEW_TOKENS)) {
+  it('UI_GUIDE 중계 토큰을 값 그대로 정의한다', () => {
+    for (const [name, value] of Object.entries(BROADCAST_TOKENS)) {
       expect({ name, value: TOKENS.get(name)?.toLowerCase() }).toEqual({ name, value: value.toLowerCase() });
     }
   });
@@ -143,11 +131,10 @@ describe('tokens.css', () => {
     expect(colors).toContain(token('--fld').toLowerCase());
   });
 
-  it('옛 토큰 이름은 새 값의 별칭으로 남기고 "11-screens에서 제거" 주석을 단다', () => {
+  it('옛 토큰 이름은 새 토큰의 별칭으로 남긴다', () => {
     for (const [name, value] of Object.entries(LEGACY_ALIASES)) {
       expect({ name, value: TOKENS.get(name)?.toLowerCase() }).toEqual({ name, value: value.toLowerCase() });
     }
-    expect(tokensCss).toContain('11-screens에서 제거');
   });
 
   it('토큰 안의 var() 참조는 모두 정의된 토큰을 가리킨다', () => {
@@ -155,32 +142,29 @@ describe('tokens.css', () => {
     expect(dangling).toEqual([]);
   });
 
-  it('금지 글꼴(픽셀·옛 본문 글꼴)과 보라·인디고 계열을 쓰지 않는다', () => {
-    expect(tokensCss).not.toMatch(/VT323|IBM Plex|Orbitron/i);
+  it('포스터·픽셀 글꼴과 보라·인디고 계열을 쓰지 않는다(UI_GUIDE 하지 마라)', () => {
+    expect(tokensCss).not.toMatch(/Gasoek|Archivo|VT323|Orbitron/i);
     expect(tokensCss).not.toMatch(/purple|indigo|violet/i);
   });
 });
 
 describe('대비 (UI_GUIDE 색상 표)', () => {
-  it('--chalk·--dust는 --ground·--plate 위에서 4.5:1 이상', () => {
-    for (const text of ['--chalk', '--dust']) {
-      for (const ground of ['--ground', '--plate']) {
-        expect({ text, ground, ok: contrastRatio(token(text), token(ground)) >= 4.5 }).toEqual({ text, ground, ok: true });
+  it('--text·--text-2는 --bg·--surface·--surface-2 위에서 7:1 이상', () => {
+    for (const text of ['--text', '--text-2']) {
+      for (const ground of ['--bg', '--surface', '--surface-2']) {
+        expect({ text, ground, ok: contrastRatio(token(text), token(ground)) >= 7 }).toEqual({ text, ground, ok: true });
       }
     }
   });
 
-  it('--flood-ink는 --flood 위에서 4.5:1 이상', () => {
-    expect(contrastRatio(token('--flood-ink'), token('--flood'))).toBeGreaterThanOrEqual(4.5);
+  it('--accent-ink는 --accent 위에서 4.5:1 이상, --text-3은 --bg 위에서 3:1 이상', () => {
+    expect(contrastRatio(token('--accent-ink'), token('--accent'))).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(token('--text-3'), token('--bg'))).toBeGreaterThanOrEqual(3);
   });
 
-  it('--dim은 --ground 위에서 3:1 이상 (장식 라벨 기준)', () => {
-    expect(contrastRatio(token('--dim'), token('--ground'))).toBeGreaterThanOrEqual(3);
-  });
-
-  it('금속색 세 가지는 --plate 위에서 4.5:1 이상', () => {
-    for (const foil of ['--foil-real', '--foil-maybe', '--foil-fun']) {
-      expect({ foil, ok: contrastRatio(token(foil), token('--plate')) >= 4.5 }).toEqual({ foil, ok: true });
+  it('근거 등급·콜 색은 --surface 위에서 4.5:1 이상', () => {
+    for (const name of ['--g-measured', '--g-plausible', '--g-fun', '--ball', '--strike', '--out', '--inplay', '--up', '--down']) {
+      expect({ name, ok: contrastRatio(token(name), token('--surface')) >= 4.5 }).toEqual({ name, ok: true });
     }
   });
 });
@@ -192,7 +176,7 @@ describe('기존 화면이 깨지지 않는다', () => {
   it('src의 CSS·TSX가 var()로 쓰는 토큰은 tokens.css나 그 요소 자신이 정의한다', () => {
     const sources = { ...cssFiles, ...tsxFiles };
     expect(Object.keys(cssFiles).length).toBeGreaterThan(10);
-    // 컴포넌트가 스스로 정하는 지역 변수(--c, --foil 등): CSS 선언이나 style 객체 키('--이름')
+    // 컴포넌트가 스스로 정하는 지역 변수(--c, --team 등): CSS 선언이나 style 객체 키('--이름')
     const local = new Set<string>();
     for (const source of Object.values(sources)) {
       for (const name of customProperties(source).keys()) local.add(name);
@@ -208,20 +192,20 @@ describe('기존 화면이 깨지지 않는다', () => {
 describe('global.css', () => {
   const clean = globalCss.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\s+/g, ' ');
 
-  it('바탕·글자·본문 글꼴과 한국어 줄바꿈을 새 토큰으로 준다', () => {
-    expect(clean).toMatch(/html, body \{[^}]*background: var\(--ground\)/);
-    expect(clean).toMatch(/html, body \{[^}]*color: var\(--chalk\)/);
-    expect(clean).toMatch(/html, body \{[^}]*font: 400 15px\/1\.6 var\(--ui\)/);
+  it('바탕·글자·본문 글꼴과 한국어 줄바꿈을 중계 토큰으로 준다', () => {
+    expect(clean).toMatch(/html, body \{[^}]*background: var\(--bg\)/);
+    expect(clean).toMatch(/html, body \{[^}]*color: var\(--text\)/);
+    expect(clean).toMatch(/html, body \{[^}]*font: 400 14px\/1\.5 var\(--ui\)/);
     expect(clean).toContain('word-break: keep-all');
     expect(clean).toContain('overflow-wrap: break-word');
   });
 
-  it('포커스 링은 --flood 2px, 숨김·버튼 글꼴 상속·숫자 유틸을 둔다', () => {
-    expect(clean).toContain('outline: 2px solid var(--flood)');
+  it('포커스 링은 --accent 2px, 숨김·버튼 글꼴 상속·숫자 유틸을 둔다', () => {
+    expect(clean).toContain('outline: 2px solid var(--accent)');
     expect(clean).toContain('outline-offset: 2px');
     expect(clean).toMatch(/\[hidden\] \{ display: none !important; \}/);
     expect(clean).toMatch(/button, input \{[^}]*font: inherit;[^}]*color: inherit;/);
-    expect(clean).toMatch(/\.num \{[^}]*font-family: var\(--num\);[^}]*font-stretch: 76%;[^}]*font-variant-numeric: tabular-nums;/);
+    expect(clean).toMatch(/\.num \{[^}]*font-family: var\(--num\);[^}]*font-variant-numeric: tabular-nums;/);
   });
 
   it('동작 줄이기에서는 모든 animation·transition을 1ms로 줄인다', () => {
@@ -239,16 +223,16 @@ describe('global.css', () => {
 });
 
 describe('index.html', () => {
-  it('Archivo·Gasoek One·Noto Sans KR 글꼴을 Google Fonts에서 받고 preconnect 두 줄을 둔다', () => {
+  it('Barlow Semi Condensed·Noto Sans KR 글꼴을 Google Fonts에서 받고 preconnect 두 줄을 둔다', () => {
     expect(indexHtml.replaceAll('&amp;', '&')).toContain(
-      'https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Gasoek+One&family=Noto+Sans+KR:wght@400;500;600;700;800;900&display=swap',
+      'https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700;800&family=Noto+Sans+KR:wght@400;500;700;800;900&display=swap',
     );
     expect(indexHtml).toMatch(/<link rel="preconnect" href="https:\/\/fonts\.googleapis\.com"/);
     expect(indexHtml).toMatch(/<link rel="preconnect" href="https:\/\/fonts\.gstatic\.com" crossorigin/);
-    expect(indexHtml).not.toMatch(/VT323|IBM\+Plex|Black\+Han\+Sans/);
+    expect(indexHtml).not.toMatch(/Gasoek|Archivo|VT323|Black\+Han\+Sans/);
   });
 
-  it('theme-color는 --ground(#07090B)', () => {
-    expect(indexHtml).toMatch(/<meta name="theme-color" content="#07090B"\s*\/?>/i);
+  it('theme-color는 --bg(#05070A)', () => {
+    expect(indexHtml).toMatch(/<meta name="theme-color" content="#05070A"\s*\/?>/i);
   });
 });

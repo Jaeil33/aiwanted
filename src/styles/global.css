@@ -13,9 +13,9 @@
 
 html,
 body {
-  background: var(--ground);
-  color: var(--chalk);
-  font: 400 15px/1.6 var(--ui);
+  background: var(--bg);
+  color: var(--text);
+  font: 400 14px/1.5 var(--ui);
 }
 
 body {
@@ -35,7 +35,7 @@ h4 {
 }
 
 :focus-visible {
-  outline: 2px solid var(--flood);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -57,10 +57,9 @@ button:disabled {
   cursor: not-allowed;
 }
 
-/* 점수·확률·카운트 숫자: 좁은 폭 Archivo, 자릿수 고정 */
+/* 점수·확률·카운트 숫자: Barlow Semi Condensed, 자릿수 고정 */
 .num {
   font-family: var(--num);
-  font-stretch: 76%;
   font-variant-numeric: tabular-nums;
 }
 

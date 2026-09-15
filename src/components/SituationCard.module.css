@@ -1,0 +1,245 @@
+/* 지난 경기 타석 카드 (UI_GUIDE 로비·경기 목록 행) */
+.card {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr) auto;
+  grid-template-areas:
+    'meta teams state'
+    'matchup matchup matchup';
+  align-items: center;
+  gap: 10px 12px;
+  padding: 12px 14px;
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--line);
+  color: inherit;
+  text-decoration: none;
+  transition: background-color 120ms var(--ease-out);
+}
+
+.card:active {
+  background: var(--surface-2);
+}
+
+.meta {
+  grid-area: meta;
+  display: grid;
+  gap: 2px;
+}
+
+.kicker {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-2);
+  font: 700 12px/1.2 var(--ui);
+}
+
+.kicker::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 3px rgba(255, 210, 63, 0.18);
+}
+
+.date {
+  font: 700 15px/1.1 var(--num);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.stadium {
+  color: var(--text-3);
+  font: 600 11px/1.2 var(--ui);
+}
+
+.teams {
+  grid-area: teams;
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.team {
+  display: grid;
+  grid-template-columns: 3px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-2);
+  font: 700 14px/1.2 var(--ui);
+}
+
+.team[data-batting='true'] {
+  color: var(--text);
+}
+
+.bar {
+  height: 14px;
+  border-radius: 2px;
+  background: var(--c);
+}
+
+.name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.team[data-batting='true'] .name::after {
+  content: '';
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  margin-left: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  vertical-align: 2px;
+}
+
+.score {
+  font: 700 18px/1 var(--num);
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
+}
+
+.state {
+  grid-area: state;
+  display: grid;
+  justify-items: end;
+  gap: 4px;
+}
+
+.situation {
+  color: var(--text);
+  font: 700 12px/1.2 var(--ui);
+  white-space: nowrap;
+}
+
+.bases {
+  width: 26px;
+  height: 21px;
+}
+
+.matchup {
+  grid-area: matchup;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px;
+  margin: 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+  color: var(--text-2);
+  font: 600 13px/1.3 var(--ui);
+}
+
+.matchup b {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.role {
+  color: var(--text-3);
+  font-size: 11px;
+}
+
+.vs {
+  margin: 0 6px;
+  color: var(--text-3);
+  font: 700 11px/1 var(--num);
+  letter-spacing: 0.04em;
+}
+
+.cta {
+  display: none;
+}
+
+/* 오늘의 타석: 큰 스코어 카드, 두 팀 색을 양 끝에 옅게 깐다 */
+.card[data-variant='feature'] {
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'meta meta'
+    'teams state'
+    'matchup matchup'
+    'cta cta';
+  gap: 14px;
+  padding: 16px;
+  border-radius: var(--r-sheet);
+  background: linear-gradient(
+    120deg,
+    color-mix(in srgb, var(--away) 20%, var(--surface)) 0%,
+    var(--surface) 46%,
+    var(--surface) 54%,
+    color-mix(in srgb, var(--home) 20%, var(--surface)) 100%
+  );
+  box-shadow: inset 0 0 0 1px var(--line-2);
+}
+
+.card[data-variant='feature'] .meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+}
+
+.card[data-variant='feature'] .date {
+  color: var(--text-2);
+  font-size: 13px;
+}
+
+.card[data-variant='feature'] .teams {
+  gap: 6px;
+}
+
+.card[data-variant='feature'] .team {
+  grid-template-columns: 4px minmax(0, 1fr) auto;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.card[data-variant='feature'] .bar {
+  height: 22px;
+}
+
+.card[data-variant='feature'] .score {
+  min-width: 2ch;
+  font-size: 34px;
+  text-align: right;
+}
+
+.card[data-variant='feature'] .state {
+  align-self: stretch;
+  align-content: center;
+  padding-left: 14px;
+  border-left: 1px solid var(--line-2);
+}
+
+.card[data-variant='feature'] .situation {
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.card[data-variant='feature'] .bases {
+  width: 40px;
+  height: 32px;
+}
+
+.card[data-variant='feature'] .matchup {
+  font-size: 14px;
+}
+
+.card[data-variant='feature'] .cta {
+  grid-area: cta;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 52px;
+  border-radius: var(--r-card);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font: 800 16px/1 var(--ui);
+}

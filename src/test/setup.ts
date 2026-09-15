@@ -6,3 +6,8 @@ import { afterEach } from 'vitest';
 afterEach(() => {
   cleanup();
 });
+
+// jsdom에는 캔버스 2D가 없다: getContext가 매번 "not implemented" 오류를 찍지 않게 null만 돌려준다(그리기 코드는 null이면 건너뛴다).
+if (typeof HTMLCanvasElement !== 'undefined') {
+  HTMLCanvasElement.prototype.getContext = (() => null) as unknown as HTMLCanvasElement['getContext'];
+}

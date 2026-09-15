@@ -1,5 +1,6 @@
 import { resolveArtifactSample, type SampleLike } from '../ai';
 import { createLocalEngineClient, createWorkerEngineClient, type EngineClient, type WorkerLike } from '../game';
+import { shareLinkWith, type NavigatorLike, type ShareOutcome } from './shareLink';
 
 /*
  * 플랫폼 어댑터: 브라우저·아티팩트 런타임 입출력(window.claude, Worker, fetch, 오늘 날짜)은 여기서만 만진다(ARCHITECTURE "패턴").
@@ -21,6 +22,8 @@ export interface Platform {
   createEngineClient(): EngineClient;
   /** 오늘 날짜 YYYY-MM-DD (Asia/Seoul) */
   today(): string;
+  /** 링크 공유(공유 시트 → 클립보드). 없으면 공유 버튼이 안내만 한다 */
+  shareLink?(url: string, title: string): Promise<ShareOutcome>;
 }
 
 /** 엔진 워커: 응답(message)과 로드 실패(error) 이벤트를 받는다. 브라우저 Worker가 그대로 맞는다 */
@@ -75,6 +78,7 @@ export async function detectPlatform(win: Window & typeof globalThis, opts: { no
     fetch: typeof fetchImpl === 'function' ? (fetchImpl as typeof fetch) : undefined,
     createEngineClient: () => createPlatformEngineClient({ loadWorker: hasWorker ? loadEngineWorker : null }),
     today: () => seoulDate(now()),
+    shareLink: (url, title) => shareLinkWith((win as { navigator?: NavigatorLike }).navigator, url, title),
   };
 }
 

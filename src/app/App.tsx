@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { weekdayOf } from '../components/SituationCard';
 import { TabBar, type TabBarTab } from '../components/TabBar';
 import { APP_DATA } from '../data/appData';
 import type { AppData } from '../types/data';
@@ -8,13 +9,19 @@ import { localPlatform, type Platform } from './platform';
 import { formatRoute } from './router';
 import { AboutScreen } from './screens/AboutScreen';
 import { EvidenceScreen } from './screens/EvidenceScreen';
-import { HomeScreen } from './screens/HomeScreen';
-import { PlayScreen } from './screens/PlayScreen';
-import { ResultScreen } from './screens/ResultScreen';
+import { LobbyScreen } from './screens/LobbyScreen';
+import { PaScreen } from './screens/PaScreen';
 import { useHashRoute } from './useHashRoute';
 
-/** 출처 한 줄(ADR-005): MenuFrame에만 둔다. 게임 화면의 출처는 결과의 실제 결과 판·만든 이유·공유 카드가 싣는다 */
+/** 출처 한 줄(ADR-005): MenuFrame에 둔다. 타석 화면의 출처는 결과 카드가 싣는다 */
 const SOURCES = '기록·중계: 네이버 스포츠(KBO) · 날씨: Open-Meteo · 확률: TMI 야구 엔진 계산값';
+
+/** 상단 바 오늘 날짜: "2026-09-15" → "9월 15일 (화)" */
+export function todayText(date: string): string {
+  const [, month, day] = date.split('-');
+  const weekday = weekdayOf(date);
+  return `${Number(month)}월 ${Number(day)}일${weekday ? ` (${weekday})` : ''}`;
+}
 
 export interface AppProps {
   /** 앱 데이터. 기본은 빌드에 넣은 APP_DATA, null이면 안내 화면 */
@@ -64,12 +71,12 @@ export function App({ data = APP_DATA, platformPromise }: AppProps) {
 
 interface MenuFrameProps {
   current: TabBarTab;
-  /** 상단 바 오른쪽 한 줄(로비의 "명장면 16") */
+  /** 상단 바 오른쪽 한 줄(로비의 오늘 날짜) */
   meta?: string;
   children: ReactNode;
 }
 
-/** 로비·판정소·만든 이유: 상단 바 52px(브랜드) + 본문 + 출처 한 줄 + 하단 TabBar */
+/** 로비·만든 이유: 상단 바 52px(브랜드) + 본문 + 출처 한 줄 + 하단 TabBar */
 function MenuFrame({ current, meta, children }: MenuFrameProps) {
   return (
     <div className={styles.column}>
@@ -88,7 +95,7 @@ function MenuFrame({ current, meta, children }: MenuFrameProps) {
   );
 }
 
-/** 플레이·결과: 머리말·푸터·탭바 없는 전체 화면. 문서 제목(h1)은 스크린리더에만 둔다 */
+/** 타석: 머리말·푸터·탭바 없는 전체 화면. 문서 제목(h1)은 스크린리더에만 둔다 */
 function GameFrame({ children }: { children: ReactNode }) {
   return (
     <div className={styles.column}>
@@ -98,11 +105,11 @@ function GameFrame({ children }: { children: ReactNode }) {
   );
 }
 
-/** 해시 라우트 → 틀과 화면. play 라우트는 장면을 열고(같은 장면이 열려 있으면 그대로), 모르는 장면·열린 장면 없는 결과는 첫 화면으로 보낸다 */
+/** 해시 라우트 → 틀과 화면. 타석 라우트는 장면을 열고(같은 장면이 열려 있으면 그대로), 결과 해시는 열린 타석으로, 모르는 장면은 첫 화면으로 보낸다 */
 function Shell() {
-  const { data, session, dispatch, actions } = useGame();
+  const { data, session, dispatch, actions, platform } = useGame();
   const [route, setRoute] = useHashRoute();
-  /** 이미 열기를 요청한 play 해시 (StrictMode에서 effect가 두 번 돌아도 한 번만 연다) */
+  /** 이미 열기를 요청한 타석 해시 (StrictMode에서 effect가 두 번 돌아도 한 번만 연다) */
   const openedFor = useRef<string | null>(null);
   const openSceneId = session.sceneId;
 
@@ -123,16 +130,16 @@ function Shell() {
       void actions.openScene(route.sceneId, route.share);
       return;
     }
-    if (route.screen === 'result' && openSceneId === null) {
-      setRoute({ screen: 'home' });
+    if (route.screen === 'result') {
+      setRoute(openSceneId === null ? { screen: 'home' } : { screen: 'play', sceneId: openSceneId, share: null });
       return;
     }
     dispatch({ type: 'navigate', screen: route.screen });
   }, [route, data, openSceneId, dispatch, actions, setRoute]);
 
   const lobby = (
-    <MenuFrame current="lobby" meta={`명장면 ${data.scenes.length}`}>
-      <HomeScreen />
+    <MenuFrame current="lobby" meta={todayText(platform.today())}>
+      <LobbyScreen />
     </MenuFrame>
   );
 
@@ -140,7 +147,7 @@ function Shell() {
     case 'play':
       return data.scenes.some((scene) => scene.id === route.sceneId) ? (
         <GameFrame>
-          <PlayScreen />
+          <PaScreen />
         </GameFrame>
       ) : (
         lobby
@@ -150,12 +157,12 @@ function Shell() {
         lobby
       ) : (
         <GameFrame>
-          <ResultScreen />
+          <PaScreen />
         </GameFrame>
       );
     case 'evidence':
       return (
-        <MenuFrame current="evidence">
+        <MenuFrame current="about">
           <EvidenceScreen />
         </MenuFrame>
       );

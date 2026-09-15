@@ -1,0 +1,102 @@
+/* 로비 (UI_GUIDE 로비) */
+.lobby {
+  display: grid;
+  gap: 24px;
+  min-width: 0;
+  padding-block: 4px 24px;
+}
+
+.intro {
+  display: grid;
+  gap: 6px;
+}
+
+.title {
+  margin: 0;
+  font: 900 24px/1.25 var(--ui);
+  letter-spacing: -0.03em;
+}
+
+.lead {
+  margin: 0;
+  color: var(--text-2);
+  font: 500 14px/1.55 var(--ui);
+}
+
+.section {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.listHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 2px;
+}
+
+.sectionTitle {
+  margin: 0;
+  font: 800 15px/1.3 var(--ui);
+}
+
+.count {
+  color: var(--text-3);
+  font: 600 12px/1 var(--num);
+  font-variant-numeric: tabular-nums;
+}
+
+.list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.how {
+  display: grid;
+  gap: 1px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border-radius: var(--r-card);
+  background: var(--line);
+  list-style: none;
+  counter-reset: step;
+}
+
+.how li {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  column-gap: 12px;
+  row-gap: 2px;
+  padding: 12px 14px;
+  background: var(--surface);
+  counter-increment: step;
+}
+
+.how li::before {
+  content: counter(step);
+  grid-row: 1 / 3;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: var(--accent);
+  font: 800 14px/1 var(--num);
+  box-shadow: inset 0 0 0 1px var(--line-2);
+}
+
+.how b {
+  font: 800 14px/1.3 var(--ui);
+}
+
+.how span {
+  color: var(--text-2);
+  font: 500 13px/1.45 var(--ui);
+}

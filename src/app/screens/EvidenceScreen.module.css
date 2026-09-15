@@ -14,7 +14,8 @@
 .title {
   margin: 0;
   color: var(--chalk);
-  font: 400 28px/1.25 var(--display);
+  font: 900 26px/1.25 var(--ui);
+  letter-spacing: -0.03em;
   word-break: keep-all;
   overflow-wrap: anywhere;
 }
