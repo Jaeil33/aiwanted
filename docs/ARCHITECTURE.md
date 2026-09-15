@@ -156,8 +156,8 @@ export interface TallyRow { key: TallyKey; count: number }
 ### 효과 (TMI → 엔진)
 - 해석 결과 `Interpretation.parts`는 `KnobPart`(14개 손잡이) 또는 `MeasuredPart`(실측 변수).
 - `engine.compileEffects(parts, sceneCtx, evidence)`가 대상(타자·투수·공격팀·수비팀·모두)을 선수 id·진영으로 확정한 `EngineEffect { applies, logOdds, scope, sourceId }`로 바꾼다. 상황의 타자·투수가 대상이다.
-- 적용: 타석마다 해당하는 효과의 logOdds 합 × 모드 배수(현실 1, 만화 6)를 ±상한(현실 0.45, 만화 1.6)으로 자른 뒤 `exp`. `scope: 'pa'` 효과는 상황의 그 타석에만 적용한다.
-- 손잡이 효과 = `STEP(0.06) × 세기 × 손잡이 가중치`. 실측 효과 = evidence의 득점 배수를 리그 평균 타선의 득점 탄력성으로 나눈 크기 × 공격 벡터.
+- 적용: 타석마다 해당하는 효과의 logOdds 합 × 모드 배수(현실 1, 만화 6)를 ±상한(현실 1.2, 만화 2.3, ADR-026)으로 자른 뒤 `exp`. `scope: 'pa'` 효과는 상황의 그 타석에만 적용한다.
+- 손잡이 효과 = `STEP(0.3, ADR-026) × 세기 × 손잡이 가중치`. 실측 효과 = evidence의 득점 배수를 리그 평균 타선의 득점 탄력성으로 나눈 크기 × 공격 벡터.
 
 ### 확률 (`src/engine`, `src/game`)
 - `createGame(cfg).evaluate(state, pitcher, { first })` → `{ batSide, pa, batterWin, pitcherWin, inningScore, expRuns, winHome, tie, winAway, after[7], count }`. `gaugesAtCount(ev, balls, strikes)` → 그 카운트의 `{ dist, winHome, tie, winAway, … }`.
