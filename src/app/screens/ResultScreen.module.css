@@ -1,0 +1,406 @@
+/* 결과 화면 (중계 시안 docs/design/broadcast 4. 결과): 최종 점수 머리말 · 카드 세 장 · 두 버튼 도크 */
+.screen {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--bg);
+  font: 400 14px/1.5 var(--ui);
+  word-break: keep-all;
+}
+
+/* 머리말: 승리 팀 색이 위에서 바탕으로 번진다 */
+.final {
+  flex: none;
+  padding: 24px 18px 18px;
+  text-align: center;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--win) 22%, var(--bg)) 0%, var(--bg) 100%);
+}
+
+.eyebrow {
+  margin: 0;
+  color: var(--text-2);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.finalScore {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  margin: 12px 0 4px;
+}
+
+.fsTeam {
+  display: grid;
+  justify-items: center;
+}
+
+.fsTeam b {
+  color: var(--text-2);
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.fsTeam em {
+  color: var(--text-3);
+  font: 800 66px/0.95 var(--num);
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
+}
+
+.fsTeam[data-win='true'] b,
+.fsTeam[data-win='true'] em,
+.fsTeam[data-tie='true'] b,
+.fsTeam[data-tie='true'] em {
+  color: var(--text);
+}
+
+.colon {
+  order: 1;
+  color: var(--text-3);
+  font: 700 30px var(--num);
+}
+
+.title {
+  margin: 2px 0;
+  font-size: 30px;
+  font-weight: 900;
+  line-height: 1.5;
+  letter-spacing: -0.03em;
+}
+
+.decider {
+  margin: 0;
+  color: var(--text-2);
+  font-size: 13px;
+}
+
+/* 카드 */
+.body {
+  flex: 1 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  gap: 10px;
+  padding: 0 16px 4px;
+}
+
+.card {
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+.cardHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.cardHead h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.headSide {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px 6px;
+  min-width: 0;
+}
+
+.cardNote {
+  color: var(--text-3);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.dotsBox {
+  margin: 12px 0;
+}
+
+.pending {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 40 / 25;
+  margin: 12px 0;
+  color: var(--text-3);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.legend {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.legend li {
+  display: grid;
+  min-width: 0;
+}
+
+.legend small {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--text-2);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.legend small::before {
+  content: '';
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+  background: var(--c);
+}
+
+.legend b {
+  font: 800 26px/1.1 var(--num);
+  font-variant-numeric: tabular-nums;
+}
+
+.legend em {
+  color: var(--text-3);
+  font-size: 11px;
+  font-style: normal;
+  white-space: nowrap;
+}
+
+.legend em span[data-trend='up'] {
+  color: var(--up);
+  font-weight: 700;
+}
+
+/* 칩 */
+.chip,
+.grade {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 99px;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.chip {
+  color: var(--text-2);
+  font-weight: 700;
+  box-shadow: inset 0 0 0 1px var(--line-2);
+}
+
+.chip[data-mode='toon'] {
+  color: var(--g-fun);
+  box-shadow: inset 0 0 0 1px rgba(255, 138, 91, 0.5);
+}
+
+.grade {
+  gap: 5px;
+  font-weight: 800;
+}
+
+.grade::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.grade[data-grade='fun'] {
+  color: var(--g-fun);
+  background: rgba(255, 138, 91, 0.12);
+}
+
+.grade[data-grade='plausible'] {
+  color: var(--g-plausible);
+  background: rgba(185, 195, 205, 0.12);
+}
+
+.grade[data-grade='measured'] {
+  color: var(--g-measured);
+  background: rgba(77, 163, 255, 0.12);
+}
+
+/* 나비효과 */
+.butterfly {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.bfText {
+  min-width: 0;
+}
+
+.kicker {
+  margin: 0;
+  color: var(--text-3);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.bfLine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 6px;
+  margin: 2px 0 6px;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.effect {
+  display: inline-flex;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.effect i {
+  color: var(--text-3);
+  font-style: normal;
+}
+
+.more {
+  color: var(--text-2);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.chips {
+  display: flex;
+  gap: 6px;
+  margin: 0;
+}
+
+.bfNum {
+  flex: none;
+  color: var(--text-2);
+  font: 800 46px/1 var(--num);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.bfNum[data-trend='up'] {
+  color: var(--up);
+}
+
+.bfNum[data-trend='down'] {
+  color: var(--down);
+}
+
+.bfNum small {
+  font-size: 18px;
+}
+
+/* 실제 결과 봉인 */
+.sealed {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.sealed p {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.truth {
+  display: grid;
+  gap: 2px;
+}
+
+.truth b {
+  font-size: 14px;
+}
+
+.truth span {
+  color: var(--text-2);
+  font-size: 12px;
+}
+
+.sources {
+  margin: 2px 2px 0;
+  color: var(--text-3);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+/* 버튼·도크 */
+.btn {
+  height: 52px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 12px;
+  font: 800 14px/1 var(--ui);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  transition: transform 120ms var(--ease-out);
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+.primary {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.quiet {
+  background: var(--surface-2);
+  color: var(--text);
+  box-shadow: inset 0 0 0 1px var(--line-2);
+}
+
+.small {
+  flex: none;
+  height: 40px;
+  font-size: 13px;
+}
+
+.dock {
+  position: sticky;
+  bottom: 0;
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 8px;
+  padding: 12px 16px calc(24px + env(safe-area-inset-bottom, 0px));
+  background: var(--bg);
+}
+
+.note {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--text-2);
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.empty {
+  padding: 48px 18px;
+}
+
+.emptyTitle {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 900;
+}
