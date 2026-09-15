@@ -5,55 +5,90 @@ import { fakePlatform, renderWithGame } from '../../test/gameHarness';
 import type { AppData, SceneRecord } from '../../types/data';
 import { LobbyScreen } from './LobbyScreen';
 
-const A = fixtureAppData.scenes[0]; // 2026-08-15
-const B: SceneRecord = { ...A, id: 'scene-b', date: '2026-08-25', stadium: '두 번째 구장' };
+const SLOW = { timeout: 30_000 };
+const A = fixtureAppData.scenes[0]; // 2026-08-15, 9회말 2사 만루, KIA 4 : 롯데 4, 홈타자6(좌타 .262) vs 원정투수(우투 ERA 3.12)
+const B: SceneRecord = {
+  ...A,
+  id: 'scene-b',
+  date: '2026-09-10',
+  stadium: '두 번째 구장',
+  title: '8회초 1사 1루',
+  state: { ...A.state, inning: 8, half: 0, outs: 1, bases: 1, away: 2, home: 5 },
+};
 const C: SceneRecord = { ...A, id: 'scene-c', date: '2026-08-20', stadium: '세 번째 구장' };
 const DATA: AppData = { ...fixtureAppData, scenes: [A, B, C] };
 
-/** todaySceneIndex('2026-01-03', 3) = 2 → 오늘의 타석은 C */
-const renderLobby = () => renderWithGame(<LobbyScreen />, { data: DATA, platform: fakePlatform({ today: () => '2026-01-03' }) });
+/** todaySceneIndex('2026-01-03', 3) = 2 → 오늘의 명장면은 C */
+const renderLobby = (data: AppData = DATA) => renderWithGame(<LobbyScreen />, { data, platform: fakePlatform({ today: () => '2026-01-03' }) });
 
 const clearHash = () => window.history.replaceState(null, '', '/');
 beforeEach(clearHash);
 afterEach(clearHash);
 
+const flat = (el: Element | null) => (el?.textContent ?? '').replace(/\s+/g, ' ').trim();
+
 describe('LobbyScreen', () => {
-  it('한 줄 제목과 설명', () => {
+  it('한 줄 소개(시안 tagline)와 스크린리더용 제목만 두고, 긴 설명·한 판 흐름은 없다', () => {
     renderLobby();
-    expect(screen.getByRole('heading', { level: 2, name: '방금 그 타석, 만약 그랬다면?' })).toBeInTheDocument();
-    expect(screen.getByText('실제 KBO 타석에 쓸데없는 TMI를 걸면, 그 결과가 나올 확률이 얼마나 바뀌는지 엔진이 계산하고 그 타석을 다시 쳐봐요.')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: '명장면 고르기' })).toBeInTheDocument();
+    expect(screen.getByText('쓸모없는 변수, 진짜 쓸모없을까?')).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: '한 판은 이렇게' })).toBeNull();
+    expect(screen.queryByText('방금 그 타석, 만약 그랬다면?')).toBeNull();
   });
 
-  it('오늘의 타석은 날짜로 고른 장면의 큰 카드이고 그 타석으로 간다', () => {
+  it('오늘의 명장면 카드: 날짜·구장, 원정·홈 이름과 점수, 주자·아웃, 제목, 타자·투수 기록, 다시 치르기 링크', () => {
     renderLobby();
-    const today = screen.getByRole('region', { name: '오늘의 타석' });
-    const link = within(today).getByRole('link');
-    expect(link).toHaveAttribute('href', '#/scene/scene-c');
-    expect(within(link).getByText('8.20 (목)')).toBeInTheDocument();
-    expect(within(link).getByText('이 타석에 TMI 걸기')).toBeInTheDocument();
+    const today = within(screen.getByRole('region', { name: '오늘의 명장면' }));
+    expect(today.getByText('오늘의 명장면 · 8월 20일 (목) · 세 번째 구장')).toBeInTheDocument();
+    const away = today.getByText('원정').parentElement;
+    const home = today.getByText('홈').parentElement;
+    expect(away?.textContent).toBe('원정KIA4');
+    expect(home?.textContent).toBe('홈롯데4');
+    expect(today.getByRole('img', { name: '만루' })).toBeInTheDocument();
+    expect(today.getByRole('img', { name: '2아웃' })).toBeInTheDocument();
+    expect(today.getByRole('heading', { level: 3, name: C.title })).toBeInTheDocument();
+    expect(flat(today.getByText('홈타자6').parentElement)).toBe('홈타자6 좌타 .262 vs 원정투수 우투 ERA 3.12');
+    expect(today.getByRole('link', { name: '이 장면 다시 치르기' })).toHaveAttribute('href', '#/scene/scene-c');
   });
 
-  it('지난 경기 승부처는 날짜 최신순 링크 목록과 타석 수', () => {
-    renderLobby();
-    const past = screen.getByRole('region', { name: '지난 경기 승부처' });
-    expect(within(past).getAllByRole('link').map((link) => link.getAttribute('href'))).toEqual(['#/scene/scene-b', '#/scene/scene-c', '#/scene/fixture-walkoff']);
-    expect(within(past).getByText('3타석')).toBeInTheDocument();
+  it('승부처 지수는 계산 중 "…"이었다가 엔진 값(소수 한 자리)과 막대로 바뀐다', SLOW, async () => {
+    renderLobby({ ...fixtureAppData, scenes: [A] });
+    const today = within(screen.getByRole('region', { name: '오늘의 명장면' }));
+    const row = today.getByText('승부처 지수').parentElement as HTMLElement;
+    expect(within(row).getByText('…')).toBeInTheDocument();
+    const value = await within(row).findByText(/^\d+\.\d$/, undefined, SLOW);
+    const bar = row.querySelector('i');
+    expect(bar).not.toBeNull();
+    const width = Math.min(Number(value.textContent) / 40, 1) * 100;
+    expect(Number.parseFloat(bar?.style.width ?? '')).toBeCloseTo(width, 0);
   });
 
-  it('선수 이름은 core 기록에서 가져오고 실제 결과는 보여주지 않는다', () => {
+  it('다른 명장면: 오늘 카드를 뺀 장면을 날짜 최신순 링크로, 장면 수와 함께', () => {
     renderLobby();
-    expect(screen.getAllByText('홈타자6').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('원정투수').length).toBeGreaterThan(0);
+    const list = within(screen.getByRole('region', { name: '다른 명장면' }));
+    expect(list.getAllByRole('link').map((link) => link.getAttribute('href'))).toEqual(['#/scene/scene-b', '#/scene/fixture-walkoff']);
+    expect(list.getByText('2장면')).toBeInTheDocument();
+  });
+
+  it('목록 한 줄: 날짜 MM.DD·구장, 두 팀 점수(공격 팀 표시), 이닝, 주자·아웃, 지수', async () => {
+    renderLobby();
+    const [rowB] = within(screen.getByRole('region', { name: '다른 명장면' })).getAllByRole('link');
+    const row = within(rowB);
+    expect(row.getByText('09.10')).toBeInTheDocument();
+    expect(row.getByText('두 번째 구장')).toBeInTheDocument();
+    expect(row.getByText('KIA').parentElement?.textContent).toBe('KIA2');
+    expect(row.getByText('롯데').parentElement?.textContent).toBe('롯데5');
+    expect(row.getByText('KIA').parentElement).toHaveAttribute('data-batting', 'true');
+    expect(row.getByText('롯데').parentElement).toHaveAttribute('data-batting', 'false');
+    expect(row.getByText('8회초')).toBeInTheDocument();
+    expect(row.getByRole('img', { name: '1루' })).toBeInTheDocument();
+    expect(row.getByRole('img', { name: '1아웃' })).toBeInTheDocument();
+    expect(row.getByText(/^지수 (…|\d+\.\d)$/)).toBeInTheDocument();
+  });
+
+  it('실제 결과는 보여주지 않는다', () => {
+    renderLobby();
     expect(screen.queryByText(A.actual.result)).toBeNull();
-  });
-
-  it('한 판 흐름 세 단계를 순서대로 보여준다', () => {
-    renderLobby();
-    const how = screen.getByRole('region', { name: '한 판은 이렇게' });
-    const steps = within(how).getAllByRole('listitem').map((item) => item.textContent ?? '');
-    expect(steps).toHaveLength(3);
-    expect(steps[0]).toContain('타석 고르기');
-    expect(steps[1]).toContain('TMI 한 줄');
-    expect(steps[2]).toContain('한 타석 쳐보기');
+    expect(screen.queryByText(/홈런/)).toBeNull();
   });
 });

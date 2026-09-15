@@ -1,31 +1,175 @@
-/* 로비 (UI_GUIDE 로비) */
+/* 로비 (docs/design/broadcast 시안 1: tagline · .feature · .swing · .list-head · .games) */
+/* MenuFrame 본문 여백은 18px, 시안 로비는 16px: 양옆 2px을 되돌린다 */
 .lobby {
   display: grid;
-  gap: 24px;
+  grid-template-columns: minmax(0, 1fr);
   min-width: 0;
-  padding-block: 4px 24px;
+  margin-inline: -2px;
+  padding-block: 0 8px;
 }
 
-.intro {
-  display: grid;
+.tagline {
+  margin: 0 2px 12px;
+  color: var(--text-2);
+  font: 500 13px/1.5 var(--ui);
+}
+
+/* 오늘의 명장면: 원정 색 → 판 → 홈 색 대각 그라디언트 */
+.feature {
+  position: relative;
+  overflow: hidden;
+  padding: 16px;
+  border-radius: 20px;
+  background: linear-gradient(
+    120deg,
+    color-mix(in srgb, var(--away) 26%, var(--surface)) 0%,
+    var(--surface) 46%,
+    var(--surface) 54%,
+    color-mix(in srgb, var(--home) 26%, var(--surface)) 100%
+  );
+  box-shadow: inset 0 0 0 1px var(--line-2);
+}
+
+.eyebrow {
+  display: flex;
+  align-items: center;
   gap: 6px;
+  margin: 0;
+  color: var(--text-2);
+  font: 700 12px/1.5 var(--ui);
+}
+
+.eyebrow::before {
+  content: '';
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 3px rgba(255, 210, 63, 0.18);
+}
+
+.score {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  margin: 14px 0 10px;
+}
+
+.team {
+  display: grid;
+  min-width: 0;
+}
+
+.team[data-side='home'] {
+  text-align: right;
+}
+
+.team small {
+  color: var(--text-3);
+  font: 600 11px/1.5 var(--ui);
+}
+
+.team b {
+  font: 900 20px/1.5 var(--ui);
+  letter-spacing: -0.02em;
+}
+
+.team em {
+  font: 800 54px/0.95 var(--num);
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
+}
+
+.state {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 0 8px;
+}
+
+.featureBases {
+  width: 46px;
+  height: 37px;
+}
+
+.outs {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.outs i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--line-2);
+}
+
+.outs i[data-on='true'] {
+  background: var(--out);
 }
 
 .title {
   margin: 0;
-  font: 900 24px/1.25 var(--ui);
+  font: 900 22px/1.5 var(--ui);
   letter-spacing: -0.03em;
 }
 
-.lead {
-  margin: 0;
+.matchup {
+  margin: 2px 0 14px;
   color: var(--text-2);
-  font: 500 14px/1.55 var(--ui);
+  font: 400 13px/1.5 var(--ui);
 }
 
-.section {
+.matchup b {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.vs {
+  margin: 0 3px;
+}
+
+.swing {
   display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
   gap: 10px;
+  margin-bottom: 14px;
+}
+
+.swing span {
+  color: var(--text-2);
+  font: 700 12px/1.5 var(--ui);
+}
+
+.swingBar {
+  height: 6px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: var(--line-2);
+}
+
+.swingBar i {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: var(--accent);
+  transition: width 0.7s var(--ease-out);
+}
+
+.swing b {
+  font: 700 16px var(--num);
+  font-variant-numeric: tabular-nums;
+}
+
+.cta {
+  width: 100%;
+  font-size: 14px;
+}
+
+/* 다른 명장면 */
+.listSection {
   min-width: 0;
 }
 
@@ -33,22 +177,20 @@
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 12px;
-  padding: 0 2px;
+  margin: 22px 2px 10px;
 }
 
-.sectionTitle {
+.listHead h3 {
   margin: 0;
-  font: 800 15px/1.3 var(--ui);
+  font: 800 15px/1.5 var(--ui);
 }
 
-.count {
+.listHead span {
   color: var(--text-3);
-  font: 600 12px/1 var(--num);
-  font-variant-numeric: tabular-nums;
+  font: 400 12px/1.5 var(--ui);
 }
 
-.list {
+.games {
   display: grid;
   gap: 8px;
   margin: 0;
@@ -56,47 +198,91 @@
   list-style: none;
 }
 
-.how {
+.game {
   display: grid;
-  gap: 1px;
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
-  border-radius: var(--r-card);
-  background: var(--line);
-  list-style: none;
-  counter-reset: step;
-}
-
-.how li {
-  display: grid;
-  grid-template-columns: 28px minmax(0, 1fr);
-  column-gap: 12px;
-  row-gap: 2px;
+  grid-template-columns: 50px 1fr auto;
+  align-items: center;
+  gap: 12px;
   padding: 12px 14px;
+  border-radius: 14px;
   background: var(--surface);
-  counter-increment: step;
+  box-shadow: inset 0 0 0 1px var(--line);
+  color: var(--text);
+  text-decoration: none;
+  touch-action: manipulation;
+  transition: background-color 120ms var(--ease-out);
 }
 
-.how li::before {
-  content: counter(step);
-  grid-row: 1 / 3;
-  display: grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
+.game:active {
   background: var(--surface-2);
-  color: var(--accent);
-  font: 800 14px/1 var(--num);
-  box-shadow: inset 0 0 0 1px var(--line-2);
 }
 
-.how b {
-  font: 800 14px/1.3 var(--ui);
+.date b {
+  display: block;
+  font: 700 16px/1.1 var(--num);
+  font-variant-numeric: tabular-nums;
 }
 
-.how span {
+.date small {
+  color: var(--text-3);
+  font: 600 11px/1.5 var(--ui);
+}
+
+.teams {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 3px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  font: 700 14px/1.5 var(--ui);
+}
+
+.row i {
+  height: 14px;
+  border-radius: 2px;
+  background: var(--c);
+}
+
+.row span {
   color: var(--text-2);
-  font: 500 13px/1.45 var(--ui);
+}
+
+.row[data-batting='true'] span {
+  color: var(--text);
+}
+
+.row em {
+  font: 700 18px/1 var(--num);
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
+}
+
+.side {
+  display: grid;
+  justify-items: end;
+  gap: 3px;
+}
+
+.side p {
+  margin: 0;
+  color: var(--text);
+  font: 700 12px/1.5 var(--ui);
+}
+
+.side span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-3);
+  font: 600 12px var(--num);
+}
+
+.rowBases {
+  width: 24px;
+  height: 19px;
 }

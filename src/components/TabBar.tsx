@@ -1,11 +1,38 @@
-import { Icon, type IconName } from './Icon';
+import type { ReactNode } from 'react';
 import styles from './TabBar.module.css';
 
-export type TabBarTab = 'lobby' | 'about';
+export type TabBarTab = 'lobby' | 'evidence' | 'about';
 
-const TABS: ReadonlyArray<{ id: TabBarTab; label: string; href: string; icon: IconName }> = [
-  { id: 'lobby', label: '경기', href: '#/', icon: 'ball' },
-  { id: 'about', label: '만든 이유', href: '#/about', icon: 'scale' },
+/** 중계 시안 탭 아이콘(선 1.7px, 채움 없음) */
+const TABS: ReadonlyArray<{ id: TabBarTab; label: string; href: string; icon: ReactNode }> = [
+  {
+    id: 'lobby',
+    label: '명장면',
+    href: '#/',
+    icon: (
+      <>
+        <path d="M4 6h16v12H4z" />
+        <path d="M4 10h16" />
+      </>
+    ),
+  },
+  {
+    id: 'evidence',
+    label: '판정소',
+    href: '#/evidence',
+    icon: <path d="M12 4v16M6 8h12M6 8l-3 6h6zM18 8l-3 6h6z" />,
+  },
+  {
+    id: 'about',
+    label: '만든 이유',
+    href: '#/about',
+    icon: (
+      <>
+        <circle cx="12" cy="12" r="8" />
+        <path d="M12 8v5l3 2" />
+      </>
+    ),
+  },
 ];
 
 export interface TabBarProps {
@@ -13,13 +40,15 @@ export interface TabBarProps {
   current: TabBarTab | null;
 }
 
-/** 로비·만든 이유의 하단 탭바(ADR-020: 경기·만든 이유 두 개). 지금 탭은 aria-current="page" */
+/** 로비·판정소·만든 이유의 하단 탭바(중계 시안: 명장면·판정소·만든 이유). 지금 탭은 aria-current="page" */
 export function TabBar({ current }: TabBarProps) {
   return (
     <nav className={styles.bar} aria-label="주 메뉴">
       {TABS.map((tab) => (
         <a key={tab.id} className={styles.link} href={tab.href} aria-current={tab.id === current ? 'page' : undefined}>
-          <Icon name={tab.icon} size={22} strokeWidth={1.5} />
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            {tab.icon}
+          </svg>
           {tab.label}
         </a>
       ))}
