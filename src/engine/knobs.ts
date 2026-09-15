@@ -1,7 +1,7 @@
 import type { EventVector, KnobId } from '../types/domain';
 
-/** 손잡이 세기 1당 로그 오즈 (ADR-002: 프로토타입 값 그대로) */
-export const STEP = 0.06;
+/** 손잡이 세기 1당 로그 오즈 (ADR-026: 프로토타입 0.06에서 올려 TMI가 확률에 크게 반영되게 했다) */
+export const STEP = 0.3;
 
 /**
  * 손잡이별 [K, BB, HR, 3B, 2B, 1B, OUT] 로그 오즈 가중치. 프로토타입 engine.js KNOBS의 w 그대로다.

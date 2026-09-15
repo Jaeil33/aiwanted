@@ -42,7 +42,9 @@ describe('PlayScreen', () => {
     expect(screen.getByRole('tab', { name: '경기' })).toHaveAttribute('aria-selected', 'true');
     expect(screen.getByRole('radio', { name: '현실' })).toHaveAttribute('aria-checked', 'true');
     expect(screen.getByRole('img', { name: /^롯데 승리확률 \d+\.\d% · 무승부 \d+\.\d% · KIA \d+\.\d%$/ })).toBeInTheDocument();
-    expect(within(screen.getByRole('region', { name: '걸린 TMI' })).getByRole('button', { name: '+ TMI 걸기' })).toBeEnabled();
+    const invite = screen.getByRole('region', { name: '걸린 TMI' });
+    expect(within(invite).getByRole('button', { name: 'TMI 걸기' })).toBeEnabled();
+    expect(within(invite).getByRole('group', { name: '눌러서 바로 걸기' })).toBeInTheDocument();
     const dock = screen.getByRole('navigation', { name: '다시 치르기' });
     expect(within(dock).getAllByRole('button').map((b) => b.textContent)).toEqual(['타석 끝까지', '한 구 던지기', '경기 끝까지']);
     expect(screen.queryByText(/^실제/)).toBeNull();
@@ -64,8 +66,9 @@ describe('PlayScreen', () => {
     const user = userEvent.setup();
     await openPlay();
     await screen.findByLabelText(/^롯데 승리확률 \d+\.\d%$/, undefined, WAIT);
-    await user.click(screen.getByRole('button', { name: '+ TMI 걸기' }));
+    await user.click(screen.getByRole('button', { name: 'TMI 걸기' }));
     const dialog = screen.getByRole('dialog', { name: 'TMI 걸기' });
+    expect(within(dialog).getByLabelText('TMI 한 줄')).toHaveFocus();
     await user.type(within(dialog).getByLabelText('TMI 한 줄'), '투수가 어젯밤 3시간밖에 못 잤다');
     await user.click(within(dialog).getByRole('button', { name: '걸기' }));
     expect(await screen.findByRole('article', { name: 'TMI 투수가 어젯밤 3시간밖에 못 잤다' }, WAIT)).toBeInTheDocument();
@@ -75,6 +78,17 @@ describe('PlayScreen', () => {
     const panel = screen.getByRole('region', { name: '승부 확률' });
     await waitFor(() => expect(panel).toHaveTextContent(/TMI 없이 \d+\.\d%/), WAIT);
     expect(within(panel).getByText('그럴듯함')).toBeInTheDocument();
+  });
+
+  it('바로 걸기 칩을 누르면 시트 없이 TMI가 걸리고, 초대 판이 칩 줄과 노란 "+ TMI 걸기"로 바뀐다', SLOW, async () => {
+    const user = userEvent.setup();
+    await openPlay();
+    await screen.findByLabelText(/^롯데 승리확률 \d+\.\d%$/, undefined, WAIT);
+    await user.click(within(screen.getByRole('group', { name: '눌러서 바로 걸기' })).getByRole('button', { name: '짜장면 곱빼기' }));
+    expect(await screen.findByRole('button', { name: /^TMI 원정투수가 경기 전 짜장면 곱빼기를 먹었다, 투수 체력 ↓, / }, WAIT)).toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).toBeNull();
+    const rail = screen.getByRole('region', { name: '걸린 TMI' });
+    expect(within(rail).getByRole('button', { name: '+ TMI 걸기' })).toHaveAttribute('data-accent', 'true');
   });
 
   it('"한 구 던지기" 뒤에는 모드·TMI가 잠기고 "↺ 처음부터"로 되돌린다', SLOW, async () => {
@@ -91,7 +105,7 @@ describe('PlayScreen', () => {
     await user.click(await screen.findByRole('button', { name: '↺ 처음부터' }, WAIT));
     await waitFor(() => expect(view.game().session.log).toHaveLength(0));
     expect(view.game().session.live?.pitches).toHaveLength(0);
-    expect(screen.getByRole('button', { name: '+ TMI 걸기' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'TMI 걸기' })).toBeInTheDocument();
   });
 
   it('경기가 끝나면 마지막 콜을 잠깐 보여준 뒤 결과 해시로 보낸다', async () => {

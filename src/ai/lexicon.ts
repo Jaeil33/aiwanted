@@ -366,6 +366,20 @@ export const CORE_CONCEPTS: readonly Concept[] = [
     why: '지친 야수는 타구 반응이 늦다는 가정',
   },
 
+  ...person(
+    'body-bathroom',
+    {
+      category: 'body',
+      patterns: [/(?<![가-힣])똥(?!볼)|급똥|화장실|대변|소변|오줌|방귀|볼일\s*(?:이\s*)?(?:급|보)|마렵|마려/],
+      negation: 'cancel',
+      evidence: 'fun',
+      scope: 'pa',
+      why: '급한 신호가 오면 온 신경이 거기로 간다는 가정',
+    },
+    ['focus', -2, "'{what}' 신호에 {who}, 온 신경이 화장실로 간다고 봤어요"],
+    ['control', -2, "'{what}' 신호에 {who}, 빨리 끝내려다 공이 날린다고 봤어요"],
+  ),
+
   // ---------- 기분 ----------
   ...person(
     'mood-excited',
@@ -790,7 +804,7 @@ export const CORE_CONCEPTS: readonly Concept[] = [
   {
     id: 'weather-rain',
     category: 'weather',
-    patterns: [/(?<![가-힣])비\s*(?:가|는|도)?\s*(?:와|옴|온|오|내리|내림|내린|뿌리|왔)|(?<![가-힣])비가|(?<![가-힣])비(?=$|\s|[는도에])|빗방울|빗줄기|빗물|우천|장마|소나기|가랑비|이슬비|보슬비|젖은|젖었|축축|비\s*예보/],
+    patterns: [/(?<![가-힣])비\s*(?:가|는|도|까지|마저|조차)?\s*(?:와|옴|온|오|내리|내림|내린|뿌리|왔)|(?<![가-힣])비가|(?<![가-힣])비(?=$|\s|[는도에])|빗방울|빗줄기|빗물|우천|장마|소나기|가랑비|이슬비|보슬비|젖은|젖었|축축|비\s*예보/],
     knob: 'slick',
     defaultSubject: 'everyone',
     strength: 1,
@@ -998,7 +1012,7 @@ export const CORE_CONCEPTS: readonly Concept[] = [
   {
     id: 'crowd-cheer',
     category: 'crowd',
-    patterns: [/관중|관객|함성|떼창|응원가|응원\s*(?:소리|열기|석|단)|(?<![가-힣])응원(?![가-힣])|만석|매진|꽉\s*찬|파도타기|치어리더|홈\s*팬|팬들|박수/],
+    patterns: [/관중|관객|함성|떼창|응원가|응원\s*(?:소리|열기|석|단)|(?<![가-힣])응원(?![가-힣])|만석|매진|꽉\s*찬|파도타기|치어리더|홈\s*팬|팬들|(?<![가-힣])박수/],
     knob: 'mood',
     defaultSubject: 'battingTeam',
     strength: 1,
@@ -1017,6 +1031,7 @@ export const CORE_CONCEPTS: readonly Concept[] = [
       evidence: 'plausible',
       scope: 'game',
       why: '쏟아지는 야유는 상대를 흔든다는 가정',
+      excludes: ['crowd-cheer'],
     },
     -1,
     'fieldingTeam',
@@ -1025,7 +1040,7 @@ export const CORE_CONCEPTS: readonly Concept[] = [
   {
     id: 'crowd-empty',
     category: 'crowd',
-    patterns: [/관중\s*(?:이\s*)?(?:없|적|텅|썰렁|별로)|관중석\s*(?:이\s*)?(?:텅|썰렁|비었)|텅\s*(?:빈|비었)|썰렁|무관중|빈\s*자리/],
+    patterns: [/관중\s*(?:이\s*)?(?:별로\s*)?(?:없|적|텅|썰렁)|관중\s*(?:이\s*)?별로|관중석\s*(?:이\s*)?(?:텅|썰렁|비었)|텅\s*(?:빈|비었)|썰렁|무관중|빈\s*자리/],
     knob: 'mood',
     defaultSubject: 'battingTeam',
     strength: -1,
@@ -1526,28 +1541,43 @@ interface Found {
   match: ConceptMatch;
 }
 
+/** 개념어 사이에 끼어 매칭을 막는 강조·시간 부사("컨디션 완전 최고"). 부정어(안·못)는 지우지 않는다 */
+const FILLER_WORDS = /(?<=^|\s)(?:완전|완전히|진짜|정말|너무|너무너무|아주|매우|엄청|엄청나게|되게|무지|굉장히|몹시|존나|졸라|겁나|개|핵|약간|조금|살짝|좀|많이|또|다시|갑자기|오늘|오늘도|어제|요즘|계속|자꾸|막|그냥|벌써|이미|아직|확|ㅈㄴ|레알|찐)(?=\s|$)\s*/g;
+
+function bestMatch(concept: Concept, text: string, prepared: PreparedText): { index: number; matched: string } | null {
+  const scan = withTokens(text);
+  let best: { index: number; matched: string } | null = null;
+  for (const re of concept.patterns) {
+    const m = re.exec(scan);
+    if (m && (!best || m.index < best.index || (m.index === best.index && m[0].length > best.matched.length))) {
+      best = { index: m.index, matched: m[0] };
+    }
+  }
+  const q = concept.quantity;
+  if (!best && q && q.near.test(scan)) {
+    const number = prepared.numbers.find((n) => n.unit === q.unit
+      && (q.min === undefined || n.value >= q.min)
+      && (q.max === undefined || n.value <= q.max)
+      && text.includes(n.raw));
+    if (number) best = { index: text.indexOf(number.raw), matched: number.raw };
+  }
+  return best;
+}
+
 export function matchConcepts(clause: Clause, prepared: PreparedText): ConceptMatch[] {
   const text = clause.text;
-  const scan = withTokens(text);
+  // 원문에서 못 찾으면 강조·시간 부사를 지운 문장에서 한 번 더 찾는다
+  const plain = text.replace(FILLER_WORDS, '').trim();
   const found: Found[] = [];
   CONCEPTS.forEach((concept, order) => {
-    let best: { index: number; matched: string } | null = null;
-    for (const re of concept.patterns) {
-      const m = re.exec(scan);
-      if (m && (!best || m.index < best.index || (m.index === best.index && m[0].length > best.matched.length))) {
-        best = { index: m.index, matched: m[0] };
-      }
-    }
-    const q = concept.quantity;
-    if (!best && q && q.near.test(scan)) {
-      const number = prepared.numbers.find((n) => n.unit === q.unit
-        && (q.min === undefined || n.value >= q.min)
-        && (q.max === undefined || n.value <= q.max)
-        && text.includes(n.raw));
-      if (number) best = { index: text.indexOf(number.raw), matched: number.raw };
+    let source = text;
+    let best = bestMatch(concept, text, prepared);
+    if (!best && plain !== '' && plain !== text) {
+      best = bestMatch(concept, plain, prepared);
+      source = plain;
     }
     if (!best) return;
-    const negated = negatedAt(text, best.index, best.index + best.matched.length);
+    const negated = negatedAt(source, best.index, best.index + best.matched.length);
     found.push({ index: best.index, order, match: { concept, matched: best.matched.trim(), negated } });
   });
   const excluded = new Set(found.flatMap((f) => f.match.concept.excludes ?? []));

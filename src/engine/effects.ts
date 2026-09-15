@@ -2,12 +2,12 @@ import { KNOB_META, SUBJECTS_FOR } from '../domain/knobs';
 import type { EffectApplies, EngineEffect, KnobPart, KnobWho, Mode, SceneContext, Side, Subject } from '../types/domain';
 import { KNOB_WEIGHTS, STEP } from './knobs';
 
-/** 현실 모드: 한 사건의 로그 오즈 변화 상한 (최대 약 ×1.57) */
-export const REAL_LOG_CAP = 0.45;
+/** 현실 모드: 한 사건의 로그 오즈 변화 상한 (최대 약 ×3.3, ADR-026) */
+export const REAL_LOG_CAP = 1.2;
 /** 만화 모드: 로그 오즈 과장 배수 (ADR-009) */
 export const TOON_FACTOR = 6;
-/** 만화 모드: 로그 오즈 상한 (최대 약 ×5) */
-export const TOON_LOG_CAP = 1.6;
+/** 만화 모드: 로그 오즈 상한 (최대 약 ×10, ADR-026) */
+export const TOON_LOG_CAP = 2.3;
 
 /** 효과 배수를 계산할 한 타석 */
 export interface PaContext {

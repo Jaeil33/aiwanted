@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { BroadcastBug } from '../../components/BroadcastBug';
 import controls from '../../components/controls.module.css';
 import { PitchTracker, type PitchTrackerHandle, type PlayerCaption } from '../../components/PitchTracker';
-import { TmiRail, type RailPill } from '../../components/TmiRail';
+import { TmiRail, type QuickTmi, type RailPill, type TmiInvite } from '../../components/TmiRail';
 import { TmiSheet } from '../../components/TmiSheet';
 import { WpPanel } from '../../components/WpPanel';
 import { josa } from '../../domain/format';
@@ -52,6 +52,8 @@ function PlayBoard({ setup }: { setup: SceneSetup }) {
   const [, setRoute] = useHashRoute();
   const [tier, setTier] = useState<Tier>('game');
   const [sheetOpen, setSheetOpen] = useState(false);
+  /** 초대 판·"+ TMI 걸기"로 열면 입력칸에 바로 초점을 둔다 */
+  const [sheetFocus, setSheetFocus] = useState(false);
 
   const { scene, promptContext } = setup;
   const live = session.live;
@@ -87,15 +89,31 @@ function PlayBoard({ setup }: { setup: SceneSetup }) {
     }),
     [promptContext],
   );
-  const examples = useMemo(
-    () => [
-      `${josa(promptContext.pitcher.name, '이/가')} 경기 전 짜장면 곱빼기를 먹었다`,
-      `${josa(promptContext.batter.name, '이/가')} 어젯밤 3시간밖에 못 잤다`,
+  const examples = useMemo(() => {
+    const batterIs = josa(promptContext.batter.name, '이/가');
+    const pitcherIs = josa(promptContext.pitcher.name, '이/가');
+    return [
+      `${pitcherIs} 경기 전 짜장면 곱빼기를 먹었다`,
+      `${batterIs} 어젯밤 3시간밖에 못 잤다`,
       '오늘 기온 35도, 폭염',
+      `${batterIs} 빨간 팬티를 입고 왔다`,
+      `${pitcherIs} 악플 보고 멘붕`,
       '원정팀이 버스로 5시간 이동했다',
-    ],
-    [promptContext],
-  );
+    ];
+  }, [promptContext]);
+  /** 초대 판의 바로 걸기 칩(ADR-026): 누르면 시트 없이 그 문장을 건다 */
+  const quick = useMemo<QuickTmi[]>(() => {
+    const batterIs = josa(promptContext.batter.name, '이/가');
+    const pitcherIs = josa(promptContext.pitcher.name, '이/가');
+    return [
+      { label: '짜장면 곱빼기', text: `${pitcherIs} 경기 전 짜장면 곱빼기를 먹었다` },
+      { label: '3시간밖에 못 잠', text: `${batterIs} 어젯밤 3시간밖에 못 잤다` },
+      { label: '갑자기 똥 신호', text: `${batterIs} 갑자기 똥이 마려웠다` },
+      { label: '폭염 35도', text: '오늘 기온 35도, 폭염' },
+      { label: '로또 1등', text: `${pitcherIs} 어제 로또 1등에 당첨됐다` },
+      { label: '홈 팬 떼창', text: '홈 팬들 떼창이 경기장을 흔든다' },
+    ];
+  }, [promptContext]);
 
   const { baseGauge, tmiGauge } = evaluations;
   const readout = baseGauge && tmiGauge ? tierReadout({ tier, setup, state, base: baseGauge, tmi: tmiGauge }) : null;
@@ -133,12 +151,21 @@ function PlayBoard({ setup }: { setup: SceneSetup }) {
     trackerRef.current?.clearMarkers();
     actions.resetPlay();
   };
+  const openSheet = (focus: boolean) => {
+    setSheetFocus(focus);
+    setSheetOpen(true);
+  };
+  // 아직 TMI가 없고 걸 수 있으면 칩 줄 자리에 큰 초대 판(ADR-026)
+  const invite: TmiInvite | null =
+    editable && !playing && !finished && session.tmis.length === 0
+      ? { onOpen: () => openSheet(true), quick, onQuick: (text) => void actions.submitTmi(text), busy: session.interpreting }
+      : null;
 
   const railAction = finished
     ? null
     : editable
       ? session.tmis.length < MAX_TMIS
-        ? { label: '+ TMI 걸기', onClick: () => setSheetOpen(true) }
+        ? { label: '+ TMI 걸기', onClick: () => openSheet(true) }
         : null
       : playing
         ? null
@@ -212,13 +239,14 @@ function PlayBoard({ setup }: { setup: SceneSetup }) {
         grade={grade}
         spark={spark}
       />
-      <TmiRail pills={pills} onOpen={() => setSheetOpen(true)} action={railAction} />
+      <TmiRail pills={pills} onOpen={() => openSheet(false)} action={railAction} invite={invite} />
       <nav className={styles.dock} data-count={finished ? 2 : 3} aria-label="다시 치르기">
         {dock}
       </nav>
 
       <TmiSheet
         open={sheetOpen}
+        autoFocus={sheetFocus}
         onClose={() => setSheetOpen(false)}
         odds={readout ? { label: readout.label, base: readout.base, value: readout.value, hasTmi } : null}
         tmis={session.tmis}

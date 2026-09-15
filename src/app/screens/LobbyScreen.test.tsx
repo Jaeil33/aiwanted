@@ -48,7 +48,7 @@ describe('LobbyScreen', () => {
     expect(today.getByRole('img', { name: '2아웃' })).toBeInTheDocument();
     expect(today.getByRole('heading', { level: 3, name: C.title })).toBeInTheDocument();
     expect(flat(today.getByText('홈타자6').parentElement)).toBe('홈타자6 좌타 .262 vs 원정투수 우투 ERA 3.12');
-    expect(today.getByRole('link', { name: '이 장면 다시 치르기' })).toHaveAttribute('href', '#/scene/scene-c');
+    expect(today.getByRole('link', { name: 'TMI 걸고 다시 치르기' })).toHaveAttribute('href', '#/scene/scene-c');
   });
 
   it('승부처 지수는 계산 중 "…"이었다가 엔진 값(소수 한 자리)과 막대로 바뀐다', SLOW, async () => {

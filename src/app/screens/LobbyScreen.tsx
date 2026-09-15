@@ -151,7 +151,7 @@ function Feature({ scene, batter, pitcher, nameOf, swing }: FeatureProps) {
         <b>{swingText(swing)}</b>
       </div>
       <a className={`${controls.primary} ${styles.cta}`} href={playHref(scene.id)}>
-        이 장면 다시 치르기
+        TMI 걸고 다시 치르기
       </a>
     </section>
   );

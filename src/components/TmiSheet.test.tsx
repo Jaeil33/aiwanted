@@ -98,6 +98,19 @@ describe('TmiSheet', () => {
     expect(screen.getByText('실존 인물에게 민감한 내용이라 계산하지 않았어요.')).toBeInTheDocument();
   });
 
+  it('autoFocus면 열릴 때 입력칸에 초점을 두고, 아니면 두지 않는다', () => {
+    const { unmount } = render(<TmiSheet {...props({ tmis: [], autoFocus: true })} />);
+    expect(screen.getByLabelText('TMI 한 줄')).toHaveFocus();
+    unmount();
+    render(<TmiSheet {...props({ tmis: [] })} />);
+    expect(screen.getByLabelText('TMI 한 줄')).not.toHaveFocus();
+  });
+
+  it('입력 줄 위에 무엇이든 확률로 바꾼다는 안내를 둔다', () => {
+    render(<TmiSheet {...props({ tmis: [] })} />);
+    expect(screen.getByText('음식·잠·기분·날씨·징크스… 아무 말이나 한 줄이면 확률이 바뀌어요')).toBeInTheDocument();
+  });
+
   it('닫기 버튼이 onClose를 부른다', async () => {
     const user = userEvent.setup();
     const p = props();

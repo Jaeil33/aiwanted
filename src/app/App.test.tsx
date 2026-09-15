@@ -123,10 +123,10 @@ describe('App', () => {
     expectMenuFrame();
   });
 
-  it('오늘의 명장면 카드의 "이 장면 다시 치르기"를 누르면 그 장면 화면으로 간다', async () => {
+  it('오늘의 명장면 카드의 "TMI 걸고 다시 치르기"를 누르면 그 장면 화면으로 간다', async () => {
     render(<App data={fixtureAppData} />);
     act(() => {
-      within(screen.getByRole('region', { name: '오늘의 명장면' })).getByRole('link', { name: '이 장면 다시 치르기' }).click();
+      within(screen.getByRole('region', { name: '오늘의 명장면' })).getByRole('link', { name: 'TMI 걸고 다시 치르기' }).click();
     });
     expect(await screen.findByRole('heading', { level: 2, name: SCENE.title })).toBeInTheDocument();
     expect(window.location.hash).toBe('#/scene/fixture-walkoff');

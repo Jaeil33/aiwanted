@@ -1,4 +1,4 @@
-import { useId, useState, type FormEvent } from 'react';
+import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import { formatPct } from '../domain/format';
 import { deltaText } from '../game/broadcast';
 import type { TmiEntry, VerdictResult } from '../types/domain';
@@ -32,6 +32,8 @@ export interface TmiSheetProps {
   notice: string;
   examples: string[];
   names?: CardNames;
+  /** 열릴 때 입력칸에 초점을 둔다("TMI 걸기" 판으로 열었을 때) */
+  autoFocus?: boolean;
   onSubmit(text: string): void;
   onRemove(id: string): void;
   onJudge(id: string): void;
@@ -44,7 +46,14 @@ const MAX_LENGTH = 80;
 export function TmiSheet(p: TmiSheetProps) {
   const titleId = useId();
   const inputId = useId();
+  const inputRef = useRef<HTMLInputElement>(null);
   const [text, setText] = useState('');
+  const { open, autoFocus = false, canEdit } = p;
+
+  // 시트(자식)가 첫 버튼에 초점을 둔 뒤에 돈다: 초대 판으로 열었으면 바로 쓸 수 있게 입력칸으로 옮긴다
+  useEffect(() => {
+    if (open && autoFocus && canEdit) inputRef.current?.focus();
+  }, [open, autoFocus, canEdit]);
   const count = p.tmis.length;
   // TMI가 늘었을 때만 입력을 비운다(거부·실패면 그대로 둔다)
   const [seenCount, setSeenCount] = useState(count);
@@ -121,11 +130,13 @@ export function TmiSheet(p: TmiSheetProps) {
           ))}
         </ul>
       )}
+      <p className={styles.hint}>음식·잠·기분·날씨·징크스… 아무 말이나 한 줄이면 확률이 바뀌어요</p>
       <form className={styles.composer} onSubmit={submit} aria-busy={p.busy}>
         <label htmlFor={inputId} className={controls.srOnly}>
           TMI 한 줄
         </label>
         <input
+          ref={inputRef}
           id={inputId}
           className={styles.input}
           type="text"

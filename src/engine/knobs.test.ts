@@ -22,8 +22,8 @@ const PROTOTYPE_W: Record<KnobId, number[]> = {
 };
 
 describe('STEP', () => {
-  it('세기 1당 로그 오즈 0.06', () => {
-    expect(STEP).toBe(0.06);
+  it('세기 1당 로그 오즈 0.3 (ADR-026)', () => {
+    expect(STEP).toBe(0.3);
   });
 });
 

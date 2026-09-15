@@ -42,10 +42,10 @@ const scaled = (knob: KnobId, strength: number) => KNOB_WEIGHTS[knob].map((w) =>
 const expOf = (xs: readonly number[]) => xs.map((x) => Math.exp(x));
 
 describe('상수', () => {
-  it('현실 상한 0.45, 만화 6배·상한 1.6', () => {
-    expect(REAL_LOG_CAP).toBe(0.45);
+  it('현실 상한 1.2, 만화 6배·상한 2.3 (ADR-026)', () => {
+    expect(REAL_LOG_CAP).toBe(1.2);
     expect(TOON_FACTOR).toBe(6);
-    expect(TOON_LOG_CAP).toBe(1.6);
+    expect(TOON_LOG_CAP).toBe(2.3);
   });
 });
 
@@ -217,27 +217,27 @@ describe('effectMultipliers', () => {
     expectVector(m, expOf(log));
   });
 
-  it('현실 모드는 합친 로그 오즈를 ±0.45에서 자른다', () => {
+  it('현실 모드는 합친 로그 오즈를 ±1.2에서 자른다', () => {
     const ctx = pa('a1', 'hp', 'away');
     const up = Array.from({ length: 20 }, () => compileKnobPart(part('power', 'everyone', 3), SCENE, 's')).flat();
-    near(effectMultipliers(up, ctx, 'real')[EV.HR], Math.exp(0.45), 1e-12, 'HR 상한');
+    near(effectMultipliers(up, ctx, 'real')[EV.HR], Math.exp(1.2), 1e-12, 'HR 상한');
     const down = Array.from({ length: 3 }, () => compileKnobPart(part('contact', 'everyone', 3), SCENE, 's')).flat();
-    near(effectMultipliers(down, ctx, 'real')[EV.K], Math.exp(-0.45), 1e-12, 'K 하한');
+    near(effectMultipliers(down, ctx, 'real')[EV.K], Math.exp(-1.2), 1e-12, 'K 하한');
   });
 
-  it('만화 모드는 로그 오즈를 6배 키우고 ±1.6에서 자른다', () => {
+  it('만화 모드는 로그 오즈를 6배 키우고 ±2.3에서 자른다', () => {
     const ctx = pa('h6', 'ap', 'home');
     const one = compileKnobPart(part('contact', 'batter', 1), SCENE, 's');
-    near(effectMultipliers(one, ctx, 'real')[EV.K], Math.exp(-0.06), 1e-12, '현실');
-    near(effectMultipliers(one, ctx, 'toon')[EV.K], Math.exp(-0.36), 1e-12, '만화');
+    near(effectMultipliers(one, ctx, 'real')[EV.K], Math.exp(-0.3), 1e-12, '현실');
+    near(effectMultipliers(one, ctx, 'toon')[EV.K], Math.exp(-1.8), 1e-12, '만화는 현실 상한을 넘을 수 있다');
 
     const three = compileKnobPart(part('contact', 'batter', 3), SCENE, 's');
-    near(effectMultipliers(three, ctx, 'real')[EV.K], Math.exp(-0.18), 1e-12, '현실 3');
-    near(effectMultipliers(three, ctx, 'toon')[EV.K], Math.exp(-1.08), 1e-12, '만화 3은 현실 상한을 넘을 수 있다');
+    near(effectMultipliers(three, ctx, 'real')[EV.K], Math.exp(-0.9), 1e-12, '현실 3');
+    near(effectMultipliers(three, ctx, 'toon')[EV.K], Math.exp(-2.3), 1e-12, '만화 3은 만화 상한에서 자른다');
 
     const pile = Array.from({ length: 20 }, () => compileKnobPart(part('power', 'everyone', 3), SCENE, 's')).flat();
-    near(effectMultipliers(pile, ctx, 'toon')[EV.HR], Math.exp(1.6), 1e-12, '만화 상한');
+    near(effectMultipliers(pile, ctx, 'toon')[EV.HR], Math.exp(2.3), 1e-12, '만화 상한');
     const down = Array.from({ length: 3 }, () => compileKnobPart(part('contact', 'everyone', 3), SCENE, 's')).flat();
-    near(effectMultipliers(down, ctx, 'toon')[EV.K], Math.exp(-1.6), 1e-12, '만화 하한');
+    near(effectMultipliers(down, ctx, 'toon')[EV.K], Math.exp(-2.3), 1e-12, '만화 하한');
   });
 });
