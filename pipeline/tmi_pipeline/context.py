@@ -104,15 +104,11 @@ def team_game_rows(games: list[dict], series_by_stadium: dict[str, HourlySeries]
 
 
 def _scene_game(scene: dict, schedule_by_game: dict[str, dict]) -> dict | None:
-    """장면의 일정 경기: 선정 장면 id → CURATED 경기, 자동 장면 id "gameId-타석" → gameId, 아니면 날짜·팀이 하나로 맞는 경기."""
-    curated = {cur["id"]: cur["game"] for cur in snapshot.CURATED}
-    game_id = curated.get(scene["id"])
-    if game_id is None and "-" in scene["id"]:
+    """장면의 일정 경기: 장면 id "gameId-타석"(선정·자동 장면 공통, ADR-014) → gameId, 아니면 날짜·팀이 하나로 맞는 경기."""
+    if "-" in scene["id"]:
         prefix = scene["id"].rsplit("-", 1)[0]
         if prefix in schedule_by_game:
-            game_id = prefix
-    if game_id is not None:
-        return schedule_by_game.get(game_id)
+            return schedule_by_game[prefix]
     matches = [
         g for g in schedule_by_game.values()
         if g.get("gameDate") == scene["date"]

@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>TMI 야구 중계 시안</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700;800&family=Noto+Sans+KR:wght@400;500;700;800;900&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="page-head">
+  <p class="page-kicker">UI 시안 · 중계 트래커</p>
+  <h1>TMI 야구</h1>
+  <p class="page-lede">8월 11일 창원 KT–NC 9회초 2사 만루. 투구는 이용준의 실제 PTS 궤적, 확률은 TMI 야구 엔진 값이에요.</p>
+</header>
+
+<main class="gallery">
+  <!-- 1. 로비 -->
+  <figure class="shot">
+    <section class="phone lobby" aria-label="로비">
+      <header class="app-bar">
+        <b class="brand">TMI<span>야구</span></b>
+        <span class="app-bar-meta">2026 시즌 명장면</span>
+      </header>
+      <div class="lobby-body">
+        <p class="tagline">쓸모없는 변수, 진짜 쓸모없을까?</p>
+        <article class="feature" id="feature"></article>
+        <div class="list-head"><h2>다른 명장면</h2><span id="games-count"></span></div>
+        <ul class="games" id="games"></ul>
+      </div>
+      <nav class="tabbar" aria-label="주 메뉴">
+        <a aria-current="page"><svg viewBox="0 0 24 24"><path d="M4 6h16v12H4z"/><path d="M4 10h16"/></svg>명장면</a>
+        <a><svg viewBox="0 0 24 24"><path d="M12 4v16M6 8h12M6 8l-3 6h6zM18 8l-3 6h6z"/></svg>판정소</a>
+        <a><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v5l3 2"/></svg>만든 이유</a>
+      </nav>
+    </section>
+    <figcaption><b>로비</b>오늘의 승부처 한 장과 경기 목록. 점수·상황·주자·승부처 지수만 보면 고를 수 있어요.</figcaption>
+  </figure>
+
+  <!-- 2. 플레이 -->
+  <figure class="shot">
+    <section class="phone play" aria-label="플레이">
+      <header class="bug" id="bug"></header>
+      <div class="tracker">
+        <canvas id="tracker" aria-hidden="true"></canvas>
+        <div class="pitch-info" id="pitch-info" hidden></div>
+        <div class="call" id="call" aria-live="polite"></div>
+        <div class="lower-third" id="lower-third"></div>
+      </div>
+      <section class="wp" aria-label="승부 확률">
+        <div class="wp-top">
+          <div class="seg" role="tablist" aria-label="확률 단위">
+            <button role="tab" data-tier="game" aria-selected="true">경기</button>
+            <button role="tab" data-tier="inning" aria-selected="false">이닝</button>
+            <button role="tab" data-tier="pa" aria-selected="false">타석</button>
+          </div>
+          <div class="mode" role="radiogroup" aria-label="모드">
+            <button role="radio" data-mode="real" aria-checked="true">현실</button>
+            <button role="radio" data-mode="toon" aria-checked="false">만화 ×6</button>
+          </div>
+        </div>
+        <div class="wp-main">
+          <div>
+            <p class="wp-label" id="wp-label"></p>
+            <p class="wp-num" id="wp-num"></p>
+          </div>
+          <div class="wp-side">
+            <span class="delta" id="wp-delta"></span>
+            <canvas class="spark" id="spark" aria-hidden="true"></canvas>
+          </div>
+        </div>
+        <div class="wp-bar" id="wp-bar"><i class="seg-a"></i><i class="seg-t"></i><i class="seg-b"></i><b class="ghost"></b></div>
+        <p class="wp-sub" id="wp-sub"></p>
+      </section>
+      <section class="rail" aria-label="걸린 TMI">
+        <div class="pills" id="pills"></div>
+      </section>
+      <nav class="dock" aria-label="다시 치르기">
+        <button class="btn quiet" type="button">타석 끝까지</button>
+        <button class="btn primary" type="button" id="pitch">한 구 던지기</button>
+        <button class="btn quiet" type="button">경기 끝까지</button>
+      </nav>
+    </section>
+    <figcaption><b>플레이</b>포수 뒤 트래커에 실제 궤적이 날아와요. 큰 숫자는 하나, 게이지는 한 줄, 조작은 엄지 아래.</figcaption>
+  </figure>
+
+  <!-- 3. TMI 시트 -->
+  <figure class="shot">
+    <section class="phone play dim" aria-label="TMI 시트">
+      <header class="bug" data-bug="static"></header>
+      <div class="tracker"><canvas data-tracker="static" aria-hidden="true"></canvas></div>
+      <div class="sheet">
+        <div class="grabber"></div>
+        <div class="sheet-wp"><span>KT 승리확률</span><b>54.3% <i>→</i> 54.7%</b><span class="delta up">+0.4%p</span></div>
+        <article class="tmi-card">
+          <header><span class="src">규칙 해석</span><span class="grade fun">상상</span></header>
+          <p class="quote">“이용준이 경기 전 짜장면 곱빼기를 먹었다”</p>
+          <div class="knob">
+            <span class="knob-icon down">↓</span>
+            <div><b>투수 체력</b><small>이용준 · 경기 내내</small></div>
+            <div class="pips" aria-label="세기 −1"><i></i><i></i><i class="on neg"></i><i class="mid"></i><i></i><i></i><i></i></div>
+          </div>
+          <p class="why">배가 부르면 몸이 무거워진다는 가정<button type="button">진짜야?</button></p>
+        </article>
+        <form class="composer" onsubmit="return false">
+          <input type="text" maxlength="80" value="" placeholder="예: 투수가 어젯밤 3시간밖에 못 잤다" aria-label="TMI 한 줄">
+          <button class="btn primary" type="submit">걸기</button>
+        </form>
+        <div class="examples"><button>포수가 어젯밤 밤샘 게임</button><button>오늘 기온 35도 폭염</button><button>원정팀 버스 5시간</button></div>
+      </div>
+    </section>
+    <figcaption><b>TMI 카드</b>한 줄을 넣으면 해석·세기·효과가 카드 한 장으로. 등급은 색 점과 글자로 밝혀요.</figcaption>
+  </figure>
+
+  <!-- 4. 결과 -->
+  <figure class="shot">
+    <section class="phone result" aria-label="결과">
+      <header class="final" id="final"></header>
+      <div class="result-body">
+        <section class="card">
+          <div class="card-head"><h3>평행우주 1,000경기</h3><span>엔진 확률의 기대값</span></div>
+          <canvas class="dots" id="dots" aria-hidden="true"></canvas>
+          <div class="legend" id="legend"></div>
+        </section>
+        <section class="card butterfly">
+          <div><p class="card-kicker">나비효과</p><p class="bf-line">짜장면 곱빼기 <i>→</i> 투수 체력 ↓</p><p class="chips"><span class="chip">현실</span><span class="grade fun">상상</span></p></div>
+          <b class="bf-num">+0.4<small>%p</small></b>
+        </section>
+        <section class="card sealed" id="sealed">
+          <p>실제 경기는 어떻게 끝났을까요?</p>
+          <button class="btn quiet" type="button" id="open">실제 결과 열기</button>
+        </section>
+      </div>
+      <nav class="dock two">
+        <button class="btn primary" type="button">같은 TMI로 다시</button>
+        <button class="btn quiet" type="button">결과 카드 공유</button>
+      </nav>
+    </section>
+    <figcaption><b>결과</b>1,000번 치르면 몇 번 이기나. 실제 결과는 눌러야 열려요.</figcaption>
+  </figure>
+</main>
+<script type="module" src="app.mjs"></script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+{
+  "project": "TMI 야구",
+  "phase": "situation",
+  "steps": [
+    { "step": 0, "name": "contracts", "status": "pending" },
+    { "step": 1, "name": "situation-setup", "status": "pending" },
+    { "step": 2, "name": "pa-session", "status": "pending" },
+    { "step": 3, "name": "pa-playback", "status": "pending" }
+  ]
+}

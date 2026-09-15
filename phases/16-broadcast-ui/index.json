@@ -1,0 +1,14 @@
+{
+  "project": "TMI 야구",
+  "phase": "broadcast-ui",
+  "steps": [
+    { "step": 0, "name": "tokens-fonts", "status": "pending" },
+    { "step": 1, "name": "tracker", "status": "pending" },
+    { "step": 2, "name": "lobby", "status": "pending" },
+    { "step": 3, "name": "game-timeline", "status": "pending" },
+    { "step": 4, "name": "matchup-custom", "status": "pending" },
+    { "step": 5, "name": "pa-screen", "status": "pending" },
+    { "step": 6, "name": "result-card", "status": "pending" },
+    { "step": 7, "name": "about-cleanup", "status": "pending" }
+  ]
+}

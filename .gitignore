@@ -18,8 +18,12 @@ __pycache__/
 .venv/
 .pytest_cache/
 
-# data: Naver/Open-Meteo raw caches and generated snapshots are never committed (rights + size)
-/data/
+# data: Naver/Open-Meteo raw caches and pipeline intermediates are never committed (rights + size).
+# Only the app bundle inputs in data/build/app are committed so Vercel's GitHub build has them (ADR-023).
+/data/*
+!/data/build/
+/data/build/*
+!/data/build/app/
 
 # build outputs
 dist/
@@ -34,3 +38,6 @@ coverage/
 
 # isolated agent worktrees
 .claude/worktrees/
+
+# vercel cli link & local build output
+.vercel

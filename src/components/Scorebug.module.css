@@ -1,5 +1,7 @@
-/* 스코어버그: 전광판 바탕(반경 2px), 숫자는 LED 폰트 색으로만(글로우 없음) */
+/* 방송 스코어버그 (UI_GUIDE 플레이·시안 .bug): --hud 판, 1px --hair-2, 반경 2px, 오른쪽 아래 모서리 사선.
+   팀 색 3px 선, 공격 팀 이름 --flood, 점수 --num 19px, 이닝 ▲▼ · 주자 · B·S·O. 글로우 없음 */
 .bug {
+  display: inline-block;
   min-width: 0;
 }
 
@@ -16,113 +18,77 @@
 }
 
 .board {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto auto;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 12px;
-  border: 1px solid var(--rail);
-  border-radius: 2px;
-  background: var(--board);
+  display: flex;
+  border: 1px solid var(--hair-2);
+  border-radius: var(--r-board);
+  background: var(--hud);
+  clip-path: polygon(0 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
 }
 
-.teams {
+.rows {
   display: grid;
-  gap: 4px;
-  min-width: 0;
 }
 
-.team {
+.row {
   display: grid;
-  grid-template-columns: 4px minmax(0, 1fr) auto;
+  grid-template-columns: 3px minmax(34px, auto) minmax(22px, auto);
   align-items: center;
   gap: 8px;
+  height: 27px;
+  padding-right: 8px;
+}
+
+.row + .row {
+  border-top: 1px solid var(--hair);
 }
 
 .swatch {
-  width: 4px;
-  height: 18px;
-  border-radius: 2px;
+  height: 100%;
 }
 
-.teamName {
-  overflow: hidden;
-  color: var(--chalk-3);
-  font: 600 15px/1.2 var(--body);
-  text-overflow: ellipsis;
+.name {
+  color: var(--chalk);
+  font: 800 13px/1 var(--ui);
   white-space: nowrap;
 }
 
-.team[data-batting='true'] .teamName {
-  color: var(--chalk);
-}
-
-.score,
-.led {
-  color: var(--led);
-  font: 400 28px/1 var(--led-font);
-  font-variant-numeric: tabular-nums;
+.batting .name {
+  color: var(--flood);
 }
 
 .score {
+  color: var(--chalk);
+  font: 700 19px/1 var(--num);
+  font-stretch: 75%;
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
   text-align: right;
+}
+
+.state {
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: center;
+  gap: 4px 8px;
+  padding: 6px 18px 6px 10px;
+  border-left: 1px solid var(--hair-2);
 }
 
 .inning {
   display: flex;
   align-items: center;
-  gap: 4px;
-}
-
-.half {
-  color: var(--chalk-3);
-  font-size: 12px;
-  line-height: 1;
-}
-
-.count {
-  display: grid;
   gap: 2px;
-}
-
-.countRow {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.countLabel {
-  color: var(--chalk-3);
-  font: 400 18px/1 var(--led-font);
-}
-
-.countValue {
-  font: 400 20px/1 var(--led-font);
+  color: var(--chalk);
+  font: 700 18px/1 var(--num);
+  font-stretch: 75%;
   font-variant-numeric: tabular-nums;
 }
 
-.balls {
-  color: var(--ball);
+.half {
+  color: var(--flood);
+  font-size: 11px;
 }
 
-.strikes {
-  color: var(--strike);
-}
-
-.dots {
-  display: flex;
-  gap: 4px;
-}
-
-.dot {
-  width: 8px;
-  height: 8px;
-  border: 1px solid var(--chalk-4);
-  border-radius: 50%;
-  background: var(--board);
-}
-
-.dot[data-on='true'] {
-  border-color: var(--out);
-  background: var(--out);
+.count {
+  grid-column: 1 / -1;
 }

@@ -1,0 +1,36 @@
+/* 하단 탭바 (UI_GUIDE 로비): 68px(+안전 영역), 위 1px --hair, 바탕 --ground. 지금 탭 --chalk, 나머지 --dim */
+.bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  height: calc(68px + env(safe-area-inset-bottom, 0px));
+  padding: 0 12px calc(6px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--hair);
+  background: var(--ground);
+}
+
+.link {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 4px;
+  color: var(--dim);
+  font: 600 11px/1 var(--ui);
+  text-decoration: none;
+  touch-action: manipulation;
+}
+
+.link svg {
+  width: 22px;
+  height: 22px;
+}
+
+.link:hover {
+  color: var(--dust);
+}
+
+.link[aria-current='page'] {
+  color: var(--chalk);
+}

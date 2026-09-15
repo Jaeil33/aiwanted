@@ -1,0 +1,7 @@
+{
+  "project": "TMI 야구",
+  "phase": "release",
+  "steps": [
+    { "step": 0, "name": "artifact-bundle", "status": "pending" }
+  ]
+}

@@ -45,7 +45,10 @@
     {
       "step": 5,
       "name": "result-share",
-      "status": "pending"
+      "status": "completed",
+      "completed_at": "2026-09-15T01:10:16+0900",
+      "summary": "재계획으로 실행하지 않음(코드 산출물 없음): 2026-09-15 재설계(ADR-011~015)에 맞춰 11-screens step 4(result-screen)가 이 step의 요구를 옮겨 구현한다. step 파일은 설계 기록으로 남긴다.",
+      "replanned_to": "11-screens step 4(result-screen)"
     },
     {
       "step": 6,

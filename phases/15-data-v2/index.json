@@ -1,0 +1,10 @@
+{
+  "project": "TMI 야구",
+  "phase": "data-v2",
+  "steps": [
+    { "step": 0, "name": "all-players", "status": "pending" },
+    { "step": 1, "name": "pitch-samples", "status": "pending" },
+    { "step": 2, "name": "matchup-index", "status": "pending" },
+    { "step": 3, "name": "collector", "status": "pending" }
+  ]
+}

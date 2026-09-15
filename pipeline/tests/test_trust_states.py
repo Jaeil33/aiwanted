@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from fixture_games import FIXTURE_RAW, load_fixture_game, make_raw_dir, pa_relay, shifted_game
+from fixture_games import FIXTURE_RAW, cases_game, load_fixture_game, make_raw_dir, pa_relay, shifted_game
 from tmi_pipeline import build, io, stats, trust_states
 
 GAME_KEYS = ["gameId", "date", "away", "home", "homeWin", "pas"]
@@ -152,3 +152,35 @@ def test_trust_stage_writes_states_and_summary(raw, tmp_path):
     pitched = sum(pa["pitcher"] in written["players"] for pa in pas)
     assert summary["pitcher_2025_ratio"] == pytest.approx(pitched / len(pas), abs=1e-4)
     assert list(build.STAGES) == ["snapshot", "context", "evidence", "trust"]
+
+
+# --- 첫 투구 투수·미완료 타석 (cases_game = 픽스처 경기 + 3회) --------------------------------------------
+
+def test_pitcher_is_the_first_pitch_pitcher_after_a_change_following_the_intro():
+    pas = trust_states.game_states(cases_game())["pas"]
+    third = pas[26:]  # 3회 타석(픽스처 26개 뒤)
+    assert [(pa["inning"], pa["half"], pa["outs"], pa["bases"], pa["pitcher"]) for pa in third] == [
+        (3, 0, 0, 0, "hp3"),  # 원정타자5: 소개에는 홈투수2, 소개 뒤 교체로 첫 공부터 홈투수3
+        (3, 0, 0, 1, "hp3"),
+        (3, 0, 1, 2, "hp3"),
+        (3, 1, 0, 0, "ap1"),  # 홈대타6: 2구 뒤 원정투수2로 바뀌어도 첫 공의 투수
+        (3, 1, 0, 1, "ap2"),
+        (3, 1, 2, 0, "ap2"),
+    ]
+    assert third[0]["naverHomeWp"] == pytest.approx(0.587)
+
+
+def test_incomplete_plate_appearance_is_not_a_trust_state():
+    game = cases_game()
+    pas = trust_states.game_states(game)["pas"]
+    # 3회 7타석 중 결과 옵션이 없는 원정타자8 타석(3회초 2사 2루, 견제사로 3아웃)만 빠진다
+    assert len(pas) == 26 + 6
+    assert (3, 0, 2, 2) not in [(pa["inning"], pa["half"], pa["outs"], pa["bases"]) for pa in pas]
+    # 빠진 타석은 타순 진행에도 세지 않는다: 원정의 마지막 완료 타석이 7번이라 3회말 slotAway 7(8번 차례)
+    bottom = pas[29]
+    assert (bottom["inning"], bottom["half"], bottom["slotAway"], bottom["slotHome"]) == (3, 1, 7, 5)
+    assert bottom["lineupHome"] == ["h1", "h2", "h3", "h4", "h5", "h6b", "h7", "h8", "h9"]
+    # 미완료 타석을 완료로 바꾸면 상태가 하나 늘어난다
+    unfinished = pa_relay(game, 30)
+    unfinished["textOptions"].append({"seqno": 181, "type": 13, "text": "원정타자8 : 가상 결과"})
+    assert len(trust_states.game_states(game)["pas"]) == 26 + 7

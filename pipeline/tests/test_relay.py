@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 
+from fixture_games import cases_game
 from tmi_pipeline import relay
 from tmi_pipeline.contract import PITCH_TYPES
 
@@ -84,7 +85,8 @@ def test_sorted_options_orders_by_seqno(game):
 def test_plate_appearance_fields():
     assert [f.name for f in dataclasses.fields(relay.PlateAppearance)] == [
         "game_id", "index", "inning", "half", "side", "batter_id", "batter_name", "bat_order", "hit_type",
-        "state", "pitcher_id", "options", "pts_by_id", "result_text", "runs_in", "event", "wp_home_after", "wpa",
+        "state", "pitcher_id", "pitcher_ids", "options", "pts_by_id", "result_text", "complete", "runs_in", "event",
+        "wp_home_after", "wpa",
     ]
 
 
@@ -248,6 +250,13 @@ def test_fixture_pitch_rows_have_sixteen_fields(pas):
         ("원정타자6 : 중견수 희생플라이 아웃", 6),
         ("원정타자1 : 유격수 땅볼 아웃 (유격수->1루수 송구아웃)", 6),
         ("", 6),
+        # 스트라이크 낫 아웃: 1루에서 잡혀도, 폭투·포일·실책으로 출루해도 K
+        ("원정타자7 : 포수 스트라이크 낫 아웃 (포수 태그아웃)", 0),
+        ("원정타자7 : 포수 스트라이크 낫 아웃 (포수->1루수 1루 터치아웃)", 0),
+        ("홈타자8 : 스트라이크 낫아웃 폭투", 0),
+        ("홈타자8 : 스트라이크 낫아웃 포일", 0),
+        ("홈타자8 : 포수 스트라이크 낫아웃 실책으로 출루 (포수 송구 실책->1루수)", 0),
+        ("홈타자8 : 포수 스트라이크 낫아웃 다른주자 수비로 출루", 0),
     ],
 )
 def test_event_of(text, event):
@@ -302,3 +311,223 @@ def test_load_game_drops_heavy_player_info_and_keeps_the_rest(tmp_path, game):
     loaded = relay.load_game(path)
     assert not any("currentPlayersInfo" in t for item in loaded["textRelays"] for t in item["textOptions"])
     assert loaded == game
+
+
+# --- 첫 투구 투수·빈 타석·미완료 타석·낫 아웃 (cases_game = 픽스처 경기 + 3회) ------------------------------
+
+@pytest.fixture(scope="module")
+def cases():
+    return cases_game()
+
+
+@pytest.fixture(scope="module")
+def case_pas(cases):
+    return relay.plate_appearances(cases)
+
+
+def _intro_pitcher(pa) -> str:
+    return next(t for t in pa.options if t["type"] == 8)["currentGameState"]["pitcher"]
+
+
+def test_cases_game_appends_a_third_inning_to_the_fixture(pas, case_pas):
+    assert len(case_pas) == 34
+    assert [pa.index for pa in case_pas] == list(range(34))
+    assert [(pa.batter_id, pa.state, pa.result_text) for pa in case_pas[:27]] == [
+        (pa.batter_id, pa.state, pa.result_text) for pa in pas
+    ]
+    assert [(pa.inning, pa.half, pa.batter_id, pa.bat_order) for pa in case_pas[27:]] == [
+        (3, 0, "a5", 5), (3, 0, "a6", 6), (3, 0, "a7", 7), (3, 0, "a8", 8),
+        (3, 1, "h6b", 6), (3, 1, "h7", 7), (3, 1, "h8", 8),
+    ]
+    assert case_pas[27].state == {"inning": 3, "half": 0, "outs": 0, "bases": 0, "away": 4, "home": 5}
+
+
+def test_pitcher_is_the_first_pitch_pitcher_when_the_change_follows_the_intro(case_pas):
+    pa = case_pas[27]  # 원정타자5 소개 뒤 홈투수2 → 홈투수3 교체, 첫 공부터 홈투수3
+    assert _intro_pitcher(pa) == "hp2"
+    assert (pa.pitcher_id, pa.pitcher_ids) == ("hp3", ["hp3"])
+
+
+def test_pitchers_of_the_third_inning(case_pas):
+    assert [(pa.batter_id, pa.pitcher_id, pa.pitcher_ids) for pa in case_pas[27:]] == [
+        ("a5", "hp3", ["hp3"]),
+        ("a6", "hp3", ["hp3"]),
+        ("a7", "hp3", ["hp3"]),
+        ("a8", "hp3", ["hp3"]),
+        ("h6b", "ap1", ["ap1", "ap2"]),  # 2구 뒤 원정투수1 → 원정투수2
+        ("h7", "ap2", ["ap2"]),
+        ("h8", "ap2", ["ap2"]),
+    ]
+
+
+def test_pitcher_ids_list_each_pitcher_during_the_plate_appearance(pas):
+    mid = pas[6]  # 원정타자7: 2구 뒤 홈투수1 → 홈투수2
+    assert (mid.pitcher_id, mid.pitcher_ids) == ("hp1", ["hp1", "hp2"])
+    # 원정타자8: 첫 공에 currentGameState가 없으면 투수가 적힌 다음 공
+    assert pas[7].options[1]["type"] == 1 and "currentGameState" not in pas[7].options[1]
+    assert (pas[7].pitcher_id, pas[7].pitcher_ids) == ("hp2", ["hp2"])
+    assert all(pa.pitcher_ids == [pa.pitcher_id] for pa in pas if pa.index != 6)
+
+
+def test_plate_appearance_without_pitches_keeps_the_intro_pitcher(pas):
+    walk = pas[25]  # 자동 고의4구
+    assert (walk.pitcher_id, walk.pitcher_ids, walk.complete) == ("ap1", ["ap1"], True)
+
+
+def test_empty_pinch_hitter_plate_appearance_is_skipped(cases, case_pas):
+    heads = [r for r in relay.chrono(cases) if any(t["type"] == 8 and t.get("batterRecord") for t in r["textOptions"])]
+    assert len(heads) == 35
+    empty = next(r for r in heads if r["inn"] == 3 and r["title"] == "6번타자 홈타자6")
+    assert [t["type"] for t in relay.sorted_options(empty)] == [8, 2, 2]  # 타자 소개, 수비 교체, 대타 교체
+    used = {t["seqno"] for pa in case_pas for t in pa.options}
+    assert not used & {t["seqno"] for t in empty["textOptions"]}
+    assert "h6" not in [pa.batter_id for pa in case_pas[27:]]
+
+
+def test_incomplete_plate_appearance_is_kept_but_not_complete(pas, case_pas):
+    assert all(pa.complete for pa in pas)
+    assert [pa.index for pa in case_pas if not pa.complete] == [30]
+    cut = case_pas[30]  # 원정타자8: 2구 뒤 2루주자 견제사로 3아웃, 결과 문장 없음
+    assert cut.batter_id == "a8"
+    assert (cut.result_text, cut.runs_in) == ("", 0)
+    assert [t["pitchResult"] for t in cut.options if t["type"] == 1] == ["B", "T"]
+
+
+def test_dropped_third_strike_counts_as_a_strikeout(case_pas):
+    assert case_pas[29].result_text == "원정타자7 : 포수 스트라이크 낫 아웃 (포수->1루수 1루 터치아웃)"
+    assert [(pa.batter_id, pa.event) for pa in case_pas[27:] if pa.complete] == [
+        ("a5", 5), ("a6", 6), ("a7", 0), ("h6b", 5), ("h7", 6), ("h8", 0),
+    ]
+
+
+INTRO = {
+    "type": 8, "text": "1번타자 가상타자", "currentGameState": {"pitcher": "xp1", "out": "0"},
+    "batterRecord": {"pcode": "x1", "name": "가상타자", "batOrder": 1, "hitType": "우투우타"},
+}
+
+
+def _mini_game(*relays: tuple[int, int, list[dict]]) -> dict:
+    """(이닝, homeOrAway, 옵션들) relay마다 seqno를 차례로 매긴 최소 경기."""
+    seq, items = 0, []
+    for inn, half, options in relays:
+        numbered = []
+        for option in options:
+            seq += 1
+            numbered.append({"seqno": seq, **copy.deepcopy(option)})
+        items.append({"inn": inn, "homeOrAway": str(half), "textOptions": numbered})
+    return {"game": {"gameId": "20260101XXYY02026"}, "textRelays": items}
+
+
+def _pitch_option(pitcher: str | None) -> dict:
+    option = {"type": 1, "pitchResult": "B"}
+    if pitcher is not None:
+        option["currentGameState"] = {"pitcher": pitcher}
+    return option
+
+
+def test_plate_appearances_need_a_pitch_or_a_result():
+    game = _mini_game(
+        (1, 0, [INTRO]),
+        (1, 0, [INTRO, {"type": 7, "text": "비디오 판독"}]),
+        (1, 0, [INTRO, {"type": 2, "text": "투수 가상투수 : 투수 가상투수2 (으)로 교체"}]),
+        (1, 0, [INTRO, {"type": 13, "text": "가상타자 : 자동 고의4구"}]),
+        (1, 0, [INTRO, _pitch_option("xp2")]),
+        (1, 0, [INTRO, _pitch_option(None), _pitch_option("xp3"), _pitch_option("xp3"), _pitch_option("xp2"),
+                {"type": 23, "text": "가상타자 : 중견수 앞 1루타"}]),
+        (1, 0, [INTRO, _pitch_option(None)]),
+    )
+    pas = relay.plate_appearances(game)
+    assert [pa.index for pa in pas] == [0, 1, 2, 3]
+    assert [(pa.complete, pa.pitcher_id, pa.pitcher_ids) for pa in pas] == [
+        (True, "xp1", ["xp1"]),  # 투구가 없으면 타자 소개의 투수
+        (False, "xp2", ["xp2"]),
+        (True, "xp3", ["xp3", "xp2"]),  # 투수 없는 공은 건너뛰고, 연속 중복은 하나로
+        (False, "xp1", ["xp1"]),  # 투수가 적힌 공이 없으면 타자 소개의 투수
+    ]
+
+
+# --- 교체 기록 ---------------------------------------------------------------------------------------------
+
+def test_substitution_record_fields():
+    assert [f.name for f in dataclasses.fields(relay.Substitution)] == [
+        "seq", "inning", "half", "side", "slot", "in_id", "out_id", "kind",
+    ]
+    sub = relay.Substitution(1, 1, 0, "away", 3, "x2", "x1", "pinch_hitter")
+    with pytest.raises(dataclasses.FrozenInstanceError):
+        sub.slot = 4
+
+
+def test_substitutions_of_the_cases_game_in_time_order(cases):
+    subs = relay.substitutions(cases)
+    assert [(s.inning, s.half, s.side, s.slot, s.in_id, s.out_id, s.kind) for s in subs] == [
+        (1, 0, "home", None, "hp2", "hp1", "pitcher"),
+        (2, 0, "away", 3, "a3b", "a3", "pinch_hitter"),
+        (3, 0, "home", None, "hp3", "hp2", "pitcher"),
+        (3, 0, "away", 5, "a5r", "a5", "pinch_runner"),
+        (3, 1, "away", 7, "a7d", "a7", "defense"),
+        (3, 1, "home", 6, "h6b", "h6", "pinch_hitter"),
+        (3, 1, "away", None, "ap2", "ap1", "pitcher"),
+    ]
+    changes = [t for r in relay.chrono(cases) for t in relay.sorted_options(r) if t["type"] == 2]
+    assert [s.seq for s in subs] == [t["seqno"] for t in changes]
+    assert [s.seq for s in subs] == sorted(s.seq for s in subs)
+
+
+def _change_option(text: str, in_pos: str, *, turn=13, in_id: str = "x2", out_id: str = "x1") -> dict:
+    in_player = {"playerName": "가상선수2", "playerPos": in_pos, "playerId": in_id}
+    if turn is not None:
+        in_player["outPlayerTurn"] = turn
+    return {
+        "type": 2, "text": text,
+        "playerChange": {
+            "liveText": text, "type": "substitution", "inPlayer": in_player,
+            "outPlayer": {"playerName": "가상선수1", "playerPos": "지명타자", "playerId": out_id},
+        },
+    }
+
+
+@pytest.mark.parametrize(
+    ("turn", "slot"),
+    [(13, 3), (29, 9), (15, 5), (10, None), (20, None), (0, None), ("17", 7), (None, None)],
+)
+def test_substitution_slot_is_out_player_turn_mod_ten(turn, slot):
+    game = _mini_game((5, 1, [INTRO, _change_option("7번타자 가상선수1 : 대타 가상선수2 (으)로 교체", "대타", turn=turn)]))
+    [sub] = relay.substitutions(game)
+    assert sub.slot == slot
+
+
+@pytest.mark.parametrize(
+    ("text", "in_pos", "half", "kind", "side"),
+    [
+        ("8번타자 가상타자 : 대타 가상대타 (으)로 교체", "대타", 0, "pinch_hitter", "away"),
+        ("2루주자 가상타자 : 대주자 가상주자 (으)로 교체", "대주자", 1, "pinch_runner", "home"),
+        ("투수 가상투수 : 투수 가상대타 (으)로 교체", "투수", 0, "pitcher", "home"),  # 이름 속 '대타'는 종류가 아니다
+        ("3루수 가상대주자 : 3루수 가상수비 (으)로 교체", "3루수", 1, "defense", "away"),
+        ("우익수 가상타자 : 중견수 가상수비 (으)로 교체", "중견수", 0, "defense", "home"),
+        ("포수 가상포수 : 포수 가상포수2 (으)로 교체", "포수", 1, "defense", "away"),
+        ("가상 교체", "대주자", 1, "pinch_runner", "home"),  # 문장에 ':'가 없으면 inPlayer.playerPos
+        ("코치 가상코치 : 감독 가상감독 (으)로 교체", "감독", 0, "other", "home"),
+    ],
+)
+def test_substitution_kind_and_side_come_from_the_incoming_position(text, in_pos, half, kind, side):
+    game = _mini_game((6, half, [_change_option(text, in_pos)]))
+    [sub] = relay.substitutions(game)
+    assert (sub.kind, sub.side, sub.inning, sub.half, sub.in_id, sub.out_id) == (kind, side, 6, half, "x2", "x1")
+
+
+def test_substitutions_skip_changes_without_both_player_ids():
+    shift_text = "중견수 가상타자 : 우익수(으)로 수비위치 변경"
+    shift = {"type": 2, "text": shift_text, "playerChange": {
+        "liveText": shift_text, "type": "shift", "shiftMessage": " 우익수(으)로 수비위치 변경",
+        "shiftPlayer": {"playerName": "가상타자", "playerPos": "중견수", "playerId": "x5", "outPlayerTurn": 1},
+    }}
+    text_only = {"type": 2, "text": "6번타자 가상타자 : 대타 가상대타 (으)로 교체", "playerChange": {
+        "liveText": "6번타자 가상타자 : 대타 가상대타 (으)로 교체", "type": "text",
+    }}
+    bare = {"type": 2, "text": "투수 가상투수 : 투수 가상투수2 (으)로 교체"}
+    no_out_id = _change_option("투수 가상투수 : 투수 가상투수2 (으)로 교체", "투수", out_id="")
+    kept = _change_option("투수 가상투수 : 투수 가상투수2 (으)로 교체", "투수", turn=10, in_id="xp2", out_id="xp1")
+    game = _mini_game((4, 0, [INTRO, shift, text_only, bare, no_out_id, _pitch_option("xp1")]), (4, 0, [kept]))
+    assert [(s.in_id, s.out_id, s.kind, s.slot, s.side) for s in relay.substitutions(game)] == [
+        ("xp2", "xp1", "pitcher", None, "home"),
+    ]

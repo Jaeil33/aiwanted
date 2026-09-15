@@ -2,9 +2,37 @@
   "project": "TMI 야구",
   "phase": "scene-data",
   "steps": [
-    { "step": 0, "name": "relay-fixes", "status": "pending" },
-    { "step": 1, "name": "scene-rebuild", "status": "pending" },
-    { "step": 2, "name": "trust-rebuild", "status": "pending" },
-    { "step": 3, "name": "swing-index", "status": "pending" }
+    {
+      "step": 0,
+      "name": "relay-fixes",
+      "status": "completed",
+      "started_at": "2026-09-15T00:50:51+0900",
+      "completed_at": "2026-09-15T01:12:11+0900",
+      "summary": "pipeline/tmi_pipeline/relay.py: PlateAppearance에 pitcher_ids(투구마다 투수 id, 시간순·연속 중복 없이, 투수 적힌 투구가 없으면 [pitcher_id])·complete(결과 옵션 13·23이 있으면 True) 추가, 기존 필드 이름 유지 · pitcher_id = 첫 투구 currentGameState.pitcher(투수 적힌 투구가 없으면 타자 소개 투수) · plate_appearances는 투구도 결과도 없는 relay(빈 대타 타석)를 건너뛰고 index를 매기지 않음(미완료 타석은 남기고 complete False, result_text '', event는 OUT 기본값) · event_of: 공백을 뺀 문장에 '낫아웃'이 있으면 K(출루해도 K, 엔진 사건 벡터 한계 주석) · Substitution(frozen: seq = 교체 옵션 seqno, inning, half, side, slot, in_id, out_id, kind)·substitutions(game): type 2 중 playerChange.inPlayer·outPlayer의 playerId가 모두 있는 교체만 seqno 순(shift·text 교체 제외), slot = inPlayer.outPlayerTurn % 10(1~9, 아니면 None), kind = 문장 ':' 뒤 첫 단어(대타 pinch_hitter·대주자 pinch_runner·투수 pitcher·수비 위치 9개 defense·그 밖 other, ':'가 없으면 inPlayer.playerPos), side = 대타·대주자는 relay 공격 팀, 나머지는 수비 팀; 원자료 사실: 선수 교체는 모두 타자 소개 뒤(대타는 바뀌기 전 타자 relay = 빈 타석, 투수·대주자·수비는 다음 타자 소개 뒤 첫 공 전, 첫 공 뒤 39건), 빈 타석·미완료 타석의 네이버 승리확률은 모두 무효 / 테스트: fixture_games.cases_game(game_id, date) = 픽스처 경기 + 3회(27 a5 소개 뒤 hp2→hp3, 28 a6 소개 뒤 대주자 a5→a5r 5번, 29 a7 낫 아웃, 30 a8 견제사 3아웃 미완료, 건너뛰는 빈 타석 h6(수비 a7→a7d 7번·대타 h6→h6b 6번), 31 h6b 2구 뒤 ap1→ap2, 32 h7 병살, 33 h8 삼진; 타석 34개, 교체 7건), 기본 픽스처 교체 2건에 outPlayerTurn(a3b 13, hp2 10) 추가, test_relay 34개 추가 / 실데이터 140경기: 첫 투구 투수가 기존 값과 다른 타석 1,000(예 20260818WOLT02026 타석 67: 56337→76118), 건너뛴 빈 타석 435(타석 11,434→10,999), K로 바뀐 낫 아웃 201('낫 아웃' 191 + '낫아웃' 10), 교체 기록 2,282건 중 slot 있는 교체 1,195건(종류: 투수 1,095·수비 546·대타 422·대주자 219), 투수 2명 이상 타석 15, 미완료 타석 40; relay.py 밖 코드 변경 없음(snapshot·trust_states 그대로); AC 통과(pytest 345)"
+    },
+    {
+      "step": 1,
+      "name": "scene-rebuild",
+      "status": "completed",
+      "started_at": "2026-09-15T01:16:17+0900",
+      "completed_at": "2026-09-15T01:29:05+0900",
+      "summary": "pipeline/tmi_pipeline/snapshot.py: scene_lineups(pas, subs, target) = 슬롯별 선발(그 슬롯 첫 타석 타자, 그 첫 타석보다 앞선 그 슬롯 교체가 있으면 가장 이른 교체의 out_id)에서 시작해 대상 타석 첫 공(투구가 없으면 첫 결과) seqno 이전의 slot 있는 교체를 시간순으로 lineup[slot-1] = in_id 적용, 대상 타자는 자기 타순(누상 대주자·수비 교체 포함, 끝까지 모르면 None) · build_scene: pitcher = target.pitcher_id(첫 투구), 타석 도중 교체면 actual.notes 끝에 새 투수마다 'N구째부터 <교체 기록 이름, 없으면 id> 등판', slotAway·slotHome은 complete 타석만 세어 계산, id = f'{gameId}-{pa_index}', title 인자가 None이면 scene_title, 타선 선수 이름은 앞선 타석 → 교체 기록 → id 순, leverage 계산에 '장면 선정용, 화면 표시 금지(ADR-014)' 주석(scene_candidates 설명에도) · scene_title(pas, subs, target) = situation_text + ', 대타'(타자를 들여보낸 교체가 pinch_hitter이고 그 뒤 첫 타석일 때만) + ', 마지막 이닝'(11회) · CURATED = 규칙 4개 {game, inning, half, outs, bases, batter}(id·title 없음) + find_curated(game, rule) · build_snapshot은 선정·자동 모두 title None, 경고 문구는 경기 id·상황·타자 / 장면 JSON 필드·src/types/data.ts 변경 없음 / snapshot 밖 변경(필요해서): context._scene_game이 CURATED id를 읽어 KeyError → gameId 접두사 규칙만 남김(test_context의 옛 모양 CURATED monkeypatch 제거), fixture_games.pa_relay를 relay.plate_appearances 번호(빈 타석 제외)로, test_relay의 '첫 공 currentGameState 없음' 사례를 실제 위치(타석 7)로 바로잡음 / 테스트: test_snapshot에 새 규칙 13개(대주자·수비·대타 교체 타선, 누상 대주자, 선발 교체·첫 공 뒤 교체 미반영, 교체 직후 첫 투구 투수, 도중 교체 문구(기존 notes 뒤·이름 없으면 id), id 형식, 제목 대타·11회·대타 뒤 다음 타석은 꼬리표 없음, 미완료 타석 슬롯 제외, find_curated, cases_game으로 build_snapshot 앱 계약) + 기존 CURATED·build_snapshot 기대값을 새 id·제목 규칙으로 갱신 / 실데이터(npm run data: 장면 16 = 선정 4 + 자동 12, 선수 146, 날씨 14장면): 투수가 바뀐 장면 2개(20260818WOLT02026 56337→76118, 20260825NCLG02026 67954→54904), 바뀐 타선 칸은 16장면 모두 1~4칸·합계 43(날짜순 2·3·2·3·1·4·1·3·3·3·3·2·4·2·3·4), 슬롯 변경 없음; 새 id·제목(날짜순): 20260811KTNC02026-69 '9회초 2사 만루' · 20260812HHOB02026-72 '9회말 2사 2루' · 20260813KTNC02026-51 '7회말 2사 1·2루' · 20260813SSHT02026-82 '9회초 1사 1·2루' · 20260818WOLT02026-67 '7회말 2사 1·2루' · 20260819WOLT02026-77 '9회말 1사 주자 없음' · 20260820HTHH02026-67 '8회초 2사 1루' · 20260823HTWO02026-84 '9회말 2사 만루' · 20260825LTHT02026-80 '9회말 2사 만루, 대타'(선정, 옛 walkoff-slam) · 20260825NCLG02026-63 '8회말 1사 1·3루' · 20260826OBKT02026-78 '9회말 1사 만루' · 20260830NCHH02026-86 '10회초 2사 2·3루'(선정, 옛 extra-go-ahead) · 20260902HTNC02026-72 '9회말 2사 만루'(선정, 옛 walkoff-walk, 타석 도중 교체 문구 1개 추가) · 20260903SKWO02026-77 '9회말 2사 3루' · 20260904KTHT02026-65 '8회말 2사 만루' · 20260910NCHT02026-79 '11회말 1사 1·3루, 마지막 이닝'(선정, 옛 eleventh-last); 선정 4개와 자동 12개 모두 이전과 같은 타석(빈 타석 제외로 번호만 바뀜); AC 통과(pytest 356)"
+    },
+    {
+      "step": 2,
+      "name": "trust-rebuild",
+      "status": "completed",
+      "started_at": "2026-09-15T01:30:40+0900",
+      "completed_at": "2026-09-15T01:33:57+0900",
+      "summary": "pipeline/tmi_pipeline/trust_states.py: game_states가 결과 옵션 없는 미완료 타석(complete False)을 루프 맨 앞에서 건너뛰어 상태에서 빼고 라인업·타순 진행(last_order)에도 세지 않음, 투수는 PlateAppearance.pitcher_id(step 0부터 첫 투구 투수, ADR-014)를 docstring에 명시; 2025 기록·슬롯별 마지막 타자 라인업·직전 유효 승리확률·무승부 처리 등 나머지 규칙은 그대로, 수치 보정·표본 선별 없음, trust_states.py와 test_trust_states.py 밖 변경 없음 / 테스트 2개 추가(cases_game: 3회 상태의 투수 hp3·hp3·hp3·ap1·ap2·ap2로 소개 뒤 교체 타석은 첫 투구 투수 hp3, 타석 도중 교체는 첫 공 투수 ap1; 미완료 원정타자8 타석(3회초 2사 2루)은 빠져 상태 32개, 3회말 slotAway 7, 결과를 붙이면 33개) / 실데이터(npm run data -- --only trust: 140경기 상태 10,819타석 · 무승부 3 · 2025 투수 기록 비율 0.6744; npm run trust 30.5초, 건너뛴 타석 0): 경기 137 · 타석 10,558(이전 11,017, −459 = 빈 대타 타석·미완료 타석 제외), Brier 엔진 0.1595 · 네이버 0.1609 · 0.5 0.2500(이전 0.1567 · 0.1580 · 0.2500, 차이 +0.0028 · +0.0029 · 0), 로그 손실 엔진 0.4828 · 네이버 0.4862 · 0.5 0.6931(이전 0.4747 · 0.4778 · 0.6931, 차이 +0.0081 · +0.0084 · 0), 엔진−네이버 Brier −0.0014(이전 −0.0013)·로그 손실 −0.0034(이전 −0.0031), 보정 10구간 n 합 10,558; data/build/app/trust.json 갱신(커밋 안 함); AC 통과(pytest 358, vitest scripts/trust-report.test.ts 16)"
+    },
+    {
+      "step": 3,
+      "name": "swing-index",
+      "status": "completed",
+      "started_at": "2026-09-15T01:36:42+0900",
+      "completed_at": "2026-09-15T01:39:45+0900",
+      "summary": "src/game/selectors.ts: expectedSwing(ev: Pick<Evaluation, 'batSide' | 'pa' | 'after' | 'winHome' | 'winAway' | 'tie'>): number | null — 승부처 지수(ADR-014) = 100 × Σ_e pa[e] × |B(after[e]) − B(지금)|, B = batSide 쪽 승리(home이면 winHome, away면 winAway) + tie/2, after가 비면(detail: false) null, 반올림 없음, SceneRecord.leverage(실제 |WPA|)는 쓰지 않음; 머리 주석을 '확률 숫자는 엔진 결과에서만 온다: 옮기거나 그 값끼리 빼고 더한다'로 · src/game/index.ts에서 expectedSwing 내보냄(index.test 값 이름 30개 정확 일치) · src/types/data.ts는 SceneRecord.leverage JSDoc만 '실제 결과의 |WPA|(네이버 wpaByPlate 절댓값, %p). 장면 선정용이며 화면에 표시하지 않는다(ADR-014)'로 바꿈(타입 그대로) / selectors.test.ts expectedSwing 6개: after가 모두 지금과 같으면 0, 손으로 계산한 사건 7개 합성 평가(pa [0.2, 0.1, 0.03, 0.01, 0.05, 0.16, 0.45], |ΔB| [0.05, 0.065, 0.24, 0.165, 0.13, 0.08, 0.045]) = 6.49와 1e-12 이내, 원정·홈 거울 입력 대칭 + 공격 진영 값 사용(원정 승리만 움직인 인위 입력: 원정 공격 10·홈 공격 0), 무승부 절반(10, 통째로 세면 20·빼면 0), 반올림 없는 유한한 0 이상 값(0.246912), after가 비면 null / src/components·src/app 변경 없음, src/game 순수(Math.abs만, DOM·타이머·난수 없음) / AC 통과(npm run lint, npm run build(tsc -b + vite build), npx vitest run src/game 9파일 116)"
+    }
   ]
 }

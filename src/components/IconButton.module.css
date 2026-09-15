@@ -1,0 +1,33 @@
+/* 아이콘 버튼 (UI_GUIDE): 44px, 바탕 --hud, 1px --hair-2, 반경 6px */
+.button {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid var(--hair-2);
+  border-radius: var(--r-control);
+  background: var(--hud);
+  color: var(--chalk);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.icon {
+  display: grid;
+  place-items: center;
+}
+
+.icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.button:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}

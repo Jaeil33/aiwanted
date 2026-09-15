@@ -1,0 +1,93 @@
+/* 아래에서 올라오는 시트 (UI_GUIDE TMI 시트): 위쪽 모서리 16px, 280ms translateY 등장, dimStage면 뒤 경기장 55% 어둡게 */
+.root {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.backdrop {
+  position: absolute;
+  inset: 0;
+  background: transparent;
+}
+
+.dim {
+  background: var(--veil);
+  animation: veil-in 280ms var(--ease-out) both;
+}
+
+/* 판 사이 빈 곳은 바탕으로 눌리게 둔다 */
+.dialog {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 480px;
+  max-height: 100%;
+  margin: 0 auto;
+  padding-top: 16px;
+  pointer-events: none;
+  animation: sheet-in 280ms var(--ease-out) both;
+}
+
+.dialog:focus {
+  outline: none;
+}
+
+.above {
+  flex: none;
+  padding: 0 14px;
+  pointer-events: auto;
+}
+
+.panel {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 10px 16px calc(16px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--hair-2);
+  border-radius: var(--r-sheet) var(--r-sheet) 0 0;
+  background: var(--plate);
+  box-shadow: var(--shadow-lift);
+  pointer-events: auto;
+}
+
+.grabber {
+  justify-self: center;
+  width: 40px;
+  height: 4px;
+  border-radius: var(--r-board);
+  background: var(--hair-2);
+}
+
+@keyframes sheet-in {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes veil-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dialog,
+  .dim {
+    animation: none;
+  }
+}

@@ -5,7 +5,7 @@
 export { batterFor, batterStanceFor, buildSceneSetup, pitcherFor } from './scene';
 export type { Hands, SceneSetup } from './scene';
 export { compileSessionEffects, effectsKey, measuredAvailable } from './effects';
-export { battingWin, butterflyPp, entryChips, selectTiers } from './selectors';
+export { battingWin, butterflyPp, entryChips, expectedSwing, selectTiers } from './selectors';
 export type { EntryChip, GaugeLike, TierView } from './selectors';
 export { decodeShare, encodeShare } from './share';
 export type { SharePayload } from './share';

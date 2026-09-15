@@ -1,39 +1,69 @@
-/* docs/UI_GUIDE.md의 색상·폰트 토큰. 야간 중계 그래픽 단일 다크 테마(ADR-010). */
+/* docs/UI_GUIDE.md 나이트게임 토큰(ADR-011). 조명탑 아래 그라파이트 바탕, 조명 금색은 행동과 결과에만. 단일 다크 테마 */
 :root {
-  /* 배경 */
-  --night: #0A1520; /* 페이지(밤하늘) */
-  --booth: #0E1B28; /* 패널(중계석) */
-  --dugout: #112131; /* 카드·시트(더그아웃) */
-  --rail: #253B50; /* 구분선(펜스 레일) */
-  --board: #05090D; /* 전광판 바탕 */
+  /* 바탕 */
+  --ground: #07090B; /* 페이지·경기장 밖 바탕 */
+  --plate: #0F1418; /* HUD 판·시트·도크 버튼 */
+  --plate-2: #161C21; /* 올라온 판(카드 안 행, 티켓, 선택된 탭) */
+  --hair: #252D34; /* 구분선 */
+  --hair-2: #333D45; /* 강한 구분선·버튼 테두리 */
+  --hud: rgba(6, 8, 10, 0.92); /* 경기장 위에 겹치는 판(스코어버그·아이콘 버튼) */
 
-  /* 텍스트 */
-  --chalk: #EEF2E9; /* 주 텍스트(분필) */
-  --chalk-2: #C9D3CC; /* 본문 */
-  --chalk-3: #8FA1A6; /* 보조 */
-  --chalk-4: #5E7078; /* 비활성 */
+  /* 글자 */
+  --chalk: #F2EFE6; /* 주 텍스트 */
+  --dust: #9AA4AA; /* 보조 텍스트(바탕 대비 7:1 이상) */
+  --dim: #626D73; /* 비활성·장식 라벨(본문 금지, 대비 3:1) */
 
-  /* 데이터·시맨틱 */
-  --led: #FFB547; /* LED 숫자·주요 버튼 */
-  --led-ink: #231503; /* LED 바탕 위 글자 */
-  --ball: #4FD37F; /* 볼·출루·유리한 변화 */
-  --strike: #FFD34E; /* 스트라이크·주의 */
-  --out: #FF5C50; /* 아웃·불리한 변화·거부 */
+  /* 행동·시맨틱 */
+  --flood: #FFCF6B; /* 조명 금색: 주요 버튼, 공격 팀 표시, 포커스 링, 강조 숫자 */
+  --flood-ink: #1C1406; /* 금색 위 글자 */
+  --ball: #3FD27E; /* 볼·출루·유리한 변화 */
+  --strike: #FFC53D; /* 스트라이크·주의 */
+  --out: #FF5043; /* 아웃·불리한 변화·거부 */
+  --toon: #FF8A2A; /* 만화 모드 칩(점선 테두리) */
+  --bat: #F0474B; /* 공격 팀: 장면마다 src/domain/teams.ts 팀 색으로 덮어쓴다 */
+  --fld: #5C8DF6; /* 수비 팀 */
 
-  /* 공격팀·수비팀: 장면마다 팀 컬러로 덮어쓴다 */
-  --bat: #F0474B;
-  --fld: #5C8DF6;
+  /* 근거 등급 금속색 */
+  --foil-real: #E7C46B; /* 실측(금) */
+  --foil-maybe: #C3CED4; /* 그럴듯함(은) */
+  --foil-fun: #D98B67; /* 상상(구리) */
 
-  /* 근거 등급 칩(테두리와 글자) */
-  --evidence-measured: #4FD37F; /* 실측 */
-  --evidence-plausible: #FFD34E; /* 그럴듯함 */
-  --evidence-fun: #B7C4C9; /* 상상 */
+  /* 글꼴 */
+  --callout: "Gasoek One", "Black Han Sans", "Noto Sans KR", sans-serif; /* 상황 제목·콜·헤드라인, 한 화면 한두 곳 */
+  --ui: "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif; /* 본문·라벨·버튼 */
+  --num: "Archivo", "Noto Sans KR", system-ui, sans-serif; /* 점수·확률·카운트: font-stretch 72~80%, tabular-nums */
 
-  /* 만화 모드 칩(점선 테두리) */
-  --toon: #FF8A2A;
+  /* 움직임 */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 
-  /* 폰트 */
-  --display: "Black Han Sans", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
-  --body: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
-  --led-font: "VT323", ui-monospace, Consolas, monospace;
+  /* 반경: 이 값 밖은 쓰지 않는다(던지기 버튼만 50%) */
+  --r-board: 2px; /* 스코어버그·LED */
+  --r-control: 6px; /* 버튼·칩·입력·탭 */
+  --r-slot: 8px; /* 도크 버튼·TMI 칸·HUD 판 */
+  --r-ticket: 10px; /* 티켓·결과 판 */
+  --r-card: 12px; /* TMI 카드 */
+  --r-sheet: 16px; /* 시트 위쪽 모서리 */
+
+  /* 깊이 */
+  --shadow-lift: 0 40px 80px -30px rgba(0, 0, 0, 0.8); /* 휴대폰 열 외곽·떠 있는 시트만 */
+  --shadow-call: 0 4px 0 rgba(0, 0, 0, 0.55); /* 콜 글자의 딱딱한 그림자 */
+  --veil: rgba(4, 6, 8, 0.55); /* 시트 뒤 경기장을 55% 어둡게 덮는 판 */
+
+  /* 옛 토큰 별칭: 기존 화면이 깨지지 않게만 남긴다. 11-screens에서 제거 */
+  --night: var(--ground);
+  --booth: var(--plate);
+  --dugout: var(--plate-2);
+  --rail: var(--hair);
+  --board: #05090D;
+  --chalk-2: #C9CFCC;
+  --chalk-3: var(--dust);
+  --chalk-4: var(--dim);
+  --led: var(--flood);
+  --led-ink: var(--flood-ink);
+  --display: var(--callout);
+  --body: var(--ui);
+  --led-font: var(--num);
+  --evidence-measured: var(--foil-real);
+  --evidence-plausible: var(--foil-maybe);
+  --evidence-fun: var(--foil-fun);
 }

@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { startNextHalf } from '../engine';
+import { startNextHalf, type AfterEvent } from '../engine';
 import { fixtureAppData } from '../test/fixtures/appData';
 import type { Interpretation, TmiEntry } from '../types/domain';
 import { buildSceneSetup } from './scene';
-import { battingWin, butterflyPp, entryChips, selectTiers, type GaugeLike } from './selectors';
+import { battingWin, butterflyPp, entryChips, expectedSwing, selectTiers, type GaugeLike } from './selectors';
 
 const setup = buildSceneSetup(fixtureAppData, 'fixture-walkoff');
 const SCENE_STATE = setup.scene.state;
@@ -141,5 +141,88 @@ describe('entryChips', () => {
     });
     expect(entryChips(refused)).toEqual([{ label: '계산 거부', tone: 'refused' }]);
     expect(entryChips(tmiEntry({ parts: [] }))).toEqual([]);
+  });
+});
+
+describe('expectedSwing', () => {
+  type SwingInput = Parameters<typeof expectedSwing>[0];
+  const after = (winHome: number, tie: number, winAway: number): AfterEvent => ({ winHome, tie, winAway, inningScore: 0.5 });
+  /** 사건 순서 [K, BB, HR, 3B, 2B, 1B, OUT], 합 1 */
+  const PA = new Float64Array([0.2, 0.1, 0.03, 0.01, 0.05, 0.16, 0.45]);
+  /** 홈 공격, 지금 B = 0.55 + 0.06 / 2 = 0.58 */
+  const HOME_AT_BAT: SwingInput = {
+    batSide: 'home',
+    pa: PA,
+    winHome: 0.55,
+    tie: 0.06,
+    winAway: 0.39,
+    after: [
+      after(0.5, 0.06, 0.44), // K   B 0.53   |ΔB| 0.05
+      after(0.61, 0.07, 0.32), // BB  B 0.645  |ΔB| 0.065
+      after(0.8, 0.04, 0.16), // HR  B 0.82   |ΔB| 0.24
+      after(0.72, 0.05, 0.23), // 3B  B 0.745  |ΔB| 0.165
+      after(0.68, 0.06, 0.26), // 2B  B 0.71   |ΔB| 0.13
+      after(0.63, 0.06, 0.31), // 1B  B 0.66   |ΔB| 0.08
+      after(0.51, 0.05, 0.44), // OUT B 0.535  |ΔB| 0.045
+    ],
+  };
+
+  it('after가 모두 지금과 같으면 0', () => {
+    const still: SwingInput = { ...HOME_AT_BAT, after: HOME_AT_BAT.after.map(() => after(0.55, 0.06, 0.39)) };
+    expect(expectedSwing(still)).toBe(0);
+  });
+
+  it('손으로 계산한 사건 7개 합성 평가와 1e-12 이내로 같다', () => {
+    // 100 × (0.2×0.05 + 0.1×0.065 + 0.03×0.24 + 0.01×0.165 + 0.05×0.13 + 0.16×0.08 + 0.45×0.045) = 100 × 0.0649
+    const swing = expectedSwing(HOME_AT_BAT);
+    expect(swing).not.toBeNull();
+    expect(Math.abs((swing as number) - 6.49)).toBeLessThan(1e-12);
+  });
+
+  it('원정 공격과 홈 공격이 대칭이다', () => {
+    const mirror = (ev: SwingInput): SwingInput => ({
+      ...ev,
+      batSide: ev.batSide === 'home' ? 'away' : 'home',
+      winHome: ev.winAway,
+      winAway: ev.winHome,
+      after: ev.after.map((a) => ({ ...a, winHome: a.winAway, winAway: a.winHome })),
+    });
+    expect(Math.abs((expectedSwing(mirror(HOME_AT_BAT)) as number) - 6.49)).toBeLessThan(1e-12);
+    // 공격 진영의 값을 쓴다: 원정 승리만 움직인 인위 입력이면 원정 공격일 때만 움직임이 있다
+    const awayMoves: SwingInput = { ...HOME_AT_BAT, after: HOME_AT_BAT.after.map(() => after(0.55, 0.06, 0.49)) };
+    expect(expectedSwing({ ...awayMoves, batSide: 'away' })).toBeCloseTo(10, 12);
+    expect(expectedSwing(awayMoves)).toBe(0);
+  });
+
+  it('무승부는 절반으로 센다', () => {
+    // 지금 B = 0.5, 뒤 B = 0.5 + 0.2 / 2 = 0.6. 무승부를 통째로 세면 20, 빼면 0
+    const even: SwingInput = {
+      batSide: 'home',
+      pa: PA,
+      winHome: 0.5,
+      tie: 0,
+      winAway: 0.5,
+      after: Array.from({ length: 7 }, () => after(0.5, 0.2, 0.3)),
+    };
+    expect(expectedSwing(even)).toBeCloseTo(10, 12);
+  });
+
+  it('반올림하지 않은 유한한 0 이상의 수다', () => {
+    const one: SwingInput = {
+      batSide: 'away',
+      pa: PA,
+      winHome: 0.5,
+      tie: 0,
+      winAway: 0.5,
+      after: [after(0.4876544, 0, 0.5123456), ...Array.from({ length: 6 }, () => after(0.5, 0, 0.5))],
+    };
+    const swing = expectedSwing(one) as number;
+    // 100 × 0.2 × 0.0123456
+    expect(swing).toBeCloseTo(0.246912, 12);
+    expect(Number.isFinite(swing) && swing >= 0).toBe(true);
+  });
+
+  it('after가 비면(detail: false 평가) null', () => {
+    expect(expectedSwing({ ...HOME_AT_BAT, after: [] })).toBeNull();
   });
 });

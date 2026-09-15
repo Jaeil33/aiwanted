@@ -1,0 +1,9 @@
+{
+  "project": "TMI 야구",
+  "phase": "release",
+  "steps": [
+    { "step": 0, "name": "share-meta", "status": "pending" },
+    { "step": 1, "name": "readme-checks", "status": "pending" },
+    { "step": 2, "name": "smoke-deploy", "status": "pending" }
+  ]
+}

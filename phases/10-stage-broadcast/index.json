@@ -1,0 +1,9 @@
+{
+  "project": "TMI 야구",
+  "phase": "stage-broadcast",
+  "steps": [
+    { "step": 0, "name": "broadcast-camera", "status": "pending" },
+    { "step": 1, "name": "broadcast-scene", "status": "pending" },
+    { "step": 2, "name": "stage-controller", "status": "pending" }
+  ]
+}

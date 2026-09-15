@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { TabBar, type TabBarTab } from '../components/TabBar';
 import { APP_DATA } from '../data/appData';
 import type { AppData } from '../types/data';
 import styles from './App.module.css';
 import { GameProvider, useGame } from './GameProvider';
 import { localPlatform, type Platform } from './platform';
-import { formatRoute, type Route } from './router';
+import { formatRoute } from './router';
 import { AboutScreen } from './screens/AboutScreen';
 import { EvidenceScreen } from './screens/EvidenceScreen';
 import { HomeScreen } from './screens/HomeScreen';
@@ -12,6 +13,7 @@ import { PlayScreen } from './screens/PlayScreen';
 import { ResultScreen } from './screens/ResultScreen';
 import { useHashRoute } from './useHashRoute';
 
+/** 출처 한 줄(ADR-005): MenuFrame에만 둔다. 게임 화면의 출처는 결과의 실제 결과 판·만든 이유·공유 카드가 싣는다 */
 const SOURCES = '기록·중계: 네이버 스포츠(KBO) · 날씨: Open-Meteo · 확률: TMI 야구 엔진 계산값';
 
 export interface AppProps {
@@ -40,7 +42,7 @@ export function App({ data = APP_DATA, platformPromise }: AppProps) {
 
   if (!data) {
     return (
-      <Frame current={null}>
+      <MenuFrame current="lobby">
         <section className={styles.notice} aria-labelledby="no-data-title">
           <h2 id="no-data-title" className={styles.noticeTitle}>
             데이터를 기다리는 중
@@ -49,7 +51,7 @@ export function App({ data = APP_DATA, platformPromise }: AppProps) {
             앱 데이터가 없어요. <code>npm run data</code>로 만든 뒤 다시 빌드하세요.
           </p>
         </section>
-      </Frame>
+      </MenuFrame>
     );
   }
 
@@ -60,40 +62,43 @@ export function App({ data = APP_DATA, platformPromise }: AppProps) {
   );
 }
 
-/** 머리말(로고·내비)·본문·출처 푸터 */
-function Frame({ current, children }: { current: Route['screen'] | null; children: ReactNode }) {
-  const scenesActive = current === 'home' || current === 'play' || current === 'result';
+interface MenuFrameProps {
+  current: TabBarTab;
+  /** 상단 바 오른쪽 한 줄(로비의 "명장면 16") */
+  meta?: string;
+  children: ReactNode;
+}
+
+/** 로비·판정소·만든 이유: 상단 바 52px(브랜드) + 본문 + 출처 한 줄 + 하단 TabBar */
+function MenuFrame({ current, meta, children }: MenuFrameProps) {
   return (
-    <div className={styles.app}>
-      <header className={styles.header}>
-        <div className={styles.bar}>
-          <h1 className={styles.brand}>
-            <a href="#/" className={styles.brandLink}>
-              TMI 야구
-            </a>
-          </h1>
-          <nav aria-label="주 메뉴" className={styles.nav}>
-            <a href="#/" className={styles.navLink} aria-current={scenesActive ? 'page' : undefined}>
-              장면
-            </a>
-            <a href="#/evidence" className={styles.navLink} aria-current={current === 'evidence' ? 'page' : undefined}>
-              판정소
-            </a>
-            <a href="#/about" className={styles.navLink} aria-current={current === 'about' ? 'page' : undefined}>
-              만든 이유
-            </a>
-          </nav>
-        </div>
+    <div className={styles.column}>
+      <header className={styles.topbar}>
+        <h1 className={styles.brand}>
+          <a href="#/" className={styles.brandLink}>
+            TMI <span className={styles.brandAccent}>야구</span>
+          </a>
+        </h1>
+        {meta ? <span className={styles.meta}>{meta}</span> : null}
       </header>
-      <main className={styles.main}>{children}</main>
-      <footer className={styles.footer}>
-        <p className={styles.sources}>{SOURCES}</p>
-      </footer>
+      <main className={styles.menuMain}>{children}</main>
+      <p className={styles.sources}>{SOURCES}</p>
+      <TabBar current={current} />
     </div>
   );
 }
 
-/** 해시 라우트 → 화면. play 라우트는 장면을 열고(같은 장면이 열려 있으면 그대로), 모르는 장면·열린 장면 없는 결과는 첫 화면으로 보낸다 */
+/** 플레이·결과: 머리말·푸터·탭바 없는 전체 화면. 문서 제목(h1)은 스크린리더에만 둔다 */
+function GameFrame({ children }: { children: ReactNode }) {
+  return (
+    <div className={styles.column}>
+      <h1 className={styles.srOnly}>TMI 야구</h1>
+      <main className={styles.gameMain}>{children}</main>
+    </div>
+  );
+}
+
+/** 해시 라우트 → 틀과 화면. play 라우트는 장면을 열고(같은 장면이 열려 있으면 그대로), 모르는 장면·열린 장면 없는 결과는 첫 화면으로 보낸다 */
 function Shell() {
   const { data, session, dispatch, actions } = useGame();
   const [route, setRoute] = useHashRoute();
@@ -125,22 +130,42 @@ function Shell() {
     dispatch({ type: 'navigate', screen: route.screen });
   }, [route, data, openSceneId, dispatch, actions, setRoute]);
 
-  let screen: ReactNode;
+  const lobby = (
+    <MenuFrame current="lobby" meta={`명장면 ${data.scenes.length}`}>
+      <HomeScreen />
+    </MenuFrame>
+  );
+
   switch (route.screen) {
     case 'play':
-      screen = data.scenes.some((scene) => scene.id === route.sceneId) ? <PlayScreen /> : <HomeScreen />;
-      break;
+      return data.scenes.some((scene) => scene.id === route.sceneId) ? (
+        <GameFrame>
+          <PlayScreen />
+        </GameFrame>
+      ) : (
+        lobby
+      );
     case 'result':
-      screen = openSceneId === null ? <HomeScreen /> : <ResultScreen />;
-      break;
+      return openSceneId === null ? (
+        lobby
+      ) : (
+        <GameFrame>
+          <ResultScreen />
+        </GameFrame>
+      );
     case 'evidence':
-      screen = <EvidenceScreen />;
-      break;
+      return (
+        <MenuFrame current="evidence">
+          <EvidenceScreen />
+        </MenuFrame>
+      );
     case 'about':
-      screen = <AboutScreen />;
-      break;
+      return (
+        <MenuFrame current="about">
+          <AboutScreen />
+        </MenuFrame>
+      );
     default:
-      screen = <HomeScreen />;
+      return lobby;
   }
-  return <Frame current={route.screen}>{screen}</Frame>;
 }
