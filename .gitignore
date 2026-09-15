@@ -34,3 +34,6 @@ coverage/
 
 # isolated agent worktrees
 .claude/worktrees/
+
+# vercel cli link & local build output
+.vercel
