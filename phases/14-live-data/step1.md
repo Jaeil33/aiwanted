@@ -39,18 +39,8 @@ export async function fetchRelay(deps: NaverDeps, gameId: string, inning?: numbe
 - Vercel Web 표준 export(`export async function GET(request: Request)`), 의존성 주입 가능한 핸들러(`handleGames(request, deps)`, `handleGame(request, deps)`)로 나눠 테스트한다.
 
 ### `vercel.json`
-```json
-{
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist",
-  "regions": ["icn1"],
-  "functions": {
-    "api/verdict.ts": { "maxDuration": 60 },
-    "api/*.ts": { "maxDuration": 20 }
-  }
-}
-```
-(Vercel이 `functions` 글롭 겹침을 거부하면 파일별로 나눠 적는다.)
+- 이 step에서는 바꾸지 않는다. 함수 지역(icn1)·제한 시간은 step 3(vercel-output)이 Build Output API의 `.vc-config.json`으로 정한다(ADR-024). 이유: 저장소가 ESM이라 Vercel 기본 함수 빌드가 확장자 없는 import를 풀지 못해 `/api/*`가 500으로 죽는다(2026-09-15 운영 확인).
+- 대신 `api/games.ts`·`api/game.ts`가 **다른 `api/` 진입 파일을 import하지 않게** 한다(공용 코드는 `api/_lib/`, `src/live/`). step 3 번들러가 함수마다 한 파일로 묶는다.
 
 ### 테스트
 - 가짜 fetch로: 요청 URL·헤더(Origin 없음), 이닝 채우기(캐시된 이닝은 다시 안 부름), 동시 요청 합치기(원격 호출 1회), 상태별 캐시 헤더, 오류 매핑, 400·404·429, 경기 전 relay 미호출, 응답에 원문 큰 필드(`currentPlayersInfo`)가 없음.

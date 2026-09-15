@@ -157,3 +157,8 @@ AI 경로도 같은 원칙을 따른다.
 **결정**: Vercel은 GitHub에 push된 코드로 빌드한다. 빌드가 `import.meta.glob`으로 번들에 넣는 `data/build/app/*.json`(core·pitches·scenes·evidence·trust)만 커밋한다. `data/raw`(네이버·Open-Meteo 원자료)와 `data/build`의 나머지 중간 생성물은 계속 커밋하지 않는다. 데이터를 새로 만들면 `npm run data` 뒤 이 파일들을 함께 커밋한다.
 **이유**: `data/`를 통째로 빼면 Vercel 빌드에 앱 데이터가 없어 "데이터를 기다리는 중" 화면만 뜬다. 이 파일들은 배포된 JS 번들로 어차피 공개되는 요약본이고, 크기도 약 400KB다.
 **트레이드오프**: 공개 저장소 기록에 가공한 기록 요약이 남는다(ADR-005의 재배포 우려를 받아들인다). 데이터를 다시 만들 때마다 저장소 기록이 커진다.
+
+### ADR-024: 서버 함수는 빌드 때 번들해 Build Output API로 낸다 (ADR-017 배포 보강)
+**결정**: `api/*.ts`(테스트·`_lib` 제외)를 Vercel 빌드에서 Vite SSR 빌드로 함수마다 import 없는 ESM 한 파일로 묶고, Node `(req, res)` 어댑터를 씌워 `.vercel/output/functions/api/<name>.func/index.mjs`로 낸다. `.vc-config.json`은 `nodejs22.x`·`launcherType: Nodejs`·`regions: ["icn1"]`·`maxDuration`(verdict 60초, 그 밖 20초)이다. 정적 파일은 `dist`를 `.vercel/output/static`에 복사한다. Vercel 빌드 명령은 `npm run build:vercel`이고, `outputDirectory: dist`는 `.vercel/output`이 쓰이지 않을 때 정적 사이트라도 뜨게 하는 대비책으로 남긴다.
+**이유**: 2026-09-15 운영 확인에서 `/api/interpret`가 500(FUNCTION_INVOCATION_FAILED)이었다. ESM 저장소에서 확장자 없는 상대 import(`./_lib/handlers`, `../../src/...`)와 JSON import를 Vercel Node 런타임이 풀지 못한다. 모든 `src` import에 `.js`를 붙이는 방법은 수백 곳을 바꾸고 병렬 phase와 충돌한다. Vite SSR 번들은 실험에서 모듈 12개를 import 없는 32KB 파일로 묶었고 Node에서 그대로 돌았다.
+**트레이드오프**: Vercel이 `api/`를 알아서 함수로 만드는 기본 동작 대신 출력 구조를 우리가 책임진다. 로컬 `npm run build`와 배포 빌드가 한 단계 다르므로 `npm run check:vercel` 스모크 점검으로 메운다.

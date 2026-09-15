@@ -4,6 +4,7 @@
   "steps": [
     { "step": 0, "name": "relay-parser", "status": "pending" },
     { "step": 1, "name": "api-functions", "status": "pending" },
-    { "step": 2, "name": "live-client", "status": "pending" }
+    { "step": 2, "name": "live-client", "status": "pending" },
+    { "step": 3, "name": "vercel-output", "status": "pending" }
   ]
 }

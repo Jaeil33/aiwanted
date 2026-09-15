@@ -33,6 +33,8 @@
 ## 명령어
 npm run dev             # 개발 서버 (/api도 Vite 미들웨어로 함께 뜬다, 14-live-data 이후)
 npm run build           # 타입 검사 + 프로덕션 빌드
+npm run build:vercel    # build + api 함수 번들 → .vercel/output (Vercel 빌드 명령, ADR-024, 14-live-data step 3 이후)
+npm run check:vercel    # .vercel/output 함수 번들 스모크 점검(네트워크 없음)
 npm run build:artifact  # 단일 HTML 빌드 (dist-artifact/index.html)
 npm run lint            # ESLint
 npm run test            # Vitest + pytest(pipeline, scripts)

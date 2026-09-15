@@ -24,7 +24,7 @@ api/                        # 서버리스 함수: games.ts, game.ts(네이버 �
 pipeline/
 ├── tmi_pipeline/           # 원자료 로더, collect(수집), snapshot(전체 선수·팀 기본 타선·투구 표본), matchups, context, weather, evidence, trust_states, build CLI
 └── tests/                  # pytest + fixtures(합성)
-scripts/                    # execute.py(하네스), run-python.ts, trust-report.ts, check-*.ts
+scripts/                    # execute.py(하네스), run-python.ts, trust-report.ts, check-*.ts, vite-api-dev.ts(개발 /api), build-vercel.ts·smoke-vercel-output.ts(배포 묶음, ADR-024)
 reference/tmi-prototype/    # 1차 JS 프로토타입(이식 참고용, 수정 금지)
 docs/design/broadcast/      # UI 시각 기준 시안(ADR-018, import 금지)
 docs/design/nightgame/      # 폐기된 시안(참고만, import 금지)
@@ -186,6 +186,7 @@ export interface TallyRow { key: TallyKey; count: number }
 - 입력 검증: gameId `^\d{8}[A-Z]{4}\d{5}$`, date `^\d{4}-\d{2}-\d{2}$`, tally keys 1~3개·키 모양 검사.
 - IP당 분당 호출 제한(인스턴스 메모리): games·game 60, tally 20, interpret 10, verdict 10.
 - 환경변수: `ANTHROPIC_API_KEY`, `TMI_MODEL_INTERPRET`, `TMI_MODEL_VERDICT`, `KV_REST_API_URL`, `KV_REST_API_TOKEN`. 응답·로그에 넣지 않는다.
+- 배포 묶음(ADR-024): `npm run build:vercel`이 `dist`를 `.vercel/output/static`에, 함수마다 Vite SSR 번들(import 없는 `index.mjs` + Node `(req, res)` 어댑터)을 `.vercel/output/functions/api/<name>.func`에 쓴다. `npm run check:vercel`이 번들을 네트워크 없이 불러 400·405 응답을 점검한다.
 
 ## 패턴
 - 순수 함수 + 얇은 React 계층. 계산·규칙·파싱은 `engine`/`game`/`ai`/`live`에서 테스트하고, 컴포넌트는 selector 결과만 그린다.
