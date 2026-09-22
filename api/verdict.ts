@@ -1,5 +1,5 @@
-import { handleVerdict } from './_lib/handlers';
-import { createRateLimiter } from './_lib/rateLimit';
+import { handleVerdict } from './_lib/handlers.js';
+import { createRateLimiter } from './_lib/rateLimit.js';
 
 /** IP당 분당 10회(ADR-006). 서버리스 인스턴스가 살아 있는 동안 유지된다 */
 const limiter = createRateLimiter({ limit: 10, windowMs: 60_000, now: () => Date.now() });

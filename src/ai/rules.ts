@@ -1,6 +1,6 @@
-import { KNOB_META } from '../domain/knobs';
-import { MEASURED } from '../domain/measured';
-import type { EvidenceData } from '../types/data';
+import { KNOB_META } from '../domain/knobs.js';
+import { MEASURED } from '../domain/measured.js';
+import type { EvidenceData } from '../types/data.js';
 import type {
   EffectPart,
   Interpretation,
@@ -11,11 +11,11 @@ import type {
   Subject,
   Verdict,
   VerdictResult,
-} from '../types/domain';
-import { CONCEPTS, matchConcepts, sentimentOf, type Concept, type ConceptMatch } from './lexicon';
-import { assessSafety, SENSITIVE_REASON, type SafetyAssessment } from './safety';
-import { resolveTarget, type TargetResolution } from './targets';
-import { prepareText, type Clause, type PreparedText } from './text';
+} from '../types/domain.js';
+import { CONCEPTS, matchConcepts, sentimentOf, type Concept, type ConceptMatch } from './lexicon.js';
+import { assessSafety, SENSITIVE_REASON, type SafetyAssessment } from './safety.js';
+import { resolveTarget, type TargetResolution } from './targets.js';
+import { prepareText, type Clause, type PreparedText } from './text.js';
 
 /*
  * AI를 쓸 수 없을 때의 규칙 해석(ADR-013·026)과 규칙 판정. 확률이나 실측 효과 크기는 만들지 않는다(ADR-003, ADR-004):

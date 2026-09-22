@@ -1,6 +1,6 @@
-import { KNOB_META, SUBJECTS_FOR } from '../domain/knobs';
-import { MEASURED } from '../domain/measured';
-import type { EvidenceData } from '../types/data';
+import { KNOB_META, SUBJECTS_FOR } from '../domain/knobs.js';
+import { MEASURED } from '../domain/measured.js';
+import type { EvidenceData } from '../types/data.js';
 import type {
   EffectPart,
   Evidence,
@@ -13,9 +13,9 @@ import type {
   MeasuredWho,
   Subject,
   VerdictResult,
-} from '../types/domain';
-import { UNMEASURABLE_BODY, UNMEASURABLE_HEADLINE, VERDICT_HEADLINE } from './rules';
-import { SENSITIVE_REASON } from './safety';
+} from '../types/domain.js';
+import { UNMEASURABLE_BODY, UNMEASURABLE_HEADLINE, VERDICT_HEADLINE } from './rules.js';
+import { SENSITIVE_REASON } from './safety.js';
 
 /*
  * AI 원문 JSON을 엔진에 넣어도 되는 값으로 검증한다(ADR-003).

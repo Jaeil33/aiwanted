@@ -1,6 +1,6 @@
-import type { PromptContext } from '../types/domain';
-import { prepareText, tokensOf } from './text';
-import type { Clause, PreparedText } from './text';
+import type { PromptContext } from '../types/domain.js';
+import { prepareText, tokensOf } from './text.js';
+import type { Clause, PreparedText } from './text.js';
 
 /*
  * 안전 판정(CLAUDE.md, ADR-005, ADR-013 2단계). 순수 모듈이다.

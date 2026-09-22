@@ -1,4 +1,4 @@
-import type { TeamCode } from '../types/data';
+import type { TeamCode } from '../types/data.js';
 
 /** KBO 10개 구단. 색은 docs/UI_GUIDE.md 팀 컬러 */
 export const TEAMS: Record<TeamCode, { name: string; color: string }> = {

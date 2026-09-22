@@ -5,7 +5,7 @@ import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 export default defineConfig([
-  { ignores: ['dist', 'dist-artifact', 'reference', 'data', '.venv', 'coverage', 'phases', 'node_modules', 'docs/design', '.claude'] },
+  { ignores: ['dist', 'dist-artifact', 'reference', 'data', '.venv', 'coverage', 'phases', 'node_modules', 'docs/design', '.claude', '.vercel'] },
   js.configs.recommended,
   tseslint.configs.recommended,
   {

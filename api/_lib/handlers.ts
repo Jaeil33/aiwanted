@@ -1,12 +1,12 @@
-import { normalizeInterpretation, normalizeVerdict } from '../../src/ai/normalize';
-import { buildInterpretPrompt, buildVerdictPrompt, evidenceToolResult, VERDICT_TOOL } from '../../src/ai/prompts';
-import { checkSensitive } from '../../src/ai/safety';
-import { MEASURED } from '../../src/domain/measured';
-import type { EvidenceData, EvidenceItem } from '../../src/types/data';
-import type { Interpretation, KnownPlayer, MeasuredId, PromptContext, RosterEntry } from '../../src/types/domain';
-import { AiHttpError, callMessages, extractJson, firstText, runToolLoop } from './anthropic';
-import type { ToolDef } from './anthropic';
-import type { createRateLimiter } from './rateLimit';
+import { normalizeInterpretation, normalizeVerdict } from '../../src/ai/normalize.js';
+import { buildInterpretPrompt, buildVerdictPrompt, evidenceToolResult, VERDICT_TOOL } from '../../src/ai/prompts.js';
+import { checkSensitive } from '../../src/ai/safety.js';
+import { MEASURED } from '../../src/domain/measured.js';
+import type { EvidenceData, EvidenceItem } from '../../src/types/data.js';
+import type { Interpretation, KnownPlayer, MeasuredId, PromptContext, RosterEntry } from '../../src/types/domain.js';
+import { AiHttpError, callMessages, extractJson, firstText, runToolLoop } from './anthropic.js';
+import type { ToolDef } from './anthropic.js';
+import type { createRateLimiter } from './rateLimit.js';
 
 /*
  * 배포용 AI 프록시 핸들러(ADR-006). 클라이언트가 보낸 프롬프트는 쓰지 않는다: 검증한 구조화 입력으로 서버가 프롬프트를 만든다

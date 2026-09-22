@@ -1,4 +1,4 @@
-import type { KnobId, KnobWho, Subject } from '../types/domain';
+import type { KnobId, KnobWho, Subject } from '../types/domain.js';
 
 /** 손잡이 14개 (프로토타입 engine.js KNOBS 순서) */
 export const KNOB_IDS: readonly KnobId[] = [

@@ -1,4 +1,4 @@
-import type { Concept } from './lexicon';
+import type { Concept } from './lexicon.js';
 
 /*
  * 일상 낱말 DB(ADR-026). AI 없이도 사람들이 쓸 만한 말 대부분을 손잡이로 옮기려고 핵심 개념(lexicon.ts) 밖의 낱말을 모은다.

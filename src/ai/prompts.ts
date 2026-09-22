@@ -1,8 +1,8 @@
-import { KNOB_IDS, KNOB_META, SUBJECTS_FOR, SUBJECT_LABEL } from '../domain/knobs';
-import { MEASURED } from '../domain/measured';
-import type { EvidenceData } from '../types/data';
-import type { EffectPart, Interpretation, MeasuredDef, MeasuredId, PromptContext, Subject } from '../types/domain';
-import { stripControl } from './normalize';
+import { KNOB_IDS, KNOB_META, SUBJECTS_FOR, SUBJECT_LABEL } from '../domain/knobs.js';
+import { MEASURED } from '../domain/measured.js';
+import type { EvidenceData } from '../types/data.js';
+import type { EffectPart, Interpretation, MeasuredDef, MeasuredId, PromptContext, Subject } from '../types/domain.js';
+import { stripControl } from './normalize.js';
 
 /*
  * AI에게 보내는 프롬프트. 모델은 문장을 조절값으로 옮기고 설명만 한다.

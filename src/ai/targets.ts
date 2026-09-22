@@ -1,8 +1,8 @@
-import { TEAMS } from '../domain/teams';
-import type { TeamCode } from '../types/data';
-import type { PromptContext, Subject } from '../types/domain';
-import { tokensOf } from './text';
-import type { Clause, PreparedText } from './text';
+import { TEAMS } from '../domain/teams.js';
+import type { TeamCode } from '../types/data.js';
+import type { PromptContext, Subject } from '../types/domain.js';
+import { tokensOf } from './text.js';
+import type { Clause, PreparedText } from './text.js';
 
 /*
  * 대상 추론(ADR-013 4단계). 순수 모듈이다. 절 하나가 누구 이야기인지 정한다.

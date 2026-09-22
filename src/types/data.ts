@@ -1,4 +1,4 @@
-import type { EventIndex, GameState, MeasuredId, Verdict } from './domain';
+import type { EventIndex, GameState, MeasuredId, Verdict } from './domain.js';
 
 export type TeamCode = 'HT' | 'LT' | 'NC' | 'HH' | 'LG' | 'OB' | 'SS' | 'SK' | 'KT' | 'WO';
 

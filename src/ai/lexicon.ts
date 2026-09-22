@@ -1,7 +1,7 @@
-import type { KnobId, MeasuredId, Scope, Subject } from '../types/domain';
-import { DB_CONCEPTS } from './lexiconDb';
-import { tokensOf } from './text';
-import type { Clause, NumberUnit, PreparedText } from './text';
+import type { KnobId, MeasuredId, Scope, Subject } from '../types/domain.js';
+import { DB_CONCEPTS } from './lexiconDb.js';
+import { tokensOf } from './text.js';
+import type { Clause, NumberUnit, PreparedText } from './text.js';
 
 /*
  * 개념 사전(ADR-013 5단계). 순수 데이터 + 매칭. 확률 숫자를 담지 않는다: 손잡이·세기(−2..2)·실측 입력 기본값만 둔다(ADR-003).

@@ -1,5 +1,5 @@
-import type { MeasuredDef, MeasuredId, MeasuredTransform, MeasuredWho } from '../types/domain';
-import measuredJson from './measured.json';
+import type { MeasuredDef, MeasuredId, MeasuredTransform, MeasuredWho } from '../types/domain.js';
+import measuredJson from './measured.json' with { type: 'json' };
 
 type LinearTransform = Extract<MeasuredTransform, { kind: 'linear' }>;
 
