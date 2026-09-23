@@ -204,3 +204,8 @@ AI 경로도 같은 원칙을 따른다.
 **결정**: `api/` 함수가 Anthropic 호출에 실패해 502를 낼 때 본문에 업스트림 HTTP 상태를 함께 담는다(`{ "error": "upstream", "status": 401 }`). 응답을 받지 못한 경우(네트워크 오류·본문 파싱 실패)에는 `status`를 넣지 않는다. 담는 값은 숫자 하나뿐이고 키·TMI 문장 원문·환경변수 이름은 그대로 넣지 않는다(ADR-017). 화면은 이 값을 쓰지 않고 지금처럼 규칙 해석으로 넘어간다. 기본 해석 모델 이름은 날짜 접미사 없는 별칭 `claude-haiku-4-5`를 쓴다(판정은 `claude-sonnet-5`).
 **이유**: 2026-09-23 배포에서 `/api/interpret`가 유효한 본문에 502 `{"error":"upstream"}`만 돌려줬다. 키가 틀렸는지(401), 크레딧이 없는지(400), 모델 이름이 틀렸는지(404), 업스트림이 죽었는지(5xx)를 가르려면 Vercel 배포 로그를 열어야만 했다. 상태 하나만 있으면 배포된 함수를 한 번 부르는 것으로 원인이 갈린다. 날짜 접미사가 붙은 모델 이름(`claude-haiku-4-5-20251001`)은 404를 부를 수 있어 별칭으로 바꿨다.
 **트레이드오프**: 업스트림 상태가 밖으로 보인다. 상태 코드는 이 서비스의 비밀이 아니고 본문·헤더·키는 그대로 가려지지만, 공개 배포에서 호출자가 "이 서비스가 Anthropic을 부르고 거기서 401을 받았다"는 사실을 알 수 있다.
+
+### ADR-030: 조직 단위 API 키를 위한 `ANTHROPIC_WORKSPACE_ID` (ADR-029 보강)
+**결정**: `api/` 함수는 환경변수 `ANTHROPIC_WORKSPACE_ID`가 있으면 Anthropic 호출에 `anthropic-workspace-id` 헤더를 붙인다. 없으면 붙이지 않는다. 값은 `api/_lib/handlers.ts`가 환경변수에서만 읽어 `callMessages`에 넘기고, 응답·로그에는 넣지 않는다(ADR-017).
+**이유**: 2026-09-23 배포에서 키가 인증은 통과하는데 모든 호출이 400이었다. 본문은 "This API key is not scoped to a workspace, so this request must include the anthropic-workspace-id header"였다. Anthropic 콘솔에서 workspace 밖(조직 단위)에 만든 키는 이 헤더가 없으면 쓸 수 없다. 키를 workspace 안에서 새로 만드는 방법도 있지만, 이미 발급한 키를 그대로 쓸 길을 함께 열어 둔다.
+**트레이드오프**: 환경변수가 하나 늘었다. workspace 키를 쓰면 이 값은 계속 비어 있다.

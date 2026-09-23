@@ -215,6 +215,21 @@ describe('handleInterpret', () => {
     expect(calls[0].body.model).toBe('claude-haiku-4-5');
   });
 
+  it('ANTHROPIC_WORKSPACE_ID가 있으면 anthropic-workspace-id 헤더로 보내고 응답에는 넣지 않는다', async () => {
+    const { fetchImpl, calls } = anthropic(aiText('{"parts":[]}'));
+    const deps = makeDeps(fetchImpl, { ANTHROPIC_API_KEY: KEY, ANTHROPIC_WORKSPACE_ID: ' wrkspc_test ' });
+    const res = await read(await handleInterpret(request('interpret', interpretBody()), deps));
+    expect(calls[0].headers).toMatchObject({ 'anthropic-workspace-id': 'wrkspc_test' });
+    expect(JSON.stringify(res.body)).not.toContain('wrkspc_test');
+    expect(logged()).not.toContain('wrkspc_test');
+  });
+
+  it('ANTHROPIC_WORKSPACE_ID가 없으면 헤더를 붙이지 않는다', async () => {
+    const { fetchImpl, calls } = anthropic(aiText('{"parts":[]}'));
+    await read(await handleInterpret(request('interpret', interpretBody()), makeDeps(fetchImpl)));
+    expect(calls[0].headers).not.toHaveProperty('anthropic-workspace-id');
+  });
+
   it('AI가 거절(stop_reason refusal)하면 200 refused', async () => {
     const { fetchImpl } = anthropic(aiMessage([], 'refusal'));
     const res = await read(await handleInterpret(request('interpret', interpretBody()), makeDeps(fetchImpl)));

@@ -15,7 +15,7 @@ import type { createRateLimiter } from './rateLimit.js';
  */
 
 export interface Deps {
-  env: { ANTHROPIC_API_KEY?: string; TMI_MODEL_INTERPRET?: string; TMI_MODEL_VERDICT?: string };
+  env: { ANTHROPIC_API_KEY?: string; ANTHROPIC_WORKSPACE_ID?: string; TMI_MODEL_INTERPRET?: string; TMI_MODEL_VERDICT?: string };
   fetch: typeof fetch;
   limiter: ReturnType<typeof createRateLimiter>;
 }
@@ -280,6 +280,12 @@ function apiKeyOf(deps: Deps): string | null {
   return key ? key : null;
 }
 
+/** workspace에 속하지 않은 조직 단위 키를 쓸 때만 필요하다. 없으면 헤더를 붙이지 않는다 */
+function workspaceIdOf(deps: Deps): string | undefined {
+  const id = deps.env.ANTHROPIC_WORKSPACE_ID?.trim();
+  return id ? id : undefined;
+}
+
 /** 환경변수 모델 이름. 비어 있으면 기본값 */
 function modelOf(value: string | undefined, fallback: string): string {
   const model = value?.trim();
@@ -328,6 +334,7 @@ export async function handleInterpret(request: Request, deps: Deps): Promise<Res
     const res = await callMessages(
       {
         apiKey,
+        workspaceId: workspaceIdOf(deps),
         model: modelOf(deps.env.TMI_MODEL_INTERPRET, DEFAULT_MODEL_INTERPRET),
         system: INTERPRET_SYSTEM,
         messages: [{ role: 'user', content: buildInterpretPrompt(text, ctx, { measuredAvailable }) }],
@@ -373,6 +380,7 @@ export async function handleVerdict(request: Request, deps: Deps): Promise<Respo
     const answer = await runToolLoop(
       {
         apiKey,
+        workspaceId: workspaceIdOf(deps),
         model: modelOf(deps.env.TMI_MODEL_VERDICT, DEFAULT_MODEL_VERDICT),
         system: VERDICT_SYSTEM,
         messages: [{ role: 'user', content: buildVerdictPrompt(text, interpretation, ctx) }],

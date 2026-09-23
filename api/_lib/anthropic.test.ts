@@ -105,6 +105,21 @@ describe('callMessages', () => {
   });
 });
 
+  it('workspaceId를 주면 anthropic-workspace-id 헤더를 붙이고, 없으면 붙이지 않는다', async () => {
+    const withId = fakeFetch(message([{ type: 'text', text: '안녕' }]));
+    await callMessages(args({ workspaceId: 'wrkspc_test' }), withId.fetchImpl);
+    expect(withId.calls[0].init.headers).toEqual({
+      'x-api-key': KEY,
+      'anthropic-version': '2023-06-01',
+      'content-type': 'application/json',
+      'anthropic-workspace-id': 'wrkspc_test',
+    });
+
+    const without = fakeFetch(message([{ type: 'text', text: '안녕' }]));
+    await callMessages(args({}), without.fetchImpl);
+    expect(without.calls[0].init.headers).not.toHaveProperty('anthropic-workspace-id');
+  });
+
 describe('firstText', () => {
   const base = { id: 'msg', model: 'claude-test', role: 'assistant' as const, stop_reason: 'end_turn' };
 

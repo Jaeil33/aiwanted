@@ -73,6 +73,11 @@ export interface MessagesArgs {
   maxTokens: number;
   /** 생략하면 모델 기본값. thinking 토큰도 max_tokens에 들어가므로 짧은 JSON 답에서는 끈다 */
   thinking?: { type: 'disabled' } | { type: 'adaptive' };
+  /*
+   * workspace에 속하지 않은 조직 단위 키는 이 값이 없으면 400으로 거절된다
+   * ("This API key is not scoped to a workspace"). workspace 키면 비워 둔다.
+   */
+  workspaceId?: string;
 }
 
 function isRecord(x: unknown): x is Record<string, unknown> {
@@ -109,7 +114,12 @@ export async function callMessages(args: MessagesArgs, fetchImpl: typeof fetch):
   try {
     response = await fetchImpl(ANTHROPIC_MESSAGES_URL, {
       method: 'POST',
-      headers: { 'x-api-key': args.apiKey, 'anthropic-version': ANTHROPIC_VERSION, 'content-type': 'application/json' },
+      headers: {
+        'x-api-key': args.apiKey,
+        'anthropic-version': ANTHROPIC_VERSION,
+        'content-type': 'application/json',
+        ...(args.workspaceId ? { 'anthropic-workspace-id': args.workspaceId } : {}),
+      },
       body: JSON.stringify(body),
     });
   } catch {
