@@ -1,6 +1,7 @@
 import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import controls from '../../components/controls.module.css';
 import { fixtureAppData } from '../../test/fixtures/appData';
 import { renderWithGame } from '../../test/gameHarness';
 import { PlayScreen } from './PlayScreen';
@@ -89,6 +90,26 @@ describe('PlayScreen', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
     const rail = screen.getByRole('region', { name: '걸린 TMI' });
     expect(within(rail).getByRole('button', { name: '+ TMI 걸기' })).toHaveAttribute('data-accent', 'true');
+  });
+
+  it('TMI를 걸기 전에는 초대 판이 승부 확률보다 위에 있고, 걸고 나면 칩 줄이 확률 아래로 내려간다', SLOW, async () => {
+    const user = userEvent.setup();
+    await openPlay();
+    await screen.findByLabelText(/^롯데 승리확률 \d+\.\d%$/, undefined, WAIT);
+
+    // ADR-026: TMI가 먼저 보이게. 초대 판은 타자·투수 바로 아래(확률 판 위)에 온다.
+    const invite = screen.getByRole('region', { name: '걸린 TMI' });
+    const wp = screen.getByRole('region', { name: '승부 확률' });
+    expect(invite.compareDocumentPosition(wp) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+    await user.click(within(screen.getByRole('group', { name: '눌러서 바로 걸기' })).getByRole('button', { name: '짜장면 곱빼기' }));
+    await screen.findByRole('button', { name: /^TMI 원정투수가 경기 전 짜장면 곱빼기를 먹었다/ }, WAIT);
+
+    // 걸고 나면 시안 자리(확률 아래)로 돌아간다.
+    const rail = screen.getByRole('region', { name: '걸린 TMI' });
+    const wpAfter = screen.getByRole('region', { name: '승부 확률' });
+    expect(wpAfter.compareDocumentPosition(rail) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByRole('button', { name: '한 구 던지기' })).toHaveClass(controls.primary);
   });
 
   it('"한 구 던지기" 뒤에는 모드·TMI가 잠기고 "↺ 처음부터"로 되돌린다', SLOW, async () => {

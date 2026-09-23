@@ -228,6 +228,8 @@ function PlayBoard({ setup }: { setup: SceneSetup }) {
         backHref={formatRoute({ screen: 'home' })}
       />
       <PitchTracker ref={trackerRef} className={styles.tracker} bases={state.bases} zone={zone} batter={batterCaption} pitcher={pitcherCaption} />
+      {/* 아직 TMI가 없으면 초대 판을 타자·투수 바로 아래에 둔다. 확률 판 아래(시안 자리)면 트래커에 밀려 눈에 안 들어온다(ADR-026) */}
+      {invite && <TmiRail pills={pills} onOpen={() => openSheet(false)} action={railAction} invite={invite} />}
       <WpPanel
         readout={readout}
         tier={tier}
@@ -239,7 +241,7 @@ function PlayBoard({ setup }: { setup: SceneSetup }) {
         grade={grade}
         spark={spark}
       />
-      <TmiRail pills={pills} onOpen={() => openSheet(false)} action={railAction} invite={invite} />
+      {!invite && <TmiRail pills={pills} onOpen={() => openSheet(false)} action={railAction} invite={null} />}
       <nav className={styles.dock} data-count={finished ? 2 : 3} aria-label="다시 치르기">
         {dock}
       </nav>
