@@ -230,6 +230,19 @@ describe('handleInterpret', () => {
     expect(calls[0].headers).not.toHaveProperty('anthropic-workspace-id');
   });
 
+  it('환경변수에 줄바꿈·공백이 섞여도 키와 workspace id를 헤더에 쓸 수 있게 지운다', async () => {
+    // 콘솔에서 복사한 값이 줄바꿈된 채로 붙여넣어지면 헤더 값이 될 수 없어 fetch가 터진다.
+    // 진짜 키·id에는 공백이 없으므로 전부 지우는 쪽이 안전하다.
+    const { fetchImpl, calls } = anthropic(aiText('{"parts":[]}'));
+    const LF = String.fromCharCode(10);
+    const CRLF = String.fromCharCode(13, 10);
+    const wrapped = `${KEY.slice(0, 20)}${LF}${KEY.slice(20)}`;
+    const deps = makeDeps(fetchImpl, { ANTHROPIC_API_KEY: ` ${wrapped} `, ANTHROPIC_WORKSPACE_ID: `wrkspc_${CRLF}test` });
+    const res = await read(await handleInterpret(request('interpret', interpretBody()), deps));
+    expect(res.status).toBe(200);
+    expect(calls[0].headers).toMatchObject({ 'x-api-key': KEY, 'anthropic-workspace-id': 'wrkspc_test' });
+  });
+
   it('AI가 거절(stop_reason refusal)하면 200 refused', async () => {
     const { fetchImpl } = anthropic(aiMessage([], 'refusal'));
     const res = await read(await handleInterpret(request('interpret', interpretBody()), makeDeps(fetchImpl)));

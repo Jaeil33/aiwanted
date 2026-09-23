@@ -275,15 +275,22 @@ function rateLimited(request: Request, deps: Deps): Response | null {
   return json(429, { error: 'rate_limited' }, { 'retry-after': String(Math.max(1, Math.ceil(result.retryAfterMs / 1000))) });
 }
 
+/*
+ * 환경변수의 공백을 전부 지운다. 콘솔에서 복사한 키가 줄바꿈된 채로 배포 설정에 들어가면
+ * 헤더 값이 될 수 없어 fetch가 HTTP 상태도 없이 터진다. 진짜 키·workspace id에는 공백이 없다.
+ */
+function headerValueOf(value: string | undefined): string | undefined {
+  const cleaned = value?.replace(/\s+/g, '');
+  return cleaned ? cleaned : undefined;
+}
+
 function apiKeyOf(deps: Deps): string | null {
-  const key = deps.env.ANTHROPIC_API_KEY?.trim();
-  return key ? key : null;
+  return headerValueOf(deps.env.ANTHROPIC_API_KEY) ?? null;
 }
 
 /** workspace에 속하지 않은 조직 단위 키를 쓸 때만 필요하다. 없으면 헤더를 붙이지 않는다 */
 function workspaceIdOf(deps: Deps): string | undefined {
-  const id = deps.env.ANTHROPIC_WORKSPACE_ID?.trim();
-  return id ? id : undefined;
+  return headerValueOf(deps.env.ANTHROPIC_WORKSPACE_ID);
 }
 
 /** 환경변수 모델 이름. 비어 있으면 기본값 */
