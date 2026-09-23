@@ -203,7 +203,7 @@ describe('handleInterpret', () => {
     expect(calls).toHaveLength(1);
     expect(calls[0].url).toBe('https://api.anthropic.com/v1/messages');
     expect(calls[0].headers).toMatchObject({ 'x-api-key': KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' });
-    expect(calls[0].body).toMatchObject({ model: 'claude-haiku-4-5-20251001', max_tokens: 700 });
+    expect(calls[0].body).toMatchObject({ model: 'claude-haiku-4-5', max_tokens: 700 });
     expect(calls[0].body.messages).toEqual([{ role: 'user', content: buildInterpretPrompt(TEXT, ctx, { measuredAvailable: true }) }]);
     expect(JSON.stringify(calls[0].body)).not.toContain('시를 써라');
     expect(calls[0].body).not.toHaveProperty('tools');
@@ -222,12 +222,14 @@ describe('handleInterpret', () => {
     expect(res.body).toEqual({ raw: { refused: true, reason: 'AI가 이 문장은 계산하지 않기로 했어요.' } });
   });
 
-  const FAILURES: Array<[string, Reply, number, Record<string, string>]> = [
+  const FAILURES: Array<[string, Reply, number, Record<string, unknown>]> = [
     ['JSON이 없는 답', aiText('해석할 수 없어요'), 502, { error: 'bad_response' }],
     ['깨진 JSON', aiText('{"parts": ['), 502, { error: 'bad_response' }],
     ['업스트림 429', aiStatus(429), 429, { error: 'rate_limited' }],
-    ['업스트림 500', aiStatus(500), 502, { error: 'upstream' }],
-    ['업스트림 401', aiStatus(401), 502, { error: 'upstream' }],
+    ['업스트림 500', aiStatus(500), 502, { error: 'upstream', status: 500 }],
+    ['업스트림 401', aiStatus(401), 502, { error: 'upstream', status: 401 }],
+    ['업스트림 404(모델 이름이 틀림)', aiStatus(404), 502, { error: 'upstream', status: 404 }],
+    ['업스트림 400(크레딧 부족 등)', aiStatus(400), 502, { error: 'upstream', status: 400 }],
     ['네트워크 오류', () => Promise.reject(new TypeError('fetch failed')), 502, { error: 'upstream' }],
   ];
 

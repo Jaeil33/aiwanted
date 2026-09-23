@@ -22,7 +22,7 @@ export interface Deps {
 
 const INTERPRET_BODY_LIMIT = 4 * 1024;
 const VERDICT_BODY_LIMIT = 16 * 1024;
-const DEFAULT_MODEL_INTERPRET = 'claude-haiku-4-5-20251001';
+const DEFAULT_MODEL_INTERPRET = 'claude-haiku-4-5';
 const DEFAULT_MODEL_VERDICT = 'claude-sonnet-5';
 const INTERPRET_MAX_TOKENS = 700;
 const VERDICT_MAX_TOKENS = 900;
@@ -286,12 +286,17 @@ function modelOf(value: string | undefined, fallback: string): string {
   return model ? model : fallback;
 }
 
-/** 업스트림 오류 → 429(rate_limited) 또는 502(upstream·bad_response). 로그에는 코드와 상태만 남긴다 */
+/*
+ * 업스트림 오류 → 429(rate_limited) 또는 502(upstream·bad_response).
+ * 응답에는 업스트림 HTTP 상태(status)만 함께 담는다. 키가 틀렸는지(401)·크레딧이 없는지(400)·모델 이름이 틀렸는지(404)를
+ * 배포 로그를 열지 않고도 가릴 수 있어야 한다. 숫자 하나뿐이라 키·문장 원문·환경변수는 들어가지 않는다.
+ */
 function upstreamFailure(route: 'interpret' | 'verdict', e: unknown): Response {
   if (e instanceof AiHttpError) {
     console.warn(`[tmi-api] ${route} 실패: ${e.code}${e.status === null ? '' : ` (HTTP ${e.status})`}`);
     if (e.code === 'rate_limited') return json(429, { error: 'rate_limited' });
-    return json(502, { error: e.code === 'bad_response' ? 'bad_response' : 'upstream' });
+    const error = e.code === 'bad_response' ? 'bad_response' : 'upstream';
+    return json(502, e.status === null ? { error } : { error, status: e.status });
   }
   console.error(`[tmi-api] ${route} 실패: 예상하지 못한 ${e instanceof Error ? e.name : typeof e}`);
   return json(502, { error: 'upstream' });
