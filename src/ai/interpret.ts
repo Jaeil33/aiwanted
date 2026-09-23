@@ -28,6 +28,7 @@ const NOTE = {
   rateLimited: 'AI 호출 한도에 걸려 규칙으로 계산했어요. 잠시 뒤 다시 해 보세요.',
   timeout: 'AI 응답이 늦어 규칙으로 계산했어요.',
   failed: 'AI 해석에 실패해 규칙으로 계산했어요.',
+  noEffect: 'AI가 효과를 찾지 못해 규칙으로 계산했어요.',
 } as const;
 
 const AI_REFUSED_REASON = 'AI가 이 문장은 계산하지 않기로 했어요.';
@@ -85,5 +86,12 @@ export async function interpretTmi(
   }
 
   const interpretation = normalizeInterpretation(raw);
-  return interpretation ? { interpretation, note: '', disableProvider: false } : rules(NOTE.unreadable);
+  if (!interpretation) return rules(NOTE.unreadable);
+  /*
+   * AI가 "승부와 상관없다"며 효과를 하나도 안 줄 때가 있다. 그러면 확률이 안 움직여
+   * "TMI를 걸면 확률이 바뀐다"는 약속이 깨진다(ADR-013 해석은 항상 답한다, ADR-026 무엇이든 받는다).
+   * 규칙 해석은 늘 무언가를 걸므로 그쪽으로 대신한다. 거부는 효과가 없는 게 맞으므로 그대로 둔다.
+   */
+  if (!interpretation.refused && interpretation.parts.length === 0) return rules(NOTE.noEffect);
+  return { interpretation, note: '', disableProvider: false };
 }

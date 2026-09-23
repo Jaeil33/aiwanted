@@ -62,6 +62,24 @@ describe('interpretTmi', () => {
     expect(spy).toHaveBeenCalledWith({ text: TEXT, ctx, measuredAvailable: true }, controller.signal);
   });
 
+  it('AI가 효과를 하나도 안 주면 규칙으로 대신한다 (ADR-013·ADR-026: 해석은 늘 무언가를 건다)', async () => {
+    const { provider } = fakeProvider(async () => ({ refused: false, reason: '', comment: '그게 무슨 상관입니까.', parts: [] }));
+    const out = await interpretTmi(TEXT, ctx, provider, on);
+    expect(out).toEqual({
+      interpretation: ruleInterpret(TEXT, ctx, on),
+      note: 'AI가 효과를 찾지 못해 규칙으로 계산했어요.',
+      disableProvider: false,
+    });
+    expect(out.interpretation.parts.length).toBeGreaterThan(0);
+  });
+
+  it('AI가 거부하면서 parts가 비어 있으면 그 거부를 그대로 쓴다', async () => {
+    const { provider } = fakeProvider(async () => ({ refused: true, reason: '계산하지 않아요.', comment: '', parts: [] }));
+    const out = await interpretTmi(TEXT, ctx, provider, on);
+    expect(out.interpretation).toMatchObject({ source: 'ai', refused: true, parts: [] });
+    expect(out.note).toBe('');
+  });
+
   it('normalize에 실패하면 규칙 + "AI 응답을 읽지 못해 규칙으로 계산했어요."', async () => {
     const { provider } = fakeProvider(async () => 'not json object');
     await expect(interpretTmi(TEXT, ctx, provider, on)).resolves.toEqual({
