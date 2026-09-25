@@ -19,3 +19,6 @@ export const PITCH_CODE_LABEL: Record<PitchCode, string> = {
 
 /** PitchRow type 인덱스의 구종 이름 (pipeline contract.PITCH_TYPES와 같다) */
 export const PITCH_TYPES: readonly string[] = ['직구', '투심', '커터', '슬라이더', '스위퍼', '커브', '체인지업', '포크', '기타'];
+
+/** 중계 pitchResult → PitchRow code (pipeline contract.PITCH_RESULT_CODE와 같다) */
+export const PITCH_RESULT_CODE: Record<string, number> = { B: 0, T: 1, S: 2, V: 2, F: 3, W: 3, H: 4 };

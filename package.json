@@ -12,7 +12,8 @@
     "test:web": "vitest run",
     "test:py": "tsx scripts/run-python.ts -m pytest -q",
     "data": "tsx scripts/run-python.ts -m tmi_pipeline.build",
-    "trust": "tsx scripts/trust-report.ts"
+    "trust": "tsx scripts/trust-report.ts",
+    "check:relay": "tsx scripts/check-relay-parity.ts"
   },
   "dependencies": {
     "react": "^19.3.0",
