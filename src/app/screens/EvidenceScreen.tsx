@@ -75,7 +75,7 @@ export function EvidenceScreen() {
   const { data, session } = useGame();
   const { evidence, trust } = data;
   const backHref =
-    session.sceneId === null ? formatRoute({ screen: 'home' }) : formatRoute({ screen: 'play', sceneId: session.sceneId, share: null });
+    session.situation === null ? formatRoute({ screen: 'home' }) : formatRoute({ screen: 'play', sceneId: session.situation.id, share: null });
 
   return (
     <div className={styles.screen}>

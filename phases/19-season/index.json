@@ -59,8 +59,10 @@
     {
       "step": 6,
       "name": "pa-session",
-      "status": "pending",
-      "absorbs": "13-situation step 2"
+      "status": "completed",
+      "absorbs": "13-situation step 2",
+      "completed_at": "2026-09-26T02:30:00+0900",
+      "summary": "원안(새 paSession reducer)을 뒤집었다: 세션이 sceneId 대신 Situation + SituationExtra를 든다. reducer는 한 벌뿐. openScene → openSituation, resetPlay에서 startState를 뺐다(세션이 상황을 들고 있다). GameProvider.setup = buildSituationSetup(core, session.situation, session.extra), actions.openSituation 추가, openScene은 다리로 남겼다. headline.ts에 oddsHeadline·winLine·toonLine을 만들지 않았다 — broadcast.ts의 tierReadout(경기·이닝·타석 3단)이 같은 일을 이미 하고 새 화면도 그 판을 쓴다. thousandSplit도 result.ts의 splitThousand가 이미 있다. src/game/paList.ts 신규: paList·halfBlocks·gamesOfTeam·gamesByDate. 목록에 실제 결과 문장을 담지 않고, 추천 승부처는 네이버 승리확률 변화 폭으로 고르되 그 숫자는 내보내지 않는다(ADR-014)."
     },
     {
       "step": 7,

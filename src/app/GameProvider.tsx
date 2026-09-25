@@ -1,23 +1,27 @@
 import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useReducer, useRef, type ReactNode } from 'react';
 import { AiError, interpretTmi, judgeTmi, pickProvider, rulesVerdict, type AiProvider } from '../ai';
 import {
-  buildSceneSetup,
+  buildSituationSetup,
   canEditTmi,
   initialSession,
   measuredAvailable,
   sessionReducer,
+  situationFromScene,
   type EngineClient,
-  type SceneSetup,
   type SessionAction,
   type SessionState,
   type SharePayload,
+  type SituationExtra,
+  type SituationSetup,
 } from '../game';
-import type { AppData } from '../types/data';
+import type { AppData, Situation } from '../types/data';
 import type { Mode } from '../types/domain';
 import type { Platform } from './platform';
 
 export interface GameActions {
-  /** 장면을 연다(시작 상태, 날짜·장면 id seed). 같은 장면의 공유 값이 있으면 모드를 정하고 TMI를 순서대로 건다. 모르는 id는 무시 */
+  /** 상황(되돌려볼 한 타석)을 연다. 같은 상황의 공유 값이 있으면 모드를 정하고 TMI를 순서대로 건다 */
+  openSituation(situation: Situation, extra: SituationExtra, share: SharePayload | null): Promise<void>;
+  /** 골라 둔 장면을 연다(장면 경로는 step 10에서 사라진다). 모르는 id는 무시 */
   openScene(sceneId: string, share: SharePayload | null): Promise<void>;
   /** TMI 한 줄을 해석해 붙인다. 편집이 잠겼거나 해석 중이거나 3개면 AI를 부르지 않는다 */
   submitTmi(text: string): Promise<void>;
@@ -36,7 +40,7 @@ export interface GameContextValue {
   dispatch: (action: SessionAction) => void;
   /** 렌더를 기다리지 않은 최신 세션: 비동기 흐름(재생 반복 등)이 dispatch 직후 상태를 읽는다 */
   getSession(): SessionState;
-  setup: SceneSetup | null;
+  setup: SituationSetup | null;
   engine: EngineClient;
   /** 이번 화면에서 쓸 AI 프로바이더 (없거나 꺼졌으면 null = 규칙 해석) */
   provider: AiProvider | null;
@@ -103,7 +107,10 @@ export function GameProvider({ data, platform, children }: { data: AppData; plat
     [platform],
   );
   const provider = session.providerDisabled ? null : aiProvider;
-  const setup = useMemo(() => (session.sceneId === null ? null : buildSceneSetup(data, session.sceneId)), [data, session.sceneId]);
+  const setup = useMemo(
+    () => (session.situation === null ? null : buildSituationSetup(data.core, session.situation, session.extra)),
+    [data, session.situation, session.extra],
+  );
 
   const latest = useRef({ data, platform, aiProvider });
   useLayoutEffect(() => {
@@ -140,15 +147,16 @@ export function GameProvider({ data, platform, children }: { data: AppData; plat
 
     async function submitTmi(text: string): Promise<void> {
       const s = stateRef.current;
-      const sceneId = s.sceneId;
-      if (sceneId === null || !canEditTmi(s) || s.interpreting || s.tmis.length >= MAX_TMIS) return;
+      const situation = s.situation;
+      if (situation === null || !canEditTmi(s) || s.interpreting || s.tmis.length >= MAX_TMIS) return;
       dispatch({ type: 'interpretStart' });
       if (!stateRef.current.interpreting) return;
       const { data: currentData } = latest.current;
       const clean = clipTmiText(text);
       const controller = begin();
       try {
-        const outcome = await interpretTmi(clean, buildSceneSetup(currentData, sceneId).promptContext, currentProvider(), {
+        const ctx = buildSituationSetup(currentData.core, situation, s.extra).promptContext;
+        const outcome = await interpretTmi(clean, ctx, currentProvider(), {
           measuredAvailable: measuredAvailable(currentData.evidence),
           signal: controller.signal,
         });
@@ -171,19 +179,17 @@ export function GameProvider({ data, platform, children }: { data: AppData; plat
       }
     }
 
-    async function openScene(sceneId: string, share: SharePayload | null): Promise<void> {
-      const { data: currentData, platform: currentPlatform } = latest.current;
-      const scene = currentData.scenes.find((x) => x.id === sceneId);
-      if (!scene) return;
+    async function openSituation(situation: Situation, extra: SituationExtra, share: SharePayload | null): Promise<void> {
+      const { platform: currentPlatform } = latest.current;
       abortAll();
       openSeq.current += 1;
       const opened = openSeq.current;
-      const payload = share !== null && share.sceneId === sceneId ? share : null;
+      const payload = share !== null && share.sceneId === situation.id ? share : null;
       dispatch({
-        type: 'openScene',
-        sceneId,
-        startState: scene.state,
-        seed: sceneSeed(currentPlatform.today(), sceneId),
+        type: 'openSituation',
+        situation,
+        extra,
+        seed: sceneSeed(currentPlatform.today(), situation.id),
         mode: payload?.mode,
       });
       if (!payload) return;
@@ -191,6 +197,15 @@ export function GameProvider({ data, platform, children }: { data: AppData; plat
         if (openSeq.current !== opened) return;
         await submitTmi(text);
       }
+    }
+
+    async function openScene(sceneId: string, share: SharePayload | null): Promise<void> {
+      const scene = latest.current.data.scenes.find((x) => x.id === sceneId);
+      if (!scene) return;
+      await openSituation(situationFromScene(scene), {
+        title: scene.title,
+        actualFinal: { away: scene.away.final, home: scene.home.final },
+      }, share);
     }
 
     function removeTmi(id: string): void {
@@ -206,9 +221,9 @@ export function GameProvider({ data, platform, children }: { data: AppData; plat
 
     async function judge(id: string): Promise<void> {
       const s = stateRef.current;
-      const sceneId = s.sceneId;
+      const situation = s.situation;
       const entry = s.tmis.find((e) => e.id === id);
-      if (sceneId === null || !entry || entry.interpretation.refused || s.judgingId !== null) return;
+      if (situation === null || !entry || entry.interpretation.refused || s.judgingId !== null) return;
       dispatch({ type: 'judgeStart', id });
       if (stateRef.current.judgingId !== id) return;
       const { data: currentData } = latest.current;
@@ -218,7 +233,7 @@ export function GameProvider({ data, platform, children }: { data: AppData; plat
         const outcome = await judgeTmi(
           entry.text,
           entry.interpretation,
-          buildSceneSetup(currentData, sceneId).promptContext,
+          buildSituationSetup(currentData.core, situation, s.extra).promptContext,
           currentData.evidence,
           currentProvider(),
           controller.signal,
@@ -238,12 +253,11 @@ export function GameProvider({ data, platform, children }: { data: AppData; plat
 
     function resetPlay(): void {
       const s = stateRef.current;
-      const scene = s.sceneId === null ? undefined : latest.current.data.scenes.find((x) => x.id === s.sceneId);
-      if (!scene) return;
-      dispatch({ type: 'resetPlay', startState: scene.state, seed: s.seed + 1 });
+      if (s.situation === null) return;
+      dispatch({ type: 'resetPlay', seed: s.seed + 1 });
     }
 
-    return { openScene, submitTmi, removeTmi, setMode, judge, resetPlay };
+    return { openSituation, openScene, submitTmi, removeTmi, setMode, judge, resetPlay };
   }, [dispatch]);
 
   const value = useMemo<GameContextValue>(

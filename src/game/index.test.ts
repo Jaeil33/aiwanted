@@ -18,6 +18,11 @@ const PUBLIC_API = [
   'situationFromScene',
   'situationTitle',
   'throwsOf',
+  // paList
+  'paList',
+  'halfBlocks',
+  'gamesOfTeam',
+  'gamesByDate',
   // effects
   'measuredAvailable',
   'compileSessionEffects',
@@ -82,7 +87,7 @@ describe('game 공개 API', () => {
     const tiers: game.TierView[] = game.selectTiers(setup, setup.situation.state, gauge, gauge);
     expect(tiers).toHaveLength(3);
 
-    const action: game.SessionAction = { type: 'openScene', sceneId: setup.situation.id, startState: setup.situation.state, seed: 5 };
+    const action: game.SessionAction = { type: 'openSituation', situation: setup.situation, seed: 5 };
     const session: game.SessionState = game.sessionReducer(game.initialSession, action);
     const screen: game.Screen = session.screen;
     const live: game.LiveState | null = session.live;

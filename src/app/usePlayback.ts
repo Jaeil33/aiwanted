@@ -61,7 +61,7 @@ const defaultSleep = (ms: number) =>
 type Outcome = 'ended' | 'continued' | 'stopped';
 
 /** 이번 판 식별: 장면을 다시 열거나 처음부터 하면 바뀐다 */
-const runKeyOf = (s: SessionState) => `${s.sceneId ?? ''}|${s.seed}`;
+const runKeyOf = (s: SessionState) => `${s.situation?.id ?? ''}|${s.seed}`;
 
 const nameOf = (setup: SituationSetup, id: string) => (Object.hasOwn(setup.names, id) ? setup.names[id] : id);
 const matchupLine = (setup: SituationSetup, state: GameState) => `${batterFor(setup, state).name} vs ${nameOf(setup, pitcherFor(setup, state).id)}`;
@@ -141,7 +141,7 @@ export function usePlayback(stageRef: RefObject<StageController | null>, opts: P
       const s = getSession();
       const st = latest.current.setup;
       const live = s.live;
-      if (!st || !live || s.status !== 'ready' || s.interpreting || st.situation.id !== s.sceneId) return 'stopped';
+      if (!st || !live || s.status !== 'ready' || s.interpreting || st.situation.id !== s.situation?.id) return 'stopped';
       const key = runKeyOf(s);
       const spec = specOf(st, s, false);
       const state = live.state;
@@ -239,7 +239,7 @@ export function usePlayback(stageRef: RefObject<StageController | null>, opts: P
       }
       const st = latest.current.setup;
       const live = s.live;
-      if (!st || !live || s.status !== 'ready' || st.situation.id !== s.sceneId) return;
+      if (!st || !live || s.status !== 'ready' || st.situation.id !== s.situation?.id) return;
       const key = runKeyOf(s);
       const start = live.state;
       let result: PlayoutResult;

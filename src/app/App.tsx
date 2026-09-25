@@ -115,7 +115,7 @@ function Shell() {
   const [route, setRoute] = useHashRoute();
   /** 이미 열기를 요청한 타석 해시 (StrictMode에서 effect가 두 번 돌아도 한 번만 연다) */
   const openedFor = useRef<string | null>(null);
-  const openSceneId = session.sceneId;
+  const openSceneId = session.situation === null ? null : session.situation.id;
   const finished = session.final !== null;
 
   useEffect(() => {

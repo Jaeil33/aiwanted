@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { fixtureAppData } from '../test/fixtures/appData';
+import type { Situation } from '../types/data';
 import type { GameState, PitchCode, TmiEntry, VerdictResult } from '../types/domain';
 import {
   canEditTmi,
@@ -10,9 +11,12 @@ import {
   type SessionAction,
   type SessionState,
 } from './session';
+import { situationFromScene } from './situation';
 
 const SCENE = fixtureAppData.scenes[0];
 const START: GameState = SCENE.state;
+const SITUATION: Situation = situationFromScene(SCENE);
+const otherSituation = (state: GameState): Situation => ({ ...SITUATION, id: 'other-situation', state });
 
 const reduce = (s: SessionState, ...actions: SessionAction[]): SessionState => actions.reduce(sessionReducer, s);
 
@@ -26,9 +30,9 @@ function tmi(id: string, refused = false): TmiEntry {
 
 const freshLive = (state: GameState): LiveState => ({ state, balls: 0, strikes: 0, paIndex: 0, pitches: [] });
 
-type OpenScene = Extract<SessionAction, { type: 'openScene' }>;
-const open = (over: Partial<Omit<OpenScene, 'type'>> = {}): SessionState =>
-  sessionReducer(initialSession, { type: 'openScene', sceneId: SCENE.id, startState: START, seed: 42, ...over });
+type OpenSituation = Extract<SessionAction, { type: 'openSituation' }>;
+const open = (over: Partial<Omit<OpenSituation, 'type'>> = {}): SessionState =>
+  sessionReducer(initialSession, { type: 'openSituation', situation: SITUATION, seed: 42, ...over });
 
 const addTmi = (s: SessionState, entry: TmiEntry, note = '', disableProvider = false): SessionState =>
   reduce(s, { type: 'interpretStart' }, { type: 'interpretDone', entry, note, disableProvider });
@@ -63,7 +67,8 @@ describe('initialSession', () => {
   it('첫 화면·현실 모드·seed 1이고 나머지는 비어 있다', () => {
     expect(initialSession).toEqual({
       screen: 'home',
-      sceneId: null,
+      situation: null,
+      extra: {},
       mode: 'real',
       seed: 1,
       tmis: [],
@@ -84,7 +89,8 @@ describe('initialSession', () => {
 describe('sessionReducer — 한 판 흐름', () => {
   it('장면 열기 → TMI 추가 → 투구 → 타석 끝 → 경기 끝', () => {
     let s = open();
-    expect(s).toMatchObject({ screen: 'play', sceneId: SCENE.id, seed: 42, mode: 'real', tmis: [], status: 'ready', log: [], final: null });
+    expect(s).toMatchObject({ screen: 'play', seed: 42, mode: 'real', tmis: [], status: 'ready', log: [], final: null });
+    expect(s.situation?.id).toBe(SCENE.id);
     expect(s.live).toEqual(freshLive(START));
     expect(canEditTmi(s)).toBe(true);
 
@@ -156,7 +162,7 @@ describe('sessionReducer — 한 판 흐름', () => {
       { type: 'pitchApplied', code: 'B', balls: 1, strikes: 0 },
       { type: 'paFinished', entry: WALKOFF_LOG, state: WALKOFF_STATE },
       { type: 'gameFinished', winner: 'home', walkoff: true, state: START },
-      { type: 'resetPlay', startState: START, seed: 2 },
+      { type: 'resetPlay', seed: 2 },
       { type: 'interpretStart' },
       { type: 'setMode', mode: 'toon' },
     ];
@@ -241,13 +247,13 @@ describe('sessionReducer — TMI 편집', () => {
 });
 
 describe('sessionReducer — 장면·화면', () => {
-  it('openScene은 준 tmis·mode를 쓴다', () => {
+  it('openSituation은 준 tmis·mode를 쓴다', () => {
     const s = open({ tmis: [tmi('tmi-9')], mode: 'toon' });
     expect(s.tmis.map((e) => e.id)).toEqual(['tmi-9']);
     expect(s.mode).toBe('toon');
   });
 
-  it('openScene은 기록·결과·판정·알림을 초기화하고, tmis를 안 주면 비우고 mode를 안 주면 유지한다', () => {
+  it('openSituation은 기록·결과·판정·알림을 초기화하고, tmis를 안 주면 비우고 mode를 안 주면 유지한다', () => {
     let s = addTmi(open(), tmi('tmi-1'), '규칙으로 계산했어요.');
     s = sessionReducer(s, { type: 'setMode', mode: 'toon' });
     s = judge(s, 'tmi-1', VERDICT);
@@ -257,10 +263,9 @@ describe('sessionReducer — 장면·화면', () => {
       { type: 'gameFinished', winner: 'home', walkoff: true, state: WALKOFF_STATE },
     );
     const other: GameState = { ...START, inning: 3, half: 0, outs: 0, bases: 0 };
-    const reopened = sessionReducer(s, { type: 'openScene', sceneId: 'other-scene', startState: other, seed: 7 });
+    const reopened = sessionReducer(s, { type: 'openSituation', situation: otherSituation(other), seed: 7 });
     expect(reopened).toMatchObject({
       screen: 'play',
-      sceneId: 'other-scene',
       seed: 7,
       mode: 'toon',
       tmis: [],
@@ -272,12 +277,13 @@ describe('sessionReducer — 장면·화면', () => {
       status: 'ready',
       final: null,
     });
+    expect(reopened.situation?.id).toBe('other-situation');
     expect(reopened.live).toEqual(freshLive(other));
   });
 
   it('해석 중에 다른 장면을 열면 옛 장면의 해석 결과는 버린다', () => {
     const inflight = sessionReducer(open(), { type: 'interpretStart' });
-    const reopened = sessionReducer(inflight, { type: 'openScene', sceneId: 'other-scene', startState: START, seed: 7 });
+    const reopened = sessionReducer(inflight, { type: 'openSituation', situation: otherSituation(START), seed: 7 });
     expect(reopened.interpreting).toBe(false);
     expect(sessionReducer(reopened, { type: 'interpretDone', entry: tmi('tmi-1'), note: '', disableProvider: false })).toBe(reopened);
   });
@@ -292,7 +298,8 @@ describe('sessionReducer — 장면·화면', () => {
 
     const s = open();
     expect(sessionReducer(s, { type: 'navigate', screen: 'result' }).screen).toBe('result');
-    expect(sessionReducer(s, { type: 'navigate', screen: 'about' })).toMatchObject({ screen: 'about', sceneId: SCENE.id });
+    expect(sessionReducer(s, { type: 'navigate', screen: 'about' })).toMatchObject({ screen: 'about' });
+    expect(sessionReducer(s, { type: 'navigate', screen: 'about' }).situation?.id).toBe(SCENE.id);
   });
 
   it('resetPlay는 TMI·판정을 두고 재생만 시작 상태로 되돌린다', () => {
@@ -303,7 +310,7 @@ describe('sessionReducer — 장면·화면', () => {
       { type: 'paFinished', entry: WALKOFF_LOG, state: WALKOFF_STATE },
       { type: 'gameFinished', winner: 'home', walkoff: true, state: WALKOFF_STATE },
     );
-    const reset = sessionReducer(s, { type: 'resetPlay', startState: START, seed: 43 });
+    const reset = sessionReducer(s, { type: 'resetPlay', seed: 43 });
     expect(reset).toMatchObject({ screen: 'play', seed: 43, status: 'ready', log: [], final: null });
     expect(reset.live).toEqual(freshLive(START));
     expect(reset.tmis).toBe(s.tmis);
@@ -313,7 +320,7 @@ describe('sessionReducer — 장면·화면', () => {
 
   it('resetPlay는 공이 날아가는 중이면 무시한다', () => {
     const animating = sessionReducer(open(), { type: 'animationStart' });
-    expect(sessionReducer(animating, { type: 'resetPlay', startState: START, seed: 2 })).toBe(animating);
+    expect(sessionReducer(animating, { type: 'resetPlay', seed: 2 })).toBe(animating);
   });
 });
 

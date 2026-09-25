@@ -1,4 +1,6 @@
+import type { Situation } from '../types/data';
 import type { GameState, Half, Mode, PitchCode, PitchSample, Side, TmiEntry, VerdictResult } from '../types/domain';
+import type { SituationExtra } from './situation';
 
 export type Screen = 'home' | 'play' | 'result' | 'evidence' | 'about';
 
@@ -30,7 +32,10 @@ export interface LiveState {
 
 export interface SessionState {
   screen: Screen;
-  sceneId: string | null;
+  /** 열린 상황(되돌려보는 한 타석). 없으면 아무것도 열지 않았다 */
+  situation: Situation | null;
+  /** core에 기록이 없는 선수의 이름·손, 실제 최종 점수, 제목 */
+  extra: SituationExtra;
   mode: Mode;
   /** 재생 난수 seed */
   seed: number;
@@ -51,7 +56,7 @@ export interface SessionState {
 
 export type SessionAction =
   | { type: 'navigate'; screen: Screen }
-  | { type: 'openScene'; sceneId: string; startState: GameState; seed: number; tmis?: TmiEntry[]; mode?: Mode }
+  | { type: 'openSituation'; situation: Situation; extra?: SituationExtra; seed: number; tmis?: TmiEntry[]; mode?: Mode }
   | { type: 'setMode'; mode: Mode }
   | { type: 'interpretStart' }
   | { type: 'interpretDone'; entry: TmiEntry; note: string; disableProvider: boolean }
@@ -63,14 +68,15 @@ export type SessionAction =
   | { type: 'pitchApplied'; code: PitchCode; balls: number; strikes: number }
   | { type: 'paFinished'; entry: PlayLogEntry; state: GameState }
   | { type: 'gameFinished'; winner: Side | 'tie'; walkoff: boolean; state: GameState }
-  | { type: 'resetPlay'; startState: GameState; seed: number };
+  | { type: 'resetPlay'; seed: number };
 
 /** 한 판에 쌓는 TMI 최대 개수 (PRD 핵심 기능 2) */
 const MAX_TMIS = 3;
 
 export const initialSession: SessionState = {
   screen: 'home',
-  sceneId: null,
+  situation: null,
+  extra: {},
   mode: 'real',
   seed: 1,
   tmis: [],
@@ -102,24 +108,25 @@ const isPlaying = (s: SessionState): s is SessionState & { live: LiveState } => 
 export function sessionReducer(s: SessionState, a: SessionAction): SessionState {
   switch (a.type) {
     case 'navigate': {
-      const screen = (a.screen === 'play' || a.screen === 'result') && s.sceneId === null ? 'home' : a.screen;
+      const screen = (a.screen === 'play' || a.screen === 'result') && s.situation === null ? 'home' : a.screen;
       return screen === s.screen ? s : { ...s, screen };
     }
 
-    case 'openScene':
+    case 'openSituation':
       return {
         ...s,
         screen: 'play',
-        sceneId: a.sceneId,
+        situation: a.situation,
+        extra: a.extra ?? {},
         seed: a.seed,
         mode: a.mode ?? s.mode,
         tmis: a.tmis ?? [],
-        // 옛 장면에서 시작한 해석·판정 결과는 받지 않는다
+        // 옛 상황에서 시작한 해석·판정 결과는 받지 않는다
         interpreting: false,
         judgingId: null,
         notice: '',
         verdicts: {},
-        live: freshLive(a.startState),
+        live: freshLive(a.situation.state),
         log: [],
         status: 'ready',
         final: null,
@@ -207,8 +214,8 @@ export function sessionReducer(s: SessionState, a: SessionAction): SessionState 
 
     case 'resetPlay':
       // 공이 날아가는 중에는 되돌리지 않는다 (연출이 끝난 뒤 pitchApplied가 새 판에 섞이지 않게)
-      if (s.sceneId === null || s.live === null || s.status === 'animating') return s;
-      return { ...s, screen: 'play', seed: a.seed, live: freshLive(a.startState), log: [], status: 'ready', final: null };
+      if (s.situation === null || s.live === null || s.status === 'animating') return s;
+      return { ...s, screen: 'play', seed: a.seed, live: freshLive(s.situation.state), log: [], status: 'ready', final: null };
 
     default:
       return s;

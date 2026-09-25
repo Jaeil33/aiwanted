@@ -7,6 +7,7 @@ import { fakePlatform, renderWithGame } from '../../test/gameHarness';
 import type { TmiEntry } from '../../types/domain';
 import type { Platform } from '../platform';
 import { ResultScreen } from './ResultScreen';
+import { situationFromScene } from '../../game';
 
 const SLOW = { timeout: 120_000 };
 const WAIT = { timeout: 90_000 };
@@ -41,7 +42,7 @@ async function finishedResult(opts: { tmis?: TmiEntry[]; platform?: Platform } =
   const after = { ...SCENE.state, bases: 0, home: 8 };
   await act(async () => {
     const { dispatch } = view.game();
-    dispatch({ type: 'openScene', sceneId: SCENE.id, startState: SCENE.state, seed: 7, tmis: opts.tmis });
+    dispatch({ type: 'openSituation', situation: situationFromScene(SCENE), extra: { title: SCENE.title, actualFinal: { away: SCENE.away.final, home: SCENE.home.final } }, seed: 7, tmis: opts.tmis });
     dispatch({ type: 'paFinished', entry: WALKOFF, state: after });
     dispatch({ type: 'gameFinished', winner: 'home', walkoff: true, state: after });
   });

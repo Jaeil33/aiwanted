@@ -13,7 +13,7 @@ const MAX_POINTS = 80;
 export function useSparkHistory(gauge: GaugeLike | null, pending: boolean): SparkPoint[] {
   const { session } = useGame();
   const live = session.live;
-  const key = `${session.sceneId ?? ''}|${session.seed}|${session.mode}|${session.tmis.map((entry) => entry.id).join(',')}`;
+  const key = `${session.situation?.id ?? ''}|${session.seed}|${session.mode}|${session.tmis.map((entry) => entry.id).join(',')}`;
   const [store, setStore] = useState<{ key: string; points: SparkPoint[]; last: GaugeLike | null }>({ key: '', points: [], last: null });
 
   // 렌더 중 상태 맞추기: 게이지가 바뀐 렌더에서만 한 번 더 그린다

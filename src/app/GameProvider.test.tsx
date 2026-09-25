@@ -66,7 +66,7 @@ describe('GameProvider', () => {
   it('처음에는 열린 장면·setup·AI가 없고 데이터·플랫폼·엔진 클라이언트가 있다', () => {
     const platform = fakePlatform();
     const { game } = renderWithGame(null, { platform });
-    expect(game().session.sceneId).toBeNull();
+    expect(game().session.situation).toBeNull();
     expect(game().setup).toBeNull();
     expect(game().provider).toBeNull();
     expect(game().data).toBe(fixtureAppData);
@@ -93,7 +93,8 @@ describe('GameProvider', () => {
     const { game } = renderWithGame(null);
     await openFixture(game);
     const { session, setup } = game();
-    expect(session).toMatchObject({ screen: 'play', sceneId: SCENE.id, seed: sceneSeed('2026-08-15', SCENE.id), mode: 'real', tmis: [] });
+    expect(session).toMatchObject({ screen: 'play', seed: sceneSeed('2026-08-15', SCENE.id), mode: 'real', tmis: [] });
+    expect(session.situation?.id).toBe(SCENE.id);
     expect(session.live?.state).toEqual(SCENE.state);
     expect(setup?.situation.id).toBe(SCENE.id);
     expect(setup?.situation.state).toEqual(SCENE.state);
