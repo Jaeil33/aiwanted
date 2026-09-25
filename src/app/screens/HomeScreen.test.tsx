@@ -32,18 +32,23 @@ afterEach(() => {
 });
 
 describe('HomeScreen', () => {
-  it('언제나 10구단 일정으로 가는 길이 있다', async () => {
-    // 20-browse-ui step 1: 응원팀이 있어도 다른 팀으로 갈 길이 사라지지 않는다
+  it('어느 팀 일정으로든 홈에서 한 번에 간다', async () => {
+    // 20-browse-ui step 2: 응원팀이 있든 없든 10구단이 늘 눈에 있다
     renderWithGame(<HomeScreen />, { platform: platformWith() });
-    expect(screen.getByRole('link', { name: '구단 일정' })).toHaveAttribute('href', '#/teams');
+    const strip = screen.getByRole('navigation', { name: '구단 일정' });
+    expect(within(strip).getByRole('link', { name: 'LG' })).toHaveAttribute('href', '#/team/LG');
+    expect(within(strip).getByRole('link', { name: '키움' })).toHaveAttribute('href', '#/team/WO');
+    expect(within(strip).getByRole('link', { name: '구단 전체' })).toHaveAttribute('href', '#/teams');
     await waitFor(() => expect(screen.getAllByRole('link').length).toBeGreaterThan(1));
   });
 
-  it('응원팀이 있으면 그 팀 달력으로 가는 길이 하나 더 는다', () => {
+  it('응원팀은 띠에 표로만 남고 자리를 옮기지 않는다', () => {
     setFavouriteTeam('LG');
     renderWithGame(<HomeScreen />, { platform: platformWith() });
-    expect(screen.getByRole('link', { name: '구단 일정' })).toHaveAttribute('href', '#/teams');
-    expect(screen.getByRole('link', { name: 'LG 일정' })).toHaveAttribute('href', '#/team/LG');
+    const strip = screen.getByRole('navigation', { name: '구단 일정' });
+    const names = within(strip).getAllByRole('link').map((link) => link.textContent);
+    expect(names[0]).toBe('KIA');
+    expect(within(strip).getByRole('link', { name: 'LG 내 팀' })).toHaveAttribute('href', '#/team/LG');
   });
 
   it('응원팀이 있어도 리그 전체 경기를 보여준다', async () => {

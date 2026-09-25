@@ -151,7 +151,7 @@ describe('App', () => {
   it('홈에서 구단 일정으로 간다', async () => {
     render(<App data={fixtureAppData} />);
     act(() => {
-      within(screen.getByRole('main')).getByRole('link', { name: '구단 일정' }).click();
+      within(screen.getByRole('main')).getByRole('link', { name: '구단 전체' }).click();
     });
     expect(await screen.findByRole('heading', { level: 2, name: '구단 일정' })).toBeInTheDocument();
     expect(window.location.hash).toBe('#/teams');

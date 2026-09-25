@@ -26,6 +26,14 @@ describe('GameScreen', () => {
     expect(within(head).getByText(/9월 15일 .* · 잠실/)).toBeInTheDocument();
   });
 
+  it('경기 머리말의 팀 이름에서 그 팀 달력으로 간다', async () => {
+    // 20-browse-ui step 2: 경기 안에서도 다른 일정으로 나갈 길을 둔다
+    renderWithGame(<GameScreen gameId={GAME_ID} />, { platform: withGame() });
+    const head = await screen.findByRole('group', { name: '경기 결과' });
+    expect(within(head).getByRole('link', { name: 'LG 일정' })).toHaveAttribute('href', '#/team/LG');
+    expect(within(head).getByRole('link', { name: '두산 일정' })).toHaveAttribute('href', '#/team/OB');
+  });
+
   it('타석마다 한 줄, 반이닝마다 묶어 보여준다', async () => {
     renderWithGame(<GameScreen gameId={GAME_ID} />, { platform: withGame() });
     const list = await screen.findByRole('list', { name: '전체 타석' });

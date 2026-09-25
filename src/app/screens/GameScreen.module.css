@@ -53,10 +53,23 @@
   order: 2;
 }
 
-.team b {
+.team b,
+.teamLink {
   color: var(--text-2);
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.teamLink {
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+}
+
+.teamLink:hover {
+  background: var(--surface-3);
+  color: var(--text);
 }
 
 .team em {
@@ -68,11 +81,13 @@
   line-height: 1;
 }
 
-.team[data-side='away'] b {
+.team[data-side='away'] b,
+.team[data-side='away'] .teamLink {
   color: var(--away);
 }
 
-.team[data-side='home'] b {
+.team[data-side='home'] b,
+.team[data-side='home'] .teamLink {
   color: var(--home);
 }
 
@@ -91,8 +106,14 @@
 .blockTitle {
   margin: 0;
   color: var(--text);
-  font-size: 15px;
-  font-weight: 800;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.blockLede {
+  margin: -4px 0 0;
+  color: var(--text-3);
+  font-size: 12px;
 }
 
 .picks,
@@ -138,8 +159,14 @@
 }
 
 .picks .pa {
+  padding-left: 12px;
   border-color: var(--line-2);
+  border-left: 3px solid var(--accent);
   background: var(--surface-2);
+}
+
+.pa:hover {
+  background: var(--surface-3);
 }
 
 .paWhere {

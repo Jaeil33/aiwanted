@@ -51,8 +51,8 @@ GET  /api/tally?gameId=         → 상위 5개 TallyRow                        
 POST /api/interpret, /api/verdict → Anthropic Messages API (키가 없으면 503 → 규칙)
 
 [브라우저]
-홈(#/): useGames(최근 2주) → recentFinished → useLiveGame ×3 → paList(승부처) 피드
-팀(#/team/:code?m=): useGames(그 달) → calendarWeeks(상대 팀·승패 한 글자) → 날짜를 누르면 경기 카드
+홈(#/): useGames(최근 2주) → recentFinished(리그 전체) → useLiveGame ×5 → paList(승부처) 피드 + 10구단 띠
+팀(#/team/:code?m=): useGames(그 달) → calendarWeeks(상대 팀·승패·스코어) → 날짜를 누르면 경기 카드
 경기(#/game/:gameId): useLiveGame → paList(승부처 + 반이닝별 전 타석). 타석 결과는 싣지 않는다
 상황 만들기: situationFromPa(LiveGame, no, kind) → Situation (customSituation은 아직 없다)
 타석 화면(#/pa/:gameId/:no): buildSituationSetup(core, situation, extra) → engineClient.evaluate(TMI 없음·TMI·TMI 만화)

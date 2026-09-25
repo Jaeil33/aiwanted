@@ -1,48 +1,18 @@
 .screen {
   display: grid;
-  gap: 14px;
+  gap: 16px;
   padding: 8px 16px 24px;
 }
 
 .head {
   display: grid;
-  gap: 8px;
+  gap: 10px;
 }
 
 .tagline {
   margin: 0;
   color: var(--text-2);
   font-size: 14px;
-}
-
-.links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 0;
-}
-
-.teamLink {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  justify-self: start;
-  height: 36px;
-  padding: 0 14px;
-  border: 1px solid var(--line-2);
-  border-radius: var(--r-pill);
-  background: var(--surface);
-  color: var(--text);
-  font-size: 13px;
-  font-weight: 800;
-  text-decoration: none;
-}
-
-.teamLink i {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--c);
 }
 
 .feed {
@@ -61,8 +31,15 @@
 .feedTitle {
   margin: 0;
   color: var(--text);
-  font-size: 17px;
+  font-size: 19px;
   font-weight: 900;
+  letter-spacing: -0.01em;
+}
+
+.lede {
+  margin: -4px 0 0;
+  color: var(--text-3);
+  font-size: 12px;
 }
 
 .filter {
@@ -95,7 +72,7 @@
 .cards,
 .picks {
   display: grid;
-  gap: 10px;
+  gap: 12px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -105,65 +82,150 @@
   gap: 6px;
 }
 
+/* 카드 위쪽에 두 팀 색 띠를 깐다: 어느 경기인지 글자를 읽기 전에 보인다 */
 .card {
   display: grid;
-  gap: 8px;
-  padding: 12px 14px;
+  gap: 10px;
+  padding: 14px 14px 12px;
   border: 1px solid var(--line);
   border-radius: var(--r-card);
-  background: var(--surface);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--away) 10%, var(--surface)) 0%, var(--surface) 76px),
+    var(--surface);
+  background-clip: padding-box;
+}
+
+.card::before {
+  content: '';
+  display: block;
+  height: 3px;
+  margin: -14px -14px 0;
+  border-radius: var(--r-card) var(--r-card) 0 0;
+  background: linear-gradient(90deg, var(--away) 0%, var(--away) 50%, var(--home) 50%, var(--home) 100%);
 }
 
 .cardHead {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 8px;
   margin: 0;
-  font-size: 13px;
+  font-size: 12px;
 }
 
 .cardHead b {
-  color: var(--text-2);
+  color: var(--text);
   font-family: var(--num);
+  font-size: 13px;
   font-weight: 800;
 }
 
 .cardHead span {
   overflow: hidden;
-  color: var(--text);
-  font-weight: 700;
+  color: var(--text-3);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .mine {
   margin-left: auto;
-  padding: 1px 7px;
+  padding: 2px 7px;
   border-radius: var(--r-chip);
   background: var(--accent);
   color: var(--accent-ink);
   font-size: 10px;
   font-style: normal;
+  font-weight: 900;
+}
+
+.score {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+}
+
+.side {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.side[data-side='home'] {
+  justify-content: flex-end;
+}
+
+.side i {
+  flex: none;
+  width: 4px;
+  height: 22px;
+  border-radius: 2px;
+}
+
+.side b {
+  overflow: hidden;
+  color: var(--text-2);
+  font-size: 14px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.side em {
+  color: var(--text-3);
+  font-family: var(--num);
+  font-size: 30px;
+  font-style: normal;
+  font-weight: 800;
+  line-height: 1;
+}
+
+/* 이긴 쪽만 밝게: 스코어를 읽지 않아도 누가 이겼는지 보인다 */
+.side[data-won='true'] b {
+  color: var(--text);
+}
+
+.side[data-won='true'] em {
+  color: var(--text);
+}
+
+.colon {
+  color: var(--text-3);
+  font-family: var(--num);
+  font-size: 20px;
   font-weight: 800;
 }
 
 .pick {
-  display: grid;
-  gap: 1px;
-  padding: 9px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 52px;
+  padding: 8px 8px 8px 12px;
+  border-left: 3px solid var(--accent);
   border-radius: var(--r-row);
   background: var(--surface-2);
   color: var(--text);
   text-decoration: none;
 }
 
-.pick b {
+.pick:hover {
+  background: var(--surface-3);
+}
+
+.pickText {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.pickText b {
   font-family: var(--num);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 800;
 }
 
-.pick span {
+.pickText span {
   overflow: hidden;
   color: var(--text-2);
   font-size: 12px;
@@ -171,10 +233,43 @@
   white-space: nowrap;
 }
 
-.more {
-  justify-self: start;
+.go {
+  margin-left: auto;
   color: var(--accent);
+  font-size: 20px;
+  font-style: normal;
+  line-height: 1;
+}
+
+.waiting {
+  padding: 12px;
+  border-radius: var(--r-row);
+  background: var(--surface-2);
+  color: var(--text-3);
   font-size: 12px;
+}
+
+.more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 38px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-control);
+  color: var(--text-2);
+  font-size: 13px;
   font-weight: 800;
   text-decoration: none;
+}
+
+.more:hover {
+  border-color: var(--text-3);
+  color: var(--text);
+}
+
+.more i {
+  font-size: 16px;
+  font-style: normal;
+  line-height: 1;
 }

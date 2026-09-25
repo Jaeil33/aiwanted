@@ -1,7 +1,9 @@
 import { useId, useState, type CSSProperties } from 'react';
+import { TeamStrip } from '../../components/TeamStrip';
+import { weekdayOf } from '../../domain/format';
 import { nameMapOf } from '../../domain/players';
 import { TEAMS, isTeamCode } from '../../domain/teams';
-import { addDays, gamesOfTeam, paList, recentFinished, scoreText, type PaListRow } from '../../game';
+import { addDays, gamesOfTeam, paList, recentFinished, type PaListRow } from '../../game';
 import type { TeamCode } from '../../types/data';
 import type { GameSummary, LiveGame } from '../../types/live';
 import { useGame } from '../GameProvider';
@@ -30,7 +32,13 @@ const FEED_DAYS = 14;
 const PICKS_PER_GAME = 2;
 
 const colorOf = (code: string) => (isTeamCode(code) ? TEAMS[code].color : '#6A7581');
-const shortDate = (date: string) => date.slice(5).replace('-', '.');
+
+/** "9.25 (금)" */
+function dateText(date: string): string {
+  const day = `${Number(date.slice(5, 7))}.${Number(date.slice(8))}`;
+  const weekday = weekdayOf(date);
+  return weekday ? `${day} (${weekday})` : day;
+}
 
 export function HomeScreen() {
   const { platform, data } = useGame();
@@ -49,31 +57,21 @@ export function HomeScreen() {
   const third = useLiveGame(platform.liveApi, picked[2]?.gameId ?? null);
   const fourth = useLiveGame(platform.liveApi, picked[3]?.gameId ?? null);
   const fifth = useLiveGame(platform.liveApi, picked[4]?.gameId ?? null);
-  const loaded = [first.data, second.data, third.data, fourth.data, fifth.data];
+  const slots = [first, second, third, fourth, fifth];
 
   // 중계에는 투수 이름이 없다: 번들 core 이름표를 함께 넘긴다(ADR-035)
   const names = nameMapOf(data.core);
-  const cards = picked.map((summary, i) => ({ summary, picks: picksOf(loaded[i], summary.gameId, names) }));
+  const cards = picked.map((summary, i) => ({
+    summary,
+    picks: picksOf(slots[i].data, summary.gameId, names),
+    waiting: slots[i].data === null && slots[i].error === null,
+  }));
 
   return (
     <div className={styles.screen}>
       <div className={styles.head}>
         <p className={styles.tagline}>쓸모없는 변수, 진짜 쓸모없을까?</p>
-        <p className={styles.links}>
-          <a className={styles.teamLink} href={formatRoute({ screen: 'teams' })}>
-            구단 일정
-          </a>
-          {team !== null && (
-            <a
-              className={styles.teamLink}
-              href={formatRoute({ screen: 'team', code: team, month: null })}
-              style={{ '--c': colorOf(team) } as CSSProperties}
-            >
-              <i aria-hidden="true" />
-              {`${TEAMS[team].name} 일정`}
-            </a>
-          )}
-        </p>
+        <TeamStrip />
       </div>
 
       <section className={styles.feed} aria-labelledby={feedId}>
@@ -98,13 +96,16 @@ export function HomeScreen() {
             </div>
           )}
         </div>
+        <p className={styles.lede}>승부가 갈린 타석이에요. 눌러서 그 자리에 들어가 다시 쳐 보세요.</p>
+
         <ul className={styles.cards} aria-label="추천 승부처">
-          {cards.map(({ summary, picks }) => (
+          {cards.map(({ summary, picks, waiting }) => (
             <li key={summary.gameId}>
-              <GameFeedCard summary={summary} picks={picks} team={team} />
+              <GameFeedCard summary={summary} picks={picks} waiting={waiting} team={team} />
             </li>
           ))}
         </ul>
+
         <LiveStatus
           loading={loading}
           error={error}
@@ -130,30 +131,73 @@ function picksOf(game: LiveGame | null, gameId: string, names: Record<string, st
   return paList(game, { highlights: PICKS_PER_GAME, names }).filter((row) => row.highlight);
 }
 
-function GameFeedCard({ summary, picks, team }: { summary: GameSummary; picks: PaListRow[]; team: TeamCode | null }) {
-  const mine = team !== null && (summary.away.code === team || summary.home.code === team);
+interface GameFeedCardProps {
+  summary: GameSummary;
+  picks: PaListRow[];
+  /** 그 경기를 아직 받는 중 */
+  waiting: boolean;
+  team: TeamCode | null;
+}
+
+/** 경기 한 판: 날짜·구장 / 큰 스코어 / 승부처 두 줄 / 타석 전체. 이긴 쪽 점수를 밝게 둔다 */
+function GameFeedCard({ summary, picks, waiting, team }: GameFeedCardProps) {
+  const { away, home } = summary;
+  const mine = team !== null && (away.code === team || home.code === team);
+  const wonBy =
+    away.score === null || home.score === null
+      ? null
+      : away.score > home.score
+        ? 'away'
+        : home.score > away.score
+          ? 'home'
+          : null;
+
   return (
-    <article
-      className={styles.card}
-      style={{ '--away': colorOf(summary.away.code), '--home': colorOf(summary.home.code) } as CSSProperties}
-    >
+    <article className={styles.card} style={{ '--away': colorOf(away.code), '--home': colorOf(home.code) } as CSSProperties}>
       <p className={styles.cardHead}>
-        <b>{shortDate(summary.date)}</b>
-        <span>{`${summary.away.name} ${scoreText(summary) || '–'} ${summary.home.name}`}</span>
+        <b>{dateText(summary.date)}</b>
+        {summary.stadium && <span>{summary.stadium}</span>}
         {mine && <em className={styles.mine}>내 팀</em>}
       </p>
+
+      <p className={styles.score}>
+        <span className={styles.side} data-won={String(wonBy === 'away')}>
+          <i aria-hidden="true" style={{ background: colorOf(away.code) }} />
+          <b>{away.name}</b>
+          <em>{away.score ?? '–'}</em>
+        </span>
+        <span className={styles.colon} aria-hidden="true">
+          :
+        </span>
+        <span className={styles.side} data-side="home" data-won={String(wonBy === 'home')}>
+          <em>{home.score ?? '–'}</em>
+          <b>{home.name}</b>
+          <i aria-hidden="true" style={{ background: colorOf(home.code) }} />
+        </span>
+      </p>
+
       <ul className={styles.picks}>
         {picks.map((row) => (
           <li key={row.no}>
             <a className={styles.pick} href={formatRoute({ screen: 'pa', gameId: summary.gameId, no: row.no, share: null })}>
-              <b>{`${row.inningText} ${row.situationText}`}</b>
-              <span>{`${row.batter} vs ${row.pitcher}`}</span>
+              <span className={styles.pickText}>
+                <b>{`${row.inningText} ${row.situationText}`}</b>
+                <span>{`${row.batter} vs ${row.pitcher}`}</span>
+              </span>
+              <i className={styles.go} aria-hidden="true">
+                ›
+              </i>
             </a>
           </li>
         ))}
+        {picks.length === 0 && (
+          <li className={styles.waiting}>{waiting ? '승부처를 고르는 중…' : '되돌려볼 타석이 없어요.'}</li>
+        )}
       </ul>
+
       <a className={styles.more} href={formatRoute({ screen: 'game', gameId: summary.gameId })}>
         이 경기 타석 전체
+        <i aria-hidden="true">›</i>
       </a>
     </article>
   );

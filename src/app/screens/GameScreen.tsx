@@ -68,6 +68,7 @@ export function GameScreen({ gameId }: { gameId: string }) {
           <h3 id={picksId} className={styles.blockTitle}>
             승부처
           </h3>
+          <p className={styles.blockLede}>승부가 갈린 자리예요. 눌러서 그 타석을 다시 쳐 보세요.</p>
           <ul className={styles.picks} aria-label="승부처">
             {picks.map((row) => (
               <li key={row.no}>
@@ -101,7 +102,10 @@ export function GameScreen({ gameId }: { gameId: string }) {
   );
 }
 
-/** 경기 머리말: 날짜·구장과 최종 점수. 결과는 공개한다(ADR-032) */
+/**
+ * 경기 머리말: 날짜·구장과 최종 점수. 결과는 공개한다(ADR-032).
+ * 팀 이름은 그 팀 달력으로 가는 문이다 — 경기 안에서도 다른 일정으로 나갈 길을 둔다(20-browse-ui step 2).
+ */
 function GameHead({ summary }: { summary: GameSummary }) {
   const score = scoreText(summary);
   const teams = [summary.away, summary.home] as const;
@@ -116,7 +120,13 @@ function GameHead({ summary }: { summary: GameSummary }) {
       <div className={styles.score}>
         {teams.map((team, index) => (
           <div key={team.code} className={styles.team} data-side={index === 0 ? 'away' : 'home'}>
-            <b>{team.name}</b>
+            {isTeamCode(team.code) ? (
+              <a className={styles.teamLink} href={formatRoute({ screen: 'team', code: team.code, month: null })} aria-label={`${team.name} 일정`}>
+                {team.name}
+              </a>
+            ) : (
+              <b>{team.name}</b>
+            )}
             <em>{team.score ?? '–'}</em>
           </div>
         ))}

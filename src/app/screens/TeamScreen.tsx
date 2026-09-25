@@ -1,4 +1,5 @@
 import { useId, useState, type CSSProperties } from 'react';
+import { TeamStrip } from '../../components/TeamStrip';
 import { nameMapOf } from '../../domain/players';
 import { TEAMS, isTeamCode } from '../../domain/teams';
 import { calendarWeeks, monthOf, monthRange, paList, scoreText, shiftMonth, type CalendarCell } from '../../game';
@@ -67,6 +68,8 @@ export function TeamScreen({ code, month }: { code: TeamCode; month: string | nu
         </button>
       </div>
 
+      <TeamStrip current={code} />
+
       <div className={styles.months}>
         <button
           type="button"
@@ -90,8 +93,8 @@ export function TeamScreen({ code, month }: { code: TeamCode; month: string | nu
       <table className={styles.calendar} role="grid" aria-label={`${monthText(shown)} 일정`}>
         <thead>
           <tr>
-            {WEEKDAYS.map((day) => (
-              <th key={day} scope="col">
+            {WEEKDAYS.map((day, i) => (
+              <th key={day} scope="col" data-weekday={i}>
                 {day}
               </th>
             ))}
@@ -101,7 +104,13 @@ export function TeamScreen({ code, month }: { code: TeamCode; month: string | nu
           {weeks.map((week, i) => (
             <tr key={week.find((cell) => cell.date !== null)?.date ?? i} role="row">
               {week.map((cell, j) => (
-                <Cell key={cell.date ?? `empty-${j}`} cell={cell} open={cell.date !== null && cell.date === openDate} onOpen={openCell} />
+                <Cell
+                  key={cell.date ?? `empty-${j}`}
+                  cell={cell}
+                  open={cell.date !== null && cell.date === openDate}
+                  today={cell.date === today}
+                  onOpen={openCell}
+                />
               ))}
             </tr>
           ))}
@@ -120,28 +129,44 @@ export function TeamScreen({ code, month }: { code: TeamCode; month: string | nu
   );
 }
 
-/** 칸을 읽어 주는 이름: "9월 15일 두산 무 3:3". 색만으로 승패를 알리지 않는다 */
-function cellLabel(cell: CalendarCell): string {
+/** 칸을 읽어 주는 이름: "9월 15일 두산 무 3:3". 색만으로 승패·오늘을 알리지 않는다 */
+function cellLabel(cell: CalendarCell, today: boolean): string {
   const day = dayText(cell.date as string);
-  if (cell.game === null) return day;
+  const mark = today ? '오늘' : '';
+  if (cell.game === null) return [day, mark].filter((part) => part !== '').join(' ');
   const opponent = TEAMS[cell.opponent as TeamCode]?.name ?? cell.opponent ?? '';
   const score = cell.score === null ? '' : `${cell.score.mine}:${cell.score.theirs}`;
-  return [day, opponent, cell.result ?? '', score].filter((part) => part !== '').join(' ');
+  return [day, mark, opponent, cell.result ?? '', score].filter((part) => part !== '').join(' ');
+}
+
+interface CellProps {
+  cell: CalendarCell;
+  open: boolean;
+  /** 오늘 날짜 칸 */
+  today: boolean;
+  onOpen(date: string): void;
 }
 
 /** 달력 칸 하나. 경기가 없으면 날짜만 */
-function Cell({ cell, open, onOpen }: { cell: CalendarCell; open: boolean; onOpen(date: string): void }) {
+function Cell({ cell, open, today, onOpen }: CellProps) {
   if (cell.date === null) return <td className={styles.cell} role="presentation" aria-hidden="true" />;
-  const label = cellLabel(cell);
+  const label = cellLabel(cell, today);
   if (cell.game === null) {
     return (
-      <td className={styles.cell} role="gridcell" aria-label={label}>
+      <td className={styles.cell} role="gridcell" aria-label={label} data-today={String(today)}>
         <span className={styles.day}>{cell.day}</span>
       </td>
     );
   }
   return (
-    <td className={styles.cell} role="gridcell" aria-label={label} data-open={String(open)} data-result={cell.result ?? 'none'}>
+    <td
+      className={styles.cell}
+      role="gridcell"
+      aria-label={label}
+      data-open={String(open)}
+      data-today={String(today)}
+      data-result={cell.result ?? 'none'}
+    >
       <button
         type="button"
         className={styles.cellButton}

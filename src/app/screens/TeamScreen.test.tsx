@@ -100,6 +100,21 @@ describe('TeamScreen', () => {
     expect(screen.getByRole('button', { name: '다음 달' })).toBeDisabled();
   });
 
+  it('달력 위에서 다른 팀으로 바로 건너간다', async () => {
+    // 20-browse-ui step 2: 한 팀 달력에 갇히지 않는다
+    renderWithGame(<TeamScreen code="LG" month="2026-09" />, { platform: platformWith() });
+    const strip = await screen.findByRole('navigation', { name: '구단 일정' });
+    expect(within(strip).getByRole('link', { name: 'LG' })).toHaveAttribute('aria-current', 'page');
+    expect(within(strip).getByRole('link', { name: '한화' })).toHaveAttribute('href', '#/team/HH');
+  });
+
+  it('오늘 칸을 알려 준다', async () => {
+    renderWithGame(<TeamScreen code="LG" month="2026-09" />, { platform: platformWith() });
+    const grid = await screen.findByRole('grid', { name: '2026년 9월 일정' });
+    // platform.today()는 2026-09-20이다
+    expect(within(grid).getByRole('gridcell', { name: '9월 20일 오늘' })).toBeInTheDocument();
+  });
+
   it('그 팀을 응원팀으로 정하고 푼다', async () => {
     // 20-browse-ui step 1: 응원팀은 여기서만 바뀐다. 팀 일정을 여는 것만으로는 바뀌지 않는다
     const user = userEvent.setup();
