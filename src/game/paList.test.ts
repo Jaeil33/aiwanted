@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { fixtureGameSummaries, fixtureLiveGame } from '../test/fixtures/live';
 import type { LiveGame } from '../types/live';
-import { gamesByDate, gamesOfTeam, halfBlocks, paList } from './paList';
+import { gamesByDate, halfBlocks, paList } from './paList';
 
 /*
  * 경기 목록·타석 목록 화면의 파생 값(ADR-032). 순수 함수라 화면 없이 검사한다.
@@ -92,17 +92,6 @@ describe('halfBlocks', () => {
 
   it('빈 목록이면 빈 묶음이다', () => {
     expect(halfBlocks([])).toEqual([]);
-  });
-});
-
-describe('gamesOfTeam', () => {
-  it('그 팀이 나온 경기만 고른다', () => {
-    expect(gamesOfTeam(SUMMARIES, 'LG').map((g) => g.gameId)).toEqual(['20260915LGOB02026']);
-    expect(gamesOfTeam(SUMMARIES, 'KT').map((g) => g.gameId)).toEqual(['20260914NCKT02026']);
-  });
-
-  it('팀이 null이면 전부 그대로', () => {
-    expect(gamesOfTeam(SUMMARIES, null)).toEqual(SUMMARIES);
   });
 });
 

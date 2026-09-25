@@ -1,24 +1,21 @@
-import { useId, useState, type CSSProperties } from 'react';
+import { useId, type CSSProperties } from 'react';
 import { TeamStrip } from '../../components/TeamStrip';
 import { weekdayOf } from '../../domain/format';
 import { nameMapOf } from '../../domain/players';
 import { TEAMS, isTeamCode } from '../../domain/teams';
-import { addDays, gamesOfTeam, paList, recentFinished, type PaListRow } from '../../game';
-import type { TeamCode } from '../../types/data';
+import { addDays, paList, recentFinished, type PaListRow } from '../../game';
 import type { GameSummary, LiveGame } from '../../types/live';
 import { useGame } from '../GameProvider';
 import { formatRoute } from '../router';
-import { useFavouriteTeam } from '../useFavouriteTeam';
 import { useGames, useLiveGame } from '../useLiveData';
 import styles from './HomeScreen.module.css';
 import { LiveStatus } from './LiveStatus';
 
 /*
- * 홈: 추천 승부처 피드(ADR-032). **늘 리그 전체에서 뽑는다.**
+ * 홈: 추천 승부처 피드(ADR-032). **늘 리그 전체에서, 최근에 끝난 경기부터.**
  *
- * 응원팀은 거르는 값이 아니다(20-browse-ui step 1). 한 번 팀을 골랐다고 계속 그 팀만 보이면
- * 다른 경기로 갈 길이 사라진다. 응원팀은 "내 팀" 표와 거르기 단추로만 쓰고, 그 단추는 저장하지 않는다 —
- * 다시 들어오면 리그 전체다(저장하는 값은 응원팀 하나뿐, ADR-034).
+ * 응원팀 개념은 없앴다(ADR-039). 거르는 값도, 저장하는 값도 없다 — 누구나 같은 홈을 본다.
+ * 특정 팀 경기는 맨 위 구단 띠로 한 번에 간다.
  *
  * 일정은 요청 한 번(기간 조회)이고, 경기는 아래 FEED_GAMES개만 더 받는다. 끝난 경기 응답은 CDN이 하루 캐시한다.
  * 타석 결과는 싣지 않는다: 그 타석 결과만 치른 뒤에 공개한다(ADR-032 스포일러 정책).
@@ -42,15 +39,11 @@ function dateText(date: string): string {
 
 export function HomeScreen() {
   const { platform, data } = useGame();
-  const [team] = useFavouriteTeam();
-  // 거르기는 이 화면을 떠나면 사라진다: 주소에도 저장소에도 두지 않는다
-  const [mineOnly, setMineOnly] = useState(false);
   const today = platform.today();
   const { data: games, error, loading, refresh } = useGames(platform.liveApi, { from: addDays(today, -FEED_DAYS), to: today });
   const feedId = useId();
 
-  const filtered = mineOnly && team !== null;
-  const picked = recentFinished(gamesOfTeam(games ?? [], filtered ? team : null), FEED_GAMES);
+  const picked = recentFinished(games ?? [], FEED_GAMES);
   // 훅은 개수가 고정이어야 한다: 자리 다섯을 미리 잡고 없으면 null을 넣는다
   const first = useLiveGame(platform.liveApi, picked[0]?.gameId ?? null);
   const second = useLiveGame(platform.liveApi, picked[1]?.gameId ?? null);
@@ -75,33 +68,15 @@ export function HomeScreen() {
       </div>
 
       <section className={styles.feed} aria-labelledby={feedId}>
-        <div className={styles.feedHead}>
-          <h2 id={feedId} className={styles.feedTitle}>
-            {filtered ? `${TEAMS[team].name} 승부처` : '최근 승부처'}
-          </h2>
-          {team !== null && (
-            <div className={styles.filter} role="group" aria-label="보기">
-              <button type="button" className={styles.chip} aria-pressed={!mineOnly} onClick={() => setMineOnly(false)}>
-                전체
-              </button>
-              <button
-                type="button"
-                className={styles.chip}
-                style={{ '--c': colorOf(team) } as CSSProperties}
-                aria-pressed={mineOnly}
-                onClick={() => setMineOnly(true)}
-              >
-                {`${TEAMS[team].name}만`}
-              </button>
-            </div>
-          )}
-        </div>
+        <h2 id={feedId} className={styles.feedTitle}>
+          최근 승부처
+        </h2>
         <p className={styles.lede}>승부가 갈린 타석이에요. 눌러서 그 자리에 들어가 다시 쳐 보세요.</p>
 
         <ul className={styles.cards} aria-label="추천 승부처">
           {cards.map(({ summary, picks, waiting }) => (
             <li key={summary.gameId}>
-              <GameFeedCard summary={summary} picks={picks} waiting={waiting} team={team} />
+              <GameFeedCard summary={summary} picks={picks} waiting={waiting} />
             </li>
           ))}
         </ul>
@@ -113,9 +88,7 @@ export function HomeScreen() {
             platform.liveApi === null
               ? '이 화면에서는 경기를 불러올 수 없어요.'
               : cards.length === 0
-                ? filtered
-                  ? `최근 2주에 끝난 ${TEAMS[team].name} 경기가 없어요.`
-                  : '최근 2주에 끝난 경기가 없어요.'
+                ? '최근 2주에 끝난 경기가 없어요.'
                 : undefined
           }
           onRetry={refresh}
@@ -136,13 +109,11 @@ interface GameFeedCardProps {
   picks: PaListRow[];
   /** 그 경기를 아직 받는 중 */
   waiting: boolean;
-  team: TeamCode | null;
 }
 
 /** 경기 한 판: 날짜·구장 / 큰 스코어 / 승부처 두 줄 / 타석 전체. 이긴 쪽 점수를 밝게 둔다 */
-function GameFeedCard({ summary, picks, waiting, team }: GameFeedCardProps) {
+function GameFeedCard({ summary, picks, waiting }: GameFeedCardProps) {
   const { away, home } = summary;
-  const mine = team !== null && (away.code === team || home.code === team);
   const wonBy =
     away.score === null || home.score === null
       ? null
@@ -157,7 +128,6 @@ function GameFeedCard({ summary, picks, waiting, team }: GameFeedCardProps) {
       <p className={styles.cardHead}>
         <b>{dateText(summary.date)}</b>
         {summary.stadium && <span>{summary.stadium}</span>}
-        {mine && <em className={styles.mine}>내 팀</em>}
       </p>
 
       <p className={styles.score}>

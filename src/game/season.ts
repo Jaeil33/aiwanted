@@ -61,10 +61,10 @@ export function resultOf(game: GameSummary, team: TeamCode): GameResult | null {
 }
 
 export interface TeamScore {
-  /** 그 팀 점수 */
-  mine: number;
-  /** 상대 점수 */
-  theirs: number;
+  /** 그 팀 득점 */
+  scored: number;
+  /** 그 팀 실점 */
+  allowed: number;
 }
 
 /**
@@ -74,8 +74,8 @@ export interface TeamScore {
 export function teamScore(game: GameSummary, team: TeamCode): TeamScore | null {
   const { away, home } = game;
   if (away.score === null || home.score === null) return null;
-  if (away.code === team) return { mine: away.score, theirs: home.score };
-  if (home.code === team) return { mine: home.score, theirs: away.score };
+  if (away.code === team) return { scored: away.score, allowed: home.score };
+  if (home.code === team) return { scored: home.score, allowed: away.score };
   return null;
 }
 
@@ -93,17 +93,17 @@ export interface CalendarCell {
   game: GameSummary | null;
   /** 상대 팀 코드 */
   opponent: TeamCode | null;
-  /** 내 팀이 홈이면 true */
+  /** 그 팀이 홈이면 true */
   home: boolean;
   result: GameResult | null;
-  /** 내 팀에서 본 점수. 아직 점수가 없으면 null */
+  /** 그 팀에서 본 점수(득점:실점). 아직 점수가 없으면 null */
   score: TeamScore | null;
 }
 
 const EMPTY_CELL: CalendarCell = { date: null, day: null, game: null, opponent: null, home: false, result: null, score: null };
 
 /**
- * 한 달 달력 격자(일요일 시작, 7칸씩). 칸에는 상대 팀·승패·스코어를 담는다.
+ * 한 달 달력 격자(일요일 시작, 7칸씩). 칸에는 상대 팀·승패·스코어(그 팀 득점이 앞)를 담는다.
  * 하루에 두 경기면 먼저 시작한 경기를 담는다.
  */
 export function calendarWeeks(month: string, games: readonly GameSummary[], team: TeamCode): CalendarCell[][] {

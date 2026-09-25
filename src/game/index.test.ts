@@ -33,7 +33,6 @@ const PUBLIC_API = [
   // paList
   'paList',
   'halfBlocks',
-  'gamesOfTeam',
   'gamesByDate',
   // effects
   'measuredAvailable',

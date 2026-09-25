@@ -1,16 +1,6 @@
 import { render, screen, within } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { setFavouriteTeam } from '../app/useFavouriteTeam';
+import { describe, expect, it } from 'vitest';
 import { TeamStrip } from './TeamStrip';
-
-beforeEach(() => {
-  window.localStorage.clear();
-  setFavouriteTeam(null);
-  window.localStorage.clear();
-});
-afterEach(() => {
-  window.localStorage.clear();
-});
 
 describe('TeamStrip', () => {
   it('10개 구단을 모두 한 번에 닿게 한다', () => {
@@ -36,10 +26,12 @@ describe('TeamStrip', () => {
     expect(screen.getByRole('link', { name: 'KIA' })).not.toHaveAttribute('aria-current');
   });
 
-  it('응원팀에는 표를 단다', () => {
-    setFavouriteTeam('HH');
+  it('어느 팀도 표를 달거나 자리를 옮기지 않는다', () => {
+    // 20-browse-ui step 3: 내 팀 개념을 없앴다. 순서는 늘 teams.ts에 적은 차례다
     render(<TeamStrip />);
-    expect(screen.getByRole('link', { name: '한화 내 팀' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'LG' })).toBeInTheDocument();
+    const strip = screen.getByRole('navigation', { name: '구단 일정' });
+    const names = within(strip).getAllByRole('link').map((link) => link.textContent);
+    expect(names).toEqual(['KIA', '롯데', 'NC', '한화', 'LG', '두산', '삼성', 'SSG', 'KT', '키움', '구단 전체']);
+    expect(window.localStorage.length).toBe(0);
   });
 });

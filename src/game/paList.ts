@@ -1,5 +1,4 @@
 import { basesText } from '../domain/format';
-import type { TeamCode } from '../types/data';
 import type { Bases, Half } from '../types/domain';
 import type { GameSummary, LiveGame } from '../types/live';
 
@@ -107,12 +106,6 @@ export function halfBlocks(rows: readonly PaListRow[]): HalfBlock[] {
     last.rows.push(row);
   }
   return blocks;
-}
-
-/** 그 팀이 나온 경기만. team이 null이면 그대로 */
-export function gamesOfTeam(games: readonly GameSummary[], team: TeamCode | null): GameSummary[] {
-  if (team === null) return [...games];
-  return games.filter((g) => g.away.code === team || g.home.code === team);
 }
 
 export interface DateGroup {

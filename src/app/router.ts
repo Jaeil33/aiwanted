@@ -3,7 +3,7 @@ import { decodeShare, encodeShare, type SharePayload } from '../game';
 import type { Situation, TeamCode } from '../types/data';
 
 /**
- * URL 해시 라우트 (ARCHITECTURE "상태 관리"). 저장하는 값은 응원팀 하나뿐이고(ADR-034) 나머지는 전부 주소에 있다.
+ * URL 해시 라우트 (ARCHITECTURE "상태 관리"). 브라우저 저장소는 쓰지 않는다(ADR-039) — 상태는 전부 주소에 있다.
  *
  * `#/`                     홈(추천 승부처)
  * `#/teams`                팀 고르기

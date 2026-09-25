@@ -55,16 +55,6 @@
   color: var(--text);
 }
 
-.mine {
-  padding: 1px 5px;
-  border-radius: var(--r-chip);
-  background: var(--c);
-  color: #0B0E12;
-  font-size: 9px;
-  font-style: normal;
-  font-weight: 900;
-}
-
 .all {
   color: var(--text-3);
 }

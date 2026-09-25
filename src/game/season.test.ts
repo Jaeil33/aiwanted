@@ -100,13 +100,13 @@ describe('scoreText', () => {
 describe('teamScore', () => {
   it('그 팀에서 본 점수를 낸다', () => {
     // 2026-09-14 NC 4 : 7 KT
-    expect(teamScore(finalGame, 'KT')).toEqual({ mine: 7, theirs: 4 });
-    expect(teamScore(finalGame, 'NC')).toEqual({ mine: 4, theirs: 7 });
+    expect(teamScore(finalGame, 'KT')).toEqual({ scored: 7, allowed: 4 });
+    expect(teamScore(finalGame, 'NC')).toEqual({ scored: 4, allowed: 7 });
   });
 
   it('진행 중 경기도 지금 점수를 낸다', () => {
     // 달력은 승패를 못 적어도 점수는 적는다: resultOf와 달리 끝난 경기만 보지 않는다
-    expect(teamScore(SUMMARIES[1], 'LG')).toEqual({ mine: 2, theirs: 0 });
+    expect(teamScore(SUMMARIES[1], 'LG')).toEqual({ scored: 2, allowed: 0 });
     expect(resultOf(SUMMARIES[1], 'LG')).toBeNull();
   });
 
@@ -146,8 +146,8 @@ describe('calendarWeeks', () => {
     expect(day15?.opponent).toBe('NC');
     expect(day15?.home).toBe(true);
     expect(day15?.result).toBe('승');
-    // 20-browse-ui step 0: 칸에 스코어를 넣는다. 내 팀 점수가 앞이다
-    expect(day15?.score).toEqual({ mine: 7, theirs: 4 });
+    // 20-browse-ui step 0: 칸에 스코어를 넣는다. 그 팀 득점이 앞이다
+    expect(day15?.score).toEqual({ scored: 7, allowed: 4 });
   });
 
   it('경기가 없는 날은 비어 있다', () => {

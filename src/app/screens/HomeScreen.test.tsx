@@ -1,10 +1,8 @@
 import { screen, waitFor, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fixtureGameSummaries, fixtureLiveGame } from '../../test/fixtures/live';
 import { fakeLiveApi, fakePlatform, renderWithGame } from '../../test/gameHarness';
 import type { GameSummary } from '../../types/live';
-import { setFavouriteTeam } from '../useFavouriteTeam';
 import { HomeScreen } from './HomeScreen';
 
 const GAME = fixtureLiveGame();
@@ -20,15 +18,11 @@ const platformWith = (over: Partial<Parameters<typeof fakeLiveApi>[0]> = {}) =>
   fakePlatform({ liveApi: fakeLiveApi({ games, game: GAME, ...over }), today: () => '2026-09-20' });
 
 beforeEach(() => {
-  window.localStorage.clear();
-  setFavouriteTeam(null);
-  window.localStorage.clear();
   window.history.replaceState(null, '', '/#/');
 });
 afterEach(() => {
   vi.restoreAllMocks();
   window.history.replaceState(null, '', '/');
-  window.localStorage.clear();
 });
 
 describe('HomeScreen', () => {
@@ -42,64 +36,22 @@ describe('HomeScreen', () => {
     await waitFor(() => expect(screen.getAllByRole('link').length).toBeGreaterThan(1));
   });
 
-  it('응원팀은 띠에 표로만 남고 자리를 옮기지 않는다', () => {
-    setFavouriteTeam('LG');
-    renderWithGame(<HomeScreen />, { platform: platformWith() });
-    const strip = screen.getByRole('navigation', { name: '구단 일정' });
-    const names = within(strip).getAllByRole('link').map((link) => link.textContent);
-    expect(names[0]).toBe('KIA');
-    expect(within(strip).getByRole('link', { name: 'LG 내 팀' })).toHaveAttribute('href', '#/team/LG');
-  });
-
-  it('응원팀이 있어도 리그 전체 경기를 보여준다', async () => {
-    // 20-browse-ui step 1: 한 번 응원팀을 골랐다고 계속 그 팀만 보이지 않는다
-    setFavouriteTeam('LG');
+  it('리그 전체 경기를 보여준다', async () => {
+    // 20-browse-ui step 3: 응원팀 개념을 없앴다. 거르는 값도, 저장하는 값도 없다
     renderWithGame(<HomeScreen />, { platform: platformWith() });
     const feed = await screen.findByRole('list', { name: '추천 승부처' });
     await waitFor(() => expect(within(feed).getAllByRole('link').length).toBeGreaterThan(0));
     expect(within(feed).getByText(/SSG/)).toBeInTheDocument();
     expect(within(feed).getAllByText(/LG/).length).toBeGreaterThan(0);
+    expect(screen.queryByText('내 팀')).toBeNull();
+    expect(screen.queryByRole('group', { name: '보기' })).toBeNull();
   });
 
-  it('응원팀 경기에는 내 팀 표를 단다', async () => {
-    setFavouriteTeam('LG');
-    renderWithGame(<HomeScreen />, { platform: platformWith() });
-    const feed = await screen.findByRole('list', { name: '추천 승부처' });
-    await waitFor(() => expect(within(feed).getAllByRole('link').length).toBeGreaterThan(0));
-    expect(within(feed).getAllByText('내 팀').length).toBe(2);
-  });
-
-  it('내 팀만 보기를 켜면 그 팀 경기만 남는다', async () => {
-    const user = userEvent.setup();
-    setFavouriteTeam('LG');
-    renderWithGame(<HomeScreen />, { platform: platformWith() });
-    const feed = await screen.findByRole('list', { name: '추천 승부처' });
-    await waitFor(() => expect(within(feed).getAllByRole('link').length).toBeGreaterThan(0));
-    await user.click(screen.getByRole('button', { name: 'LG만' }));
-    await waitFor(() => expect(within(feed).queryByText(/SSG/)).toBeNull());
-    expect(screen.getByRole('button', { name: 'LG만' })).toHaveAttribute('aria-pressed', 'true');
-  });
-
-  it('내 팀만 보기는 저장하지 않는다', async () => {
-    // 다시 들어오면 리그 전체다. 저장하는 값은 응원팀 하나뿐이다(ADR-034)
-    const user = userEvent.setup();
-    setFavouriteTeam('LG');
-    const view = renderWithGame(<HomeScreen />, { platform: platformWith() });
-    await screen.findByRole('list', { name: '추천 승부처' });
-    await user.click(screen.getByRole('button', { name: 'LG만' }));
-    view.unmount();
-
-    renderWithGame(<HomeScreen />, { platform: platformWith() });
-    const feed = await screen.findByRole('list', { name: '추천 승부처' });
-    await waitFor(() => expect(within(feed).getAllByRole('link').length).toBeGreaterThan(0));
-    expect(within(feed).getByText(/SSG/)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '전체' })).toHaveAttribute('aria-pressed', 'true');
-  });
-
-  it('응원팀이 없으면 거르기 단추도 없다', async () => {
+  it('브라우저 저장소를 건드리지 않는다', async () => {
+    // ARCHITECTURE "상태 관리": 저장소는 쓰지 않는다. 공유할 값은 URL 해시에 둔다
     renderWithGame(<HomeScreen />, { platform: platformWith() });
     await screen.findByRole('list', { name: '추천 승부처' });
-    expect(screen.queryByRole('button', { name: '전체' })).toBeNull();
+    expect(window.localStorage.length).toBe(0);
   });
 
   it('추천 승부처는 그 타석 화면으로 바로 간다', async () => {

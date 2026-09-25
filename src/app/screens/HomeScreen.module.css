@@ -20,14 +20,6 @@
   gap: 10px;
 }
 
-.feedHead {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
 .feedTitle {
   margin: 0;
   color: var(--text);
@@ -40,33 +32,6 @@
   margin: -4px 0 0;
   color: var(--text-3);
   font-size: 12px;
-}
-
-.filter {
-  display: flex;
-  gap: 4px;
-  padding: 3px;
-  border-radius: var(--r-pill);
-  background: var(--surface);
-}
-
-.chip {
-  height: 28px;
-  padding: 0 12px;
-  border: 0;
-  border-radius: var(--r-pill);
-  background: none;
-  color: var(--text-2);
-  font-family: var(--ui);
-  font-size: 12px;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-.chip[aria-pressed='true'] {
-  background: var(--surface-3);
-  box-shadow: inset 0 0 0 1px var(--c, var(--line-2));
-  color: var(--text);
 }
 
 .cards,
@@ -123,17 +88,6 @@
   color: var(--text-3);
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.mine {
-  margin-left: auto;
-  padding: 2px 7px;
-  border-radius: var(--r-chip);
-  background: var(--accent);
-  color: var(--accent-ink);
-  font-size: 10px;
-  font-style: normal;
-  font-weight: 900;
 }
 
 .score {

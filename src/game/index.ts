@@ -18,7 +18,7 @@ export { compileSessionEffects, effectsKey, measuredAvailable } from './effects'
 export { gameRowsOf, pitcherPlanOf } from './pitchers';
 export { addDays, calendarWeeks, finishedGames, monthOf, monthRange, recentFinished, resultOf, scoreText, shiftMonth, teamScore } from './season';
 export type { CalendarCell, GameResult, TeamScore } from './season';
-export { gamesByDate, gamesOfTeam, halfBlocks, paList } from './paList';
+export { gamesByDate, halfBlocks, paList } from './paList';
 export type { DateGroup, HalfBlock, PaListOptions, PaListRow } from './paList';
 export { battingWin, butterflyPp, entryChips, expectedSwing, selectTiers } from './selectors';
 export type { EntryChip, GaugeLike, TierView } from './selectors';
