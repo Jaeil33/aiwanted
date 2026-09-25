@@ -120,6 +120,10 @@ export interface TmiEntry {
   id: string;
   text: string;
   interpretation: Interpretation;
+  /** 건 순간의 타석 번호(0이 개입한 타석). scope 'pa' 효과는 그 타석에만 걸린다(ADR-033) */
+  paIndex?: number;
+  /** 건 순간의 타자·투수·진영. 없으면 상황 기준으로 본다 */
+  context?: SceneContext;
 }
 
 /** TMI를 넣은 순간의 장면 기준: Subject를 선수 id·진영으로 확정할 때 쓴다 */

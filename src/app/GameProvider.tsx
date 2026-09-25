@@ -3,6 +3,7 @@ import { AiError, interpretTmi, judgeTmi, pickProvider, rulesVerdict, type AiPro
 import {
   buildSituationSetup,
   canEditTmi,
+  currentSituation,
   initialSession,
   measuredAvailable,
   sessionReducer,
@@ -31,6 +32,8 @@ export interface GameActions {
   judge(id: string): Promise<void>;
   /** 처음부터: TMI는 두고 seed + 1로 재생만 되돌린다 */
   resetPlay(): void;
+  /** 여기까지 보기: 이어서 치지 않고 지금까지의 결과로 마무리한다(ADR-033) */
+  stopHere(): void;
 }
 
 export interface GameContextValue {
@@ -154,9 +157,16 @@ export function GameProvider({ data, platform, children }: { data: AppData; plat
       const { data: currentData } = latest.current;
       const clean = clipTmiText(text);
       const controller = begin();
+      // 이어서 치는 타석이면 그 타석의 타자·투수를 기준으로 해석한다(ADR-033)
+      const setupNow = buildSituationSetup(currentData.core, situation, s.extra);
+      const paIndex = s.live ? s.live.paIndex : 0;
+      const atBat = buildSituationSetup(
+        currentData.core,
+        currentSituation(setupNow, s.live ? s.live.state : situation.state),
+        s.extra,
+      );
       try {
-        const ctx = buildSituationSetup(currentData.core, situation, s.extra).promptContext;
-        const outcome = await interpretTmi(clean, ctx, currentProvider(), {
+        const outcome = await interpretTmi(clean, atBat.promptContext, currentProvider(), {
           measuredAvailable: measuredAvailable(currentData.evidence),
           signal: controller.signal,
         });
@@ -164,7 +174,13 @@ export function GameProvider({ data, platform, children }: { data: AppData; plat
         tmiSeq.current += 1;
         dispatch({
           type: 'interpretDone',
-          entry: { id: `tmi-${tmiSeq.current}`, text: clean, interpretation: outcome.interpretation },
+          entry: {
+            id: `tmi-${tmiSeq.current}`,
+            text: clean,
+            interpretation: outcome.interpretation,
+            paIndex,
+            context: atBat.sceneContext,
+          },
           note: outcome.note,
           disableProvider: outcome.disableProvider,
         });
@@ -257,7 +273,12 @@ export function GameProvider({ data, platform, children }: { data: AppData; plat
       dispatch({ type: 'resetPlay', seed: s.seed + 1 });
     }
 
-    return { openSituation, openScene, submitTmi, removeTmi, setMode, judge, resetPlay };
+    function stopHere(): void {
+      abortAll();
+      dispatch({ type: 'stopHere' });
+    }
+
+    return { openSituation, openScene, submitTmi, removeTmi, setMode, judge, resetPlay, stopHere };
   }, [dispatch]);
 
   const value = useMemo<GameContextValue>(

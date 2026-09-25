@@ -7,6 +7,7 @@ export {
   batterFor,
   batterStanceFor,
   buildSituationSetup,
+  currentSituation,
   nameOf,
   pitcherFor,
   situationFromPa,
@@ -25,7 +26,7 @@ export { battingWin, butterflyPp, entryChips, expectedSwing, selectTiers } from 
 export type { EntryChip, GaugeLike, TierView } from './selectors';
 export { decodeShare, encodeShare } from './share';
 export type { SharePayload } from './share';
-export { canEditTmi, initialSession, sessionReducer } from './session';
+export { canEditMode, canEditTmi, canStopHere, initialSession, sessionReducer } from './session';
 export type { LiveState, PlayLogEntry, Screen, SessionAction, SessionState } from './session';
 export { createLocalEngineClient, createWorkerEngineClient, handleEngineMessage, specKey } from './engineClient';
 export type {

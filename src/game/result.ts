@@ -23,7 +23,8 @@ export function splitThousand(values: readonly number[]): number[] {
   return floors;
 }
 
-type Final = NonNullable<SessionState['final']>;
+/** deciderLine이 쓰는 부분만. 여기서 멈췄는지(stopped)는 머리말이 따로 읽는다 */
+type Final = Pick<NonNullable<SessionState['final']>, 'winner' | 'walkoff' | 'state'>;
 
 const HALF_NAME = ['초', '말'] as const;
 const sideOf = (half: Half): Side => (half === 0 ? 'away' : 'home');

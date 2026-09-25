@@ -13,6 +13,7 @@ const PUBLIC_API = [
   'pitcherFor',
   'batterFor',
   'buildSituationSetup',
+  'currentSituation',
   'nameOf',
   'situationFromPa',
   'situationFromScene',
@@ -42,6 +43,8 @@ const PUBLIC_API = [
   // session
   'initialSession',
   'canEditTmi',
+  'canEditMode',
+  'canStopHere',
   'sessionReducer',
   // engineClient
   'specKey',

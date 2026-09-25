@@ -49,11 +49,38 @@ async function finishedResult(opts: { tmis?: TmiEntry[]; platform?: Platform } =
   return view;
 }
 
+async function stoppedResult() {
+  const view = renderWithGame(<ResultScreen />, { platform: fakePlatform() });
+  const after = { ...SCENE.state, bases: 0, outs: 3, home: 4 };
+  await act(async () => {
+    const { dispatch } = view.game();
+    dispatch({
+      type: 'openSituation',
+      situation: situationFromScene(SCENE),
+      extra: { title: SCENE.title, actualFinal: { away: SCENE.away.final, home: SCENE.home.final } },
+      seed: 7,
+    });
+    dispatch({ type: 'paFinished', entry: { ...WALKOFF, headline: '삼진', score: { away: 4, home: 4 } }, state: after });
+    dispatch({ type: 'stopHere' });
+  });
+  return view;
+}
+
 beforeEach(() => {
   window.history.replaceState(null, '', '/#/result');
 });
 afterEach(() => {
   window.history.replaceState(null, '', '/');
+});
+
+describe('ResultScreen — 여기까지 보기(ADR-033)', () => {
+  it('이긴 팀을 적지 않고 멈춘 지점을 적는다', SLOW, async () => {
+    const view = await stoppedResult();
+    expect(view.game().session.final).toMatchObject({ stopped: true });
+    expect(await screen.findByRole('heading', { level: 2, name: '9회말까지' }, WAIT)).toBeInTheDocument();
+    expect(screen.getByText('여기까지 · 다시 치른 결과')).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { level: 2, name: /승리$/ })).toBeNull();
+  });
 });
 
 describe('ResultScreen', () => {

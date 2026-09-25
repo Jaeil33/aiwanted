@@ -7,7 +7,7 @@ import { TmiSheet } from '../../components/TmiSheet';
 import { WpPanel } from '../../components/WpPanel';
 import { josa } from '../../domain/format';
 import { hitterOf, pitcherOf } from '../../domain/players';
-import { batterFor, canEditTmi, pitcherFor, type SituationSetup } from '../../game';
+import { batterFor, canEditMode, canEditTmi, canStopHere, pitcherFor, type SituationSetup } from '../../game';
 import { sparkSeries, tierReadout, tmiPill, type Tier } from '../../game/broadcast';
 import { gradeOf, statLine } from '../../game/headline';
 import { tmiShortLabel } from '../../game/result';
@@ -130,6 +130,9 @@ function PlayBoard({ setup }: { setup: SituationSetup }) {
   const editable = canEditTmi(session);
   const finished = session.status === 'finished';
   const playing = playback.busy || session.status === 'animating';
+  /** 한 타석을 치른 뒤 타석 사이: 이어서 칠지 여기서 멈출지 고를 수 있다(ADR-033) */
+  const betweenPas = canStopHere(session) && !playing && !finished;
+  const lastPlay = session.log[session.log.length - 1];
   const canPlay = session.status === 'ready' && !session.interpreting && !playback.busy;
 
   // 연출이 끝나면 건너뛰기를 끈다
@@ -151,6 +154,11 @@ function PlayBoard({ setup }: { setup: SituationSetup }) {
     trackerRef.current?.setSkipping(false);
     trackerRef.current?.clearMarkers();
     actions.resetPlay();
+  };
+  const stopHere = () => {
+    trackerRef.current?.setSkipping(false);
+    actions.stopHere();
+    setRoute({ screen: 'result' });
   };
   const openSheet = (focus: boolean) => {
     setSheetFocus(focus);
@@ -237,12 +245,23 @@ function PlayBoard({ setup }: { setup: SituationSetup }) {
         onTier={setTier}
         mode={session.mode}
         onMode={actions.setMode}
-        modeLocked={!editable || playing}
+        modeLocked={!canEditMode(session) || playing}
         hasTmi={hasTmi}
         grade={grade}
         spark={spark}
       />
       {!invite && <TmiRail pills={pills} onOpen={() => openSheet(false)} action={railAction} invite={null} />}
+      {betweenPas && (
+        <div className={styles.carryOn} role="group" aria-label="이어가기">
+          <p className={styles.carryOnText}>{lastPlay ? `${lastPlay.batterName} ${lastPlay.headline}` : '타석 끝'}</p>
+          <button type="button" className={controls.secondary} onClick={reset}>
+            처음부터
+          </button>
+          <button type="button" className={controls.secondary} onClick={stopHere}>
+            여기까지
+          </button>
+        </div>
+      )}
       <nav className={styles.dock} data-count={finished ? 2 : 3} aria-label="다시 치르기">
         {dock}
       </nav>

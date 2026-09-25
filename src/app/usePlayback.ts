@@ -107,10 +107,9 @@ export function usePlayback(stageRef: RefObject<StageController | null>, opts: P
       return seed;
     };
 
-    const specOf = (st: SituationSetup, s: SessionState, dropPa: boolean): GameSpec => {
-      const effects = compileSessionEffects(s.tmis, st, latest.current.data.evidence);
-      return gameSpecFor(st, dropPa ? effects.filter((fx) => fx.scope !== 'pa') : effects, s.mode);
-    };
+    /** 그 타석에서 쓸 효과만 담은 설정. scope 'pa' 효과는 그것을 건 타석에만 걸린다(ADR-033) */
+    const specOf = (st: SituationSetup, s: SessionState, paIndex: number): GameSpec =>
+      gameSpecFor(st, compileSessionEffects(s.tmis, st, latest.current.data.evidence, { paIndex }), s.mode);
 
     const evaluationAt = async (st: SituationSetup, spec: GameSpec, state: GameState, first: boolean): Promise<Evaluation> => {
       const key = `${specKey(spec)}\n${JSON.stringify(state)}\n${first}`;
@@ -143,11 +142,12 @@ export function usePlayback(stageRef: RefObject<StageController | null>, opts: P
       const live = s.live;
       if (!st || !live || s.status !== 'ready' || s.interpreting || st.situation.id !== s.situation?.id) return 'stopped';
       const key = runKeyOf(s);
-      const spec = specOf(st, s, false);
+      const spec = specOf(st, s, live.paIndex);
       const state = live.state;
       let ev: Evaluation;
       try {
-        ev = await evaluationAt(st, spec, state, live.paIndex === 0);
+        // 이 spec에는 이 타석의 pa 효과만 남아 있다. 엔진의 first는 "지금 타석"이라는 뜻으로 쓴다
+        ev = await evaluationAt(st, spec, state, true);
       } catch {
         return 'stopped';
       }
@@ -244,9 +244,9 @@ export function usePlayback(stageRef: RefObject<StageController | null>, opts: P
       const start = live.state;
       let result: PlayoutResult;
       try {
-        // 장면 첫 타석이 이미 끝났으면 이번 타석(pa) 효과는 빼고 재생한다
+        // playout의 첫 타석이 지금 타석이다: 그 타석에 건 pa 효과가 거기에 걸린다
         result = await latest.current.engine.playout({
-          spec: specOf(st, s, live.paIndex > 0),
+          spec: specOf(st, s, live.paIndex),
           start,
           scenePitcher: pitcherFor(st, start),
           // 남은 경기도 그 경기에서 실제로 던진 투수들이 던진다(ADR-033)

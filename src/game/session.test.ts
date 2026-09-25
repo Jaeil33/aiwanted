@@ -3,7 +3,9 @@ import { fixtureAppData } from '../test/fixtures/appData';
 import type { Situation } from '../types/data';
 import type { GameState, PitchCode, TmiEntry, VerdictResult } from '../types/domain';
 import {
+  canEditMode,
   canEditTmi,
+  canStopHere,
   initialSession,
   sessionReducer,
   type LiveState,
@@ -176,17 +178,56 @@ describe('sessionReducer — 한 판 흐름', () => {
 });
 
 describe('sessionReducer — TMI 편집', () => {
-  it('공이 날아가는 중·이번 타석에 공을 던진 뒤·다음 타석이면 모드와 TMI를 바꿀 수 없다', () => {
+  it('공이 날아가는 중·이번 타석에 공을 던진 뒤에는 모드와 TMI를 바꿀 수 없다', () => {
     const withTmi = addTmi(open(), tmi('tmi-1'));
     const animating = sessionReducer(withTmi, { type: 'animationStart' });
     const thrown = sessionReducer(animating, { type: 'pitchApplied', code: 'B', balls: 1, strikes: 0 });
-    const nextPa = sessionReducer(withTmi, { type: 'paFinished', entry: WALKOFF_LOG, state: START });
-    for (const locked of [animating, thrown, nextPa]) {
+    for (const locked of [animating, thrown]) {
       expect(canEditTmi(locked)).toBe(false);
       expect(sessionReducer(locked, { type: 'setMode', mode: 'toon' })).toBe(locked);
       expect(sessionReducer(locked, { type: 'interpretStart' })).toBe(locked);
       expect(sessionReducer(locked, { type: 'removeTmi', id: 'tmi-1' })).toBe(locked);
     }
+  });
+
+  it('다음 타석에는 TMI를 다시 걸 수 있지만 모드는 잠긴다', () => {
+    // ADR-033·Q13: 이어서 치는 타석마다 다시 걸 수 있다. 새로 걸지 않으면 앞 타석 TMI가 그대로 남는다.
+    // 모드는 이미 친 타석과 기준이 달라지므로 판 도중에 바꾸지 않는다
+    const withTmi = addTmi(open(), tmi('tmi-1'));
+    const nextPa = sessionReducer(withTmi, { type: 'paFinished', entry: WALKOFF_LOG, state: START });
+    expect(canEditTmi(nextPa)).toBe(true);
+    expect(canEditMode(nextPa)).toBe(false);
+    expect(sessionReducer(nextPa, { type: 'setMode', mode: 'toon' })).toBe(nextPa);
+    expect(sessionReducer(nextPa, { type: 'interpretStart' }).interpreting).toBe(true);
+    expect(sessionReducer(nextPa, { type: 'removeTmi', id: 'tmi-1' }).tmis).toEqual([]);
+    // 앞 타석 TMI는 그대로 남아 있다
+    expect(nextPa.tmis.map((e) => e.id)).toEqual(['tmi-1']);
+  });
+
+  it('여기까지: 한 타석이라도 친 뒤 첫 공 전에만 멈춘다', () => {
+    const fresh = open();
+    expect(canStopHere(fresh)).toBe(false);
+    expect(sessionReducer(fresh, { type: 'stopHere' })).toBe(fresh);
+
+    const played = sessionReducer(fresh, { type: 'paFinished', entry: WALKOFF_LOG, state: WALKOFF_STATE });
+    expect(canStopHere(played)).toBe(true);
+    const stopped = sessionReducer(played, { type: 'stopHere' });
+    expect(stopped).toMatchObject({ status: 'finished', screen: 'result' });
+    expect(stopped.final).toEqual({ winner: 'home', walkoff: false, state: WALKOFF_STATE, stopped: true });
+
+    const midPa = pitch(played, 'B', 1, 0);
+    expect(canStopHere(midPa)).toBe(false);
+    expect(sessionReducer(midPa, { type: 'stopHere' })).toBe(midPa);
+  });
+
+  it('여기까지 멈추면 그 시점 점수로 승패를 적는다', () => {
+    const tie = { ...START, away: 4, home: 4 };
+    const played = sessionReducer(open(), { type: 'paFinished', entry: WALKOFF_LOG, state: tie });
+    expect(sessionReducer(played, { type: 'stopHere' }).final?.winner).toBe('tie');
+
+    const awayAhead = { ...START, away: 9, home: 4 };
+    const played2 = sessionReducer(open(), { type: 'paFinished', entry: WALKOFF_LOG, state: awayAhead });
+    expect(sessionReducer(played2, { type: 'stopHere' }).final?.winner).toBe('away');
   });
 
   it('해석 중에 공을 던졌으면 늦게 온 해석은 넣지 않고 해석 중 표시만 끈다', () => {

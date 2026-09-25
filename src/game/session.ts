@@ -51,7 +51,8 @@ export interface SessionState {
   live: LiveState | null;
   log: PlayLogEntry[];
   status: 'ready' | 'animating' | 'finished';
-  final: { winner: Side | 'tie'; walkoff: boolean; state: GameState } | null;
+  /** 끝난 판. stopped면 경기가 끝난 게 아니라 사용자가 "여기까지"로 멈춘 것이다(ADR-033) */
+  final: { winner: Side | 'tie'; walkoff: boolean; state: GameState; stopped: boolean } | null;
 }
 
 export type SessionAction =
@@ -68,6 +69,7 @@ export type SessionAction =
   | { type: 'pitchApplied'; code: PitchCode; balls: number; strikes: number }
   | { type: 'paFinished'; entry: PlayLogEntry; state: GameState }
   | { type: 'gameFinished'; winner: Side | 'tie'; walkoff: boolean; state: GameState }
+  | { type: 'stopHere' }
   | { type: 'resetPlay'; seed: number };
 
 /** 한 판에 쌓는 TMI 최대 개수 (PRD 핵심 기능 2) */
@@ -91,9 +93,22 @@ export const initialSession: SessionState = {
   final: null,
 };
 
-/** TMI·모드를 바꿀 수 있는가: 장면 첫 타석에 아직 공을 던지지 않았고 연출 중이 아닐 때만 */
+/**
+ * TMI를 걸거나 뗄 수 있는가: 타석 첫 공을 던지기 전이고 연출 중이 아닐 때.
+ * 이어서 치는 타석마다 다시 걸 수 있다(ADR-033, Q13). 새로 걸지 않으면 앞 타석 TMI가 그대로 남는다.
+ */
 export function canEditTmi(s: SessionState): boolean {
-  return s.live !== null && s.live.paIndex === 0 && s.live.pitches.length === 0 && s.status === 'ready';
+  return s.live !== null && s.live.pitches.length === 0 && s.status === 'ready';
+}
+
+/** 모드를 바꿀 수 있는가: 첫 타석 첫 공 전까지만. 판 도중에 바꾸면 이미 친 타석과 기준이 달라진다 */
+export function canEditMode(s: SessionState): boolean {
+  return canEditTmi(s) && s.log.length === 0;
+}
+
+/** 여기서 멈출 수 있는가: 한 타석이라도 치렀고 지금 타석 첫 공을 아직 던지지 않았을 때 */
+export function canStopHere(s: SessionState): boolean {
+  return s.live !== null && s.status === 'ready' && s.log.length > 0 && s.live.pitches.length === 0;
 }
 
 const freshLive = (state: GameState): LiveState => ({ state, balls: 0, strikes: 0, paIndex: 0, pitches: [] });
@@ -133,7 +148,7 @@ export function sessionReducer(s: SessionState, a: SessionAction): SessionState 
       };
 
     case 'setMode':
-      return canEditTmi(s) && a.mode !== s.mode ? { ...s, mode: a.mode } : s;
+      return canEditMode(s) && a.mode !== s.mode ? { ...s, mode: a.mode } : s;
 
     case 'interpretStart':
       return canEditTmi(s) && !s.interpreting && s.tmis.length < MAX_TMIS ? { ...s, interpreting: true } : s;
@@ -210,7 +225,14 @@ export function sessionReducer(s: SessionState, a: SessionAction): SessionState 
 
     case 'gameFinished':
       if (!isPlaying(s)) return s;
-      return { ...s, status: 'finished', screen: 'result', final: { winner: a.winner, walkoff: a.walkoff, state: a.state } };
+      return { ...s, status: 'finished', screen: 'result', final: { winner: a.winner, walkoff: a.walkoff, state: a.state, stopped: false } };
+
+    case 'stopHere': {
+      if (!canStopHere(s) || s.live === null) return s;
+      const { state } = s.live;
+      const winner: Side | 'tie' = state.home > state.away ? 'home' : state.away > state.home ? 'away' : 'tie';
+      return { ...s, status: 'finished', screen: 'result', final: { winner, walkoff: false, state, stopped: true } };
+    }
 
     case 'resetPlay':
       // 공이 날아가는 중에는 되돌리지 않는다 (연출이 끝난 뒤 pitchApplied가 새 판에 섞이지 않게)

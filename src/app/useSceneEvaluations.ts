@@ -43,12 +43,17 @@ interface Settled {
 }
 
 /**
- * 한 상태에서 base·tmi 평가를 구한다. 요청 키(두 spec 키 + 상태 + first)가 바뀌면 다시 계산하고, 늦게 도착한 옛 결과는 버린다.
+ * 한 상태에서 base·tmi 평가를 구한다. 요청 키(두 spec 키 + 상태 + 타석 번호)가 바뀌면 다시 계산하고, 늦게 도착한 옛 결과는 버린다.
  * active가 false면 요청하지 않고 마지막 값을 유지한다(끝난 경기·3아웃 상태는 엔진이 RangeError를 던진다).
+ *
+ * `paIndex`는 그 타석에 걸린 `scope: 'pa'` 효과만 남기는 데 쓴다(ADR-033). 남은 효과는 모두 "지금 타석"이므로 엔진에는 first: true로 준다.
  */
-export function useEvaluationPair(state: GameState | null, first: boolean, active: boolean): EvaluationPair {
+export function useEvaluationPair(state: GameState | null, paIndex: number, active: boolean): EvaluationPair {
   const { setup, session, engine, data } = useGame();
-  const effects = useMemo(() => (setup ? compileSessionEffects(session.tmis, setup, data.evidence) : []), [setup, session.tmis, data.evidence]);
+  const effects = useMemo(
+    () => (setup ? compileSessionEffects(session.tmis, setup, data.evidence, { paIndex }) : []),
+    [setup, session.tmis, data.evidence, paIndex],
+  );
   const stateKey = state ? JSON.stringify(state) : null;
 
   const request = useMemo((): PairRequest | null => {
@@ -60,12 +65,12 @@ export function useEvaluationPair(state: GameState | null, first: boolean, activ
     const tmiKey = specKey(tmiSpec);
     const pitcher = pitcherFor(setup, target);
     return {
-      key: [baseKey, tmiKey, stateKey, String(first)].join('\n'),
+      key: [baseKey, tmiKey, stateKey, String(paIndex)].join('\n'),
       sceneId: setup.situation.id,
-      base: { spec: baseSpec, state: target, pitcher, first },
-      tmi: baseKey === tmiKey ? null : { spec: tmiSpec, state: target, pitcher, first },
+      base: { spec: baseSpec, state: target, pitcher, first: true },
+      tmi: baseKey === tmiKey ? null : { spec: tmiSpec, state: target, pitcher, first: true },
     };
-  }, [setup, stateKey, active, effects, session.mode, first]);
+  }, [setup, stateKey, active, effects, session.mode, paIndex]);
 
   const [settled, setSettled] = useState<Settled | null>(null);
 
@@ -116,7 +121,7 @@ export function useSceneEvaluations(): SceneEvaluations {
   const { session } = useGame();
   const live = session.live;
   const active = live !== null && session.status !== 'finished';
-  const pair = useEvaluationPair(live ? live.state : null, live ? live.paIndex === 0 : true, active);
+  const pair = useEvaluationPair(live ? live.state : null, live ? live.paIndex : 0, active);
   const balls = live ? live.balls : 0;
   const strikes = live ? live.strikes : 0;
   const baseGauge = useMemo(() => gaugeOf(pair.base, balls, strikes), [pair.base, balls, strikes]);

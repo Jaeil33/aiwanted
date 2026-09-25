@@ -129,6 +129,46 @@ describe('PlayScreen', () => {
     expect(screen.getByRole('button', { name: 'TMI 걸기' })).toBeInTheDocument();
   });
 
+  it('타석이 끝나면 이어가기 줄이 뜨고 TMI를 다시 걸 수 있다', SLOW, async () => {
+    // ADR-033·Q13: 한 타석에 개입한 뒤에도 이어서 치거나 여기서 멈출 수 있다
+    const view = await openPlay();
+    act(() => {
+      view.game().dispatch({
+        type: 'paFinished',
+        entry: {
+          index: 0, inning: 9, half: 1, batterName: '홈타자6', pitcherName: '원정투수',
+          headline: '삼진', score: { away: 4, home: 4 }, wpHomeAfter: null, highlight: false,
+        },
+        state: { ...SCENE.state, outs: 3 },
+      });
+    });
+    const bar = await screen.findByRole('group', { name: '이어가기' }, WAIT);
+    expect(within(bar).getByText('홈타자6 삼진')).toBeInTheDocument();
+    expect(within(bar).getByRole('button', { name: '처음부터' })).toBeInTheDocument();
+    expect(within(bar).getByRole('button', { name: '여기까지' })).toBeInTheDocument();
+    // 모드는 잠기고 TMI는 다시 걸 수 있다
+    expect(screen.getByRole('radio', { name: '만화 ×6' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'TMI 걸기' })).toBeInTheDocument();
+  });
+
+  it('"여기까지"를 누르면 멈춘 판으로 결과 화면에 간다', SLOW, async () => {
+    const user = userEvent.setup();
+    const view = await openPlay();
+    act(() => {
+      view.game().dispatch({
+        type: 'paFinished',
+        entry: {
+          index: 0, inning: 9, half: 1, batterName: '홈타자6', pitcherName: '원정투수',
+          headline: '삼진', score: { away: 4, home: 4 }, wpHomeAfter: null, highlight: false,
+        },
+        state: { ...SCENE.state, outs: 3 },
+      });
+    });
+    await user.click(await screen.findByRole('button', { name: '여기까지' }, WAIT));
+    await waitFor(() => expect(window.location.hash).toBe('#/result'));
+    expect(view.game().session.final).toMatchObject({ stopped: true });
+  });
+
   it('경기가 끝나면 마지막 콜을 잠깐 보여준 뒤 결과 해시로 보낸다', async () => {
     const view = await openPlay();
     act(() => {

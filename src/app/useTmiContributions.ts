@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import type { GameState } from '../types/domain';
 import { compileSessionEffects, pitcherFor, specKey, type EvaluateRequest } from '../game';
 import { battingWin } from '../game/selectors';
 import { useGame } from './GameProvider';
@@ -18,21 +19,26 @@ interface Settled {
 export function useTmiContributions(): Record<string, number | null> {
   const { setup, session, engine, data } = useGame();
   const { tmis, mode } = session;
+  // 지금 치르는 타석 기준으로 견준다: 이어서 치는 동안 걸린 TMI도 같은 잣대로 보인다(ADR-033)
+  const live = session.live;
+  const stateKey = JSON.stringify(live ? live.state : (setup?.situation.state ?? null));
+  const paIndex = live ? live.paIndex : 0;
 
   const request = useMemo(() => {
     if (!setup) return null;
-    const state = setup.situation.state;
+    const state = JSON.parse(stateKey) as GameState;
     const pitcher = pitcherFor(setup, state);
     const base: EvaluateRequest = { spec: gameSpecFor(setup, [], 'real'), state, pitcher, first: true };
     const items = tmis
       .filter((entry) => !entry.interpretation.refused)
       .map((entry) => {
-        const req: EvaluateRequest = { spec: gameSpecFor(setup, compileSessionEffects([entry], setup, data.evidence), mode), state, pitcher, first: true };
+        const effects = compileSessionEffects([entry], setup, data.evidence, { paIndex });
+        const req: EvaluateRequest = { spec: gameSpecFor(setup, effects, mode), state, pitcher, first: true };
         return { id: entry.id, req };
       });
-    const key = [setup.situation.id, specKey(base.spec), ...items.map((item) => `${item.id}:${specKey(item.req.spec)}`)].join('\n');
+    const key = [setup.situation.id, stateKey, specKey(base.spec), ...items.map((item) => `${item.id}:${specKey(item.req.spec)}`)].join('\n');
     return { key, base, items, batSide: setup.batSide };
-  }, [setup, tmis, mode, data.evidence]);
+  }, [setup, tmis, mode, data.evidence, stateKey, paIndex]);
 
   const [settled, setSettled] = useState<Settled>({ key: '', values: {} });
 

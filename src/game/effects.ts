@@ -11,14 +11,27 @@ export function measuredAvailable(evidence: EvidenceData | null): boolean {
 }
 
 /**
- * 세션 TMI 목록을 엔진 효과로 바꾼다. 거부된 해석은 건너뛰고, 각 entry는 장면 기준(setup.sceneContext)으로
- * compileEffects해 순서대로 이어 붙인다. 효과 크기는 전부 엔진이 정한다.
+ * 세션 TMI 목록을 엔진 효과로 바꾼다. 거부된 해석은 건너뛴다. 효과 크기는 전부 엔진이 정한다.
+ *
+ * 대상은 **건 순간의 기준**(entry.context)으로 확정한다: 3번 타석에 "타자가…"라고 걸면 3번 타자에게 걸린다(ADR-033).
+ * 기준이 없는 옛 entry는 상황 기준(setup.sceneContext)이다.
+ *
+ * `paIndex`를 주면 그 타석에서 쓸 효과만 남긴다: `scope: 'pa'` 효과는 그것을 건 타석에만 걸린다.
+ * 나머지(scope 'game')는 판이 끝날 때까지 그대로 남는다 — 새로 걸지 않으면 앞 타석 TMI가 유지된다(Q13).
  */
-export function compileSessionEffects(entries: readonly TmiEntry[], setup: SituationSetup, evidence: EvidenceData | null): EngineEffect[] {
+export function compileSessionEffects(
+  entries: readonly TmiEntry[],
+  setup: SituationSetup,
+  evidence: EvidenceData | null,
+  opts: { paIndex?: number } = {},
+): EngineEffect[] {
   const effects: EngineEffect[] = [];
   for (const entry of entries) {
     if (entry.interpretation.refused) continue;
-    effects.push(...compileEffects(entry.interpretation.parts, setup.sceneContext, { sourceId: entry.id, evidence, lg: setup.lg }));
+    const ctx = entry.context ?? setup.sceneContext;
+    const compiled = compileEffects(entry.interpretation.parts, ctx, { sourceId: entry.id, evidence, lg: setup.lg });
+    const mine = opts.paIndex === undefined || (entry.paIndex ?? 0) === opts.paIndex;
+    effects.push(...(mine ? compiled : compiled.filter((fx) => fx.scope !== 'pa')));
   }
   return effects;
 }

@@ -41,7 +41,7 @@ function ResultBoard({ setup, final }: { setup: SituationSetup; final: Final }) 
   const { session, actions, platform } = useGame();
   const [, setRoute] = useHashRoute();
   // 평행우주·나비효과는 장면 시작 상태의 평가: TMI 없음(현실) 대 세션 TMI·모드
-  const pair = useEvaluationPair(setup.situation.state, true, true);
+  const pair = useEvaluationPair(setup.situation.state, 0, true);
   const [opened, setOpened] = useState(false);
   const [shareNote, setShareNote] = useState('');
   const dotsTitleId = useId();
@@ -54,7 +54,10 @@ function ResultBoard({ setup, final }: { setup: SituationSetup; final: Final }) 
 
   const winner = final.winner;
   const winColor = winner === 'tie' ? TIE_COLOR : setup.teamColors[winner];
-  const heading = winner === 'tie' ? '무승부' : `${situation[winner].name} 승리`;
+  // 여기까지 보기(ADR-033): 경기가 끝난 게 아니라 멈춘 것이다. 이긴 팀을 적지 않는다
+  const stopped = final.stopped;
+  const stoppedAt = `${final.state.inning}회${final.state.half ? '말' : '초'}`;
+  const heading = stopped ? `${stoppedAt}까지` : winner === 'tie' ? '무승부' : `${situation[winner].name} 승리`;
   const decider = deciderLine({ title: setup.title, start: situation.state, log: session.log, final, teams: { away: situation.away.name, home: situation.home.name } });
 
   const legend =
@@ -120,10 +123,10 @@ function ResultBoard({ setup, final }: { setup: SituationSetup; final: Final }) 
   return (
     <div className={styles.screen}>
       <header className={styles.final} style={{ '--win': winColor } as CSSProperties}>
-        <p className={styles.eyebrow}>경기 종료 · 다시 치른 결과</p>
-        <div className={styles.finalScore} role="group" aria-label={`최종 점수 ${teams[0].name} ${teams[0].score}, ${teams[1].name} ${teams[1].score}`}>
+        <p className={styles.eyebrow}>{stopped ? '여기까지 · 다시 치른 결과' : '경기 종료 · 다시 치른 결과'}</p>
+        <div className={styles.finalScore} role="group" aria-label={`${stopped ? stoppedAt : '최종'} 점수 ${teams[0].name} ${teams[0].score}, ${teams[1].name} ${teams[1].score}`}>
           {teams.map((team, index) => (
-            <div key={team.side} className={styles.fsTeam} data-win={String(winner === team.side)} data-tie={String(winner === 'tie')} style={{ order: index * 2 }}>
+            <div key={team.side} className={styles.fsTeam} data-win={String(!stopped && winner === team.side)} data-tie={String(!stopped && winner === 'tie')} style={{ order: index * 2 }}>
               <b>{team.name}</b>
               <em>{team.score}</em>
             </div>

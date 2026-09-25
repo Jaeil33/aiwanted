@@ -320,3 +320,24 @@ export function batterFor(setup: SituationSetup, state: GameState): LineupSlot &
     stance: batterStanceFor(bats, throwsOf(setup, pitcherFor(setup, state).id)),
   };
 }
+/**
+ * 지금 치르고 있는 타석의 상황(ADR-033). 이어서 치는 동안 TMI 대상·AI 프롬프트 맥락이 여기서 나온다.
+ * 상황 자체(타선·경기·날씨)는 그대로 두고 상태·타자·투수만 지금 것으로 바꾼다. 실제 결과는 없다(갈라진 경기다).
+ */
+export function currentSituation(setup: SituationSetup, state: GameState): Situation {
+  const base = setup.situation;
+  if (state === base.state) return base;
+  const batSide = batSideOf(state);
+  const slot = batSide === 'away' ? state.slotAway : state.slotHome;
+  return {
+    ...base,
+    id: `${base.id}@${state.inning}-${state.half}-${slot}`,
+    paNo: null,
+    state,
+    count: { balls: 0, strikes: 0 },
+    batter: batterFor(setup, state).id,
+    pitcher: pitcherFor(setup, state).id,
+    actual: null,
+    naverWpBeforeHome: null,
+  };
+}
