@@ -6,6 +6,7 @@ import type { TeamCode } from '../../types/data';
 import type { GameSummary } from '../../types/live';
 import { useGame } from '../GameProvider';
 import { formatRoute } from '../router';
+import { useFavouriteTeam } from '../useFavouriteTeam';
 import { useHashRoute } from '../useHashRoute';
 import { useGames, useLiveGame } from '../useLiveData';
 import { LiveStatus } from './LiveStatus';
@@ -14,6 +15,9 @@ import styles from './TeamScreen.module.css';
 /*
  * 한 팀의 월 달력(ADR-032). 칸에는 날짜·승패·상대 팀·스코어를 둔다(내 팀 점수가 앞이다).
  * 날짜를 누르면 달력 아래에 그 경기 카드가 펼쳐져 구장과 승부처를 보여준다.
+ *
+ * 응원팀은 **여기서만** 바뀐다(20-browse-ui step 1). 달력을 여는 것만으로는 바뀌지 않는다 —
+ * 남의 팀 일정을 한 번 봤다고 그 팀이 응원팀이 되면 홈이 엉뚱한 팀으로 눌러앉는다.
  */
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
@@ -30,6 +34,7 @@ const dayText = (date: string) => `${Number(date.slice(5, 7))}월 ${Number(date.
 export function TeamScreen({ code, month }: { code: TeamCode; month: string | null }) {
   const { platform } = useGame();
   const [, setRoute] = useHashRoute();
+  const [team, setTeam] = useFavouriteTeam();
   const today = platform.today();
   const shown = month ?? monthOf(today);
   const { data: games, error, loading, refresh } = useGames(platform.liveApi, monthRange(shown));
@@ -43,20 +48,34 @@ export function TeamScreen({ code, month }: { code: TeamCode; month: string | nu
   const open = weeks.flat().find((cell) => cell.date === openDate)?.game ?? null;
   const atLatest = shown >= monthOf(today);
   const openCell = (date: string) => setPicked({ key: pageKey, date });
+  const mine = team === code;
 
   return (
     <section className={styles.screen} aria-labelledby={titleId}>
-      <div className={styles.head}>
+      <div className={styles.head} style={{ '--team': TEAMS[code].color } as CSSProperties}>
+        <h2 id={titleId} className={styles.title}>
+          <i aria-hidden="true" />
+          {`${TEAMS[code].name} · ${monthText(shown)}`}
+        </h2>
+        <button
+          type="button"
+          className={styles.fav}
+          aria-pressed={mine}
+          onClick={() => setTeam(mine ? null : code)}
+        >
+          {mine ? '내 팀' : '응원팀으로'}
+        </button>
+      </div>
+
+      <div className={styles.months}>
         <button
           type="button"
           className={styles.nav}
           onClick={() => setRoute({ screen: 'team', code, month: shiftMonth(shown, -1) })}
         >
+          <i aria-hidden="true">‹</i>
           이전 달
         </button>
-        <h2 id={titleId} className={styles.title}>
-          {`${TEAMS[code].name} · ${monthText(shown)}`}
-        </h2>
         <button
           type="button"
           className={styles.nav}
@@ -64,6 +83,7 @@ export function TeamScreen({ code, month }: { code: TeamCode; month: string | nu
           onClick={() => setRoute({ screen: 'team', code, month: shiftMonth(shown, 1) })}
         >
           다음 달
+          <i aria-hidden="true">›</i>
         </button>
       </div>
 

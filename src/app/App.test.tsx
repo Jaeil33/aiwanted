@@ -83,7 +83,7 @@ describe('App', () => {
   it('시즌 경로: 팀 고르기 → 그 팀 달력 → 경기 타석 목록 → 타석', async () => {
     goto('#/teams');
     render(<App data={fixtureAppData} platformPromise={Promise.resolve(seasonPlatform())} />);
-    expect(await screen.findByRole('heading', { level: 2, name: '응원하는 팀' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 2, name: '구단 일정' })).toBeInTheDocument();
     expectMenuFrame();
 
     act(() => {
@@ -148,12 +148,12 @@ describe('App', () => {
     expectMenuFrame();
   }, 120_000);
 
-  it('홈에서 응원팀 고르기로 간다', async () => {
+  it('홈에서 구단 일정으로 간다', async () => {
     render(<App data={fixtureAppData} />);
     act(() => {
-      within(screen.getByRole('main')).getByRole('link', { name: '응원팀 고르기' }).click();
+      within(screen.getByRole('main')).getByRole('link', { name: '구단 일정' }).click();
     });
-    expect(await screen.findByRole('heading', { level: 2, name: '응원하는 팀' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 2, name: '구단 일정' })).toBeInTheDocument();
     expect(window.location.hash).toBe('#/teams');
     expectMenuFrame();
   });

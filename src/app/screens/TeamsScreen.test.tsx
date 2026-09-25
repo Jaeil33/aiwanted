@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { renderWithGame } from '../../test/gameHarness';
@@ -19,28 +19,33 @@ afterEach(() => {
 describe('TeamsScreen', () => {
   it('10개 구단을 모두 보여준다', () => {
     renderWithGame(<TeamsScreen />);
-    const buttons = screen.getAllByRole('button', { pressed: false });
-    expect(buttons.length).toBeGreaterThanOrEqual(10);
+    const list = screen.getByRole('list', { name: '구단' });
+    expect(within(list).getAllByRole('link')).toHaveLength(10);
     for (const name of ['KIA', '롯데', 'NC', '한화', 'LG', '두산', '삼성', 'SSG', 'KT', '키움']) {
-      expect(screen.getByRole('button', { name })).toBeInTheDocument();
+      expect(within(list).getByRole('link', { name })).toBeInTheDocument();
     }
   });
 
-  it('팀을 고르면 저장하고 그 팀 일정으로 간다', async () => {
-    const user = userEvent.setup();
+  it('팀을 누르면 그 팀 일정으로 간다', () => {
     renderWithGame(<TeamsScreen />);
-    await user.click(screen.getByRole('button', { name: '한화' }));
-    expect(window.localStorage.getItem(FAVOURITE_TEAM_KEY)).toBe('HH');
-    expect(window.location.hash).toBe('#/team/HH');
+    expect(screen.getByRole('link', { name: '한화' })).toHaveAttribute('href', '#/team/HH');
   });
 
-  it('고른 팀을 눌린 상태로 표시하고 지울 수 있다', async () => {
+  it('팀을 눌러도 응원팀이 바뀌지 않는다', async () => {
+    // 20-browse-ui step 1: 보는 것과 응원하는 것은 다르다
+    const user = userEvent.setup();
+    renderWithGame(<TeamsScreen />);
+    await user.click(screen.getByRole('link', { name: '한화' }));
+    expect(window.localStorage.getItem(FAVOURITE_TEAM_KEY)).toBeNull();
+  });
+
+  it('응원팀에는 표를 달고 지울 수 있다', async () => {
     const user = userEvent.setup();
     setFavouriteTeam('LT');
     renderWithGame(<TeamsScreen />);
-    expect(screen.getByRole('button', { name: '롯데' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('link', { name: '롯데 내 팀' })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: '응원팀 지우기' }));
-    expect(screen.getByRole('button', { name: '롯데' })).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByRole('link', { name: '롯데' })).toBeInTheDocument();
     expect(window.localStorage.getItem(FAVOURITE_TEAM_KEY)).toBeNull();
   });
 
@@ -49,7 +54,7 @@ describe('TeamsScreen', () => {
     expect(screen.queryByRole('button', { name: '응원팀 지우기' })).toBeNull();
   });
 
-  it('이 기기에만 남는다고 알린다', () => {
+  it('응원팀은 이 기기에만 남고 목록을 가리지 않는다고 알린다', () => {
     // ADR-034: 브라우저 저장소 예외 하나. 사용자에게 숨기지 않는다
     renderWithGame(<TeamsScreen />);
     expect(screen.getByText(/이 기기에만/)).toBeInTheDocument();

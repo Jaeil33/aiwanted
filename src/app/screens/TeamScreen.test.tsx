@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { fixtureGameSummaries, fixtureLiveGame } from '../../test/fixtures/live';
 import { fakeLiveApi, fakePlatform, renderWithGame } from '../../test/gameHarness';
 import type { GameSummary } from '../../types/live';
+import { FAVOURITE_TEAM_KEY, setFavouriteTeam } from '../useFavouriteTeam';
 import { TeamScreen } from './TeamScreen';
 
 const GAME = fixtureLiveGame();
@@ -20,10 +21,14 @@ const platformWith = (games: GameSummary[] = SEPTEMBER, game = GAME) =>
   fakePlatform({ liveApi: fakeLiveApi({ games, game }), today: () => '2026-09-20' });
 
 beforeEach(() => {
+  window.localStorage.clear();
+  setFavouriteTeam(null);
+  window.localStorage.clear();
   window.history.replaceState(null, '', '/#/team/LG');
 });
 afterEach(() => {
   window.history.replaceState(null, '', '/');
+  window.localStorage.clear();
 });
 
 describe('TeamScreen', () => {
@@ -93,6 +98,27 @@ describe('TeamScreen', () => {
     renderWithGame(<TeamScreen code="LG" month="2026-09" />, { platform: platformWith() });
     await screen.findByRole('grid', { name: '2026년 9월 일정' });
     expect(screen.getByRole('button', { name: '다음 달' })).toBeDisabled();
+  });
+
+  it('그 팀을 응원팀으로 정하고 푼다', async () => {
+    // 20-browse-ui step 1: 응원팀은 여기서만 바뀐다. 팀 일정을 여는 것만으로는 바뀌지 않는다
+    const user = userEvent.setup();
+    renderWithGame(<TeamScreen code="LG" month="2026-09" />, { platform: platformWith() });
+    const set = await screen.findByRole('button', { name: '응원팀으로' });
+    expect(set).toHaveAttribute('aria-pressed', 'false');
+    await user.click(set);
+    expect(window.localStorage.getItem(FAVOURITE_TEAM_KEY)).toBe('LG');
+
+    const unset = screen.getByRole('button', { name: '내 팀' });
+    expect(unset).toHaveAttribute('aria-pressed', 'true');
+    await user.click(unset);
+    expect(window.localStorage.getItem(FAVOURITE_TEAM_KEY)).toBeNull();
+  });
+
+  it('달력을 여는 것만으로는 응원팀이 되지 않는다', async () => {
+    renderWithGame(<TeamScreen code="LG" month="2026-09" />, { platform: platformWith() });
+    await screen.findByRole('grid', { name: '2026년 9월 일정' });
+    expect(window.localStorage.getItem(FAVOURITE_TEAM_KEY)).toBeNull();
   });
 
   it('못 불러오면 다시 받을 수 있다', async () => {
