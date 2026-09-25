@@ -37,14 +37,29 @@ describe('TeamScreen', () => {
     expect(await screen.findByRole('heading', { level: 2, name: 'LG · 2026년 5월' })).toBeInTheDocument();
   });
 
-  it('경기가 있는 날에 상대 팀과 승패 한 글자를 둔다', async () => {
-    // ADR-032: 칸이 좁아 스코어는 넣지 않는다
+  it('경기가 있는 날에 상대 팀·승패·스코어를 둔다', async () => {
+    // 20-browse-ui step 0: 일정표에서 스코어까지 보인다. 내 팀 점수가 앞이다
     renderWithGame(<TeamScreen code="LG" month="2026-09" />, { platform: platformWith() });
     const grid = await screen.findByRole('grid', { name: '2026년 9월 일정' });
     const cell = within(grid).getByRole('gridcell', { name: /^9월 2일/ });
     expect(cell).toHaveTextContent('두산');
     expect(cell).toHaveTextContent('승');
-    expect(cell).not.toHaveTextContent('5');
+    expect(cell).toHaveTextContent('5:2');
+  });
+
+  it('진 경기도 내 팀 점수를 앞에 적는다', async () => {
+    renderWithGame(<TeamScreen code="LG" month="2026-09" />, { platform: platformWith() });
+    const grid = await screen.findByRole('grid', { name: '2026년 9월 일정' });
+    const cell = within(grid).getByRole('gridcell', { name: /^9월 10일/ });
+    expect(cell).toHaveTextContent('1:7');
+    expect(cell).toHaveTextContent('패');
+  });
+
+  it('칸 이름에도 스코어를 적는다', async () => {
+    // 색만으로 승패를 알리지 않는다: 읽어 주는 이름에 승패와 점수가 함께 있다
+    renderWithGame(<TeamScreen code="LG" month="2026-09" />, { platform: platformWith() });
+    const grid = await screen.findByRole('grid', { name: '2026년 9월 일정' });
+    expect(within(grid).getByRole('gridcell', { name: '9월 15일 두산 무 3:3' })).toBeInTheDocument();
   });
 
   it('경기가 없는 날은 누를 수 없다', async () => {

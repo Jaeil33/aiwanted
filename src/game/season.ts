@@ -60,6 +60,25 @@ export function resultOf(game: GameSummary, team: TeamCode): GameResult | null {
   return mine > theirs ? '승' : mine < theirs ? '패' : '무';
 }
 
+export interface TeamScore {
+  /** 그 팀 점수 */
+  mine: number;
+  /** 상대 점수 */
+  theirs: number;
+}
+
+/**
+ * 그 팀에서 본 점수. 점수를 모르거나 그 팀 경기가 아니면 null.
+ * `resultOf`와 달리 끝난 경기만 보지 않는다 — 달력은 승패를 못 적는 경기에도 지금 점수를 적는다.
+ */
+export function teamScore(game: GameSummary, team: TeamCode): TeamScore | null {
+  const { away, home } = game;
+  if (away.score === null || home.score === null) return null;
+  if (away.code === team) return { mine: away.score, theirs: home.score };
+  if (home.code === team) return { mine: home.score, theirs: away.score };
+  return null;
+}
+
 /** "4 : 7"(원정 : 홈). 점수를 모르면 빈 문자열 */
 export function scoreText(game: GameSummary): string {
   const { away, home } = game;
@@ -77,13 +96,15 @@ export interface CalendarCell {
   /** 내 팀이 홈이면 true */
   home: boolean;
   result: GameResult | null;
+  /** 내 팀에서 본 점수. 아직 점수가 없으면 null */
+  score: TeamScore | null;
 }
 
-const EMPTY_CELL: CalendarCell = { date: null, day: null, game: null, opponent: null, home: false, result: null };
+const EMPTY_CELL: CalendarCell = { date: null, day: null, game: null, opponent: null, home: false, result: null, score: null };
 
 /**
- * 한 달 달력 격자(일요일 시작, 7칸씩). 칸에는 상대 팀과 승패만 담는다 — 칸 폭이 390px 기준 약 55px이라
- * 스코어가 들어가지 않는다(ADR-032). 하루에 두 경기면 먼저 시작한 경기를 담는다.
+ * 한 달 달력 격자(일요일 시작, 7칸씩). 칸에는 상대 팀·승패·스코어를 담는다.
+ * 하루에 두 경기면 먼저 시작한 경기를 담는다.
  */
 export function calendarWeeks(month: string, games: readonly GameSummary[], team: TeamCode): CalendarCell[][] {
   const { to } = monthRange(month);
@@ -110,6 +131,7 @@ export function calendarWeeks(month: string, games: readonly GameSummary[], team
       opponent: game === null ? null : home ? game.away.code : game.home.code,
       home,
       result: game === null ? null : resultOf(game, team),
+      score: game === null ? null : teamScore(game, team),
     });
   }
   while (cells.length % DAYS_IN_WEEK !== 0) cells.push(EMPTY_CELL);

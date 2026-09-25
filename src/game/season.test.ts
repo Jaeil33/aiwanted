@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { fixtureGameSummaries } from '../test/fixtures/live';
 import type { GameSummary } from '../types/live';
-import { addDays, calendarWeeks, finishedGames, monthOf, monthRange, recentFinished, resultOf, scoreText, shiftMonth } from './season';
+import { addDays, calendarWeeks, finishedGames, monthOf, monthRange, recentFinished, resultOf, scoreText, shiftMonth, teamScore } from './season';
 
 /*
  * 팀 달력·최근 경기(ADR-032). 순수 함수라 시계를 읽지 않는다.
@@ -97,6 +97,26 @@ describe('scoreText', () => {
   });
 });
 
+describe('teamScore', () => {
+  it('그 팀에서 본 점수를 낸다', () => {
+    // 2026-09-14 NC 4 : 7 KT
+    expect(teamScore(finalGame, 'KT')).toEqual({ mine: 7, theirs: 4 });
+    expect(teamScore(finalGame, 'NC')).toEqual({ mine: 4, theirs: 7 });
+  });
+
+  it('진행 중 경기도 지금 점수를 낸다', () => {
+    // 달력은 승패를 못 적어도 점수는 적는다: resultOf와 달리 끝난 경기만 보지 않는다
+    expect(teamScore(SUMMARIES[1], 'LG')).toEqual({ mine: 2, theirs: 0 });
+    expect(resultOf(SUMMARIES[1], 'LG')).toBeNull();
+  });
+
+  it('점수를 모르거나 그 팀 경기가 아니면 null', () => {
+    expect(teamScore(SUMMARIES[0], 'HT')).toBeNull();
+    expect(teamScore(finalGame, 'LG')).toBeNull();
+    expect(teamScore(game({ gameId: 'x', home: { ...finalGame.home, score: null } }), 'KT')).toBeNull();
+  });
+});
+
 describe('calendarWeeks', () => {
   const games = [
     game({ gameId: '20260901KTNC02026', date: '2026-09-01' }),
@@ -119,13 +139,15 @@ describe('calendarWeeks', () => {
     expect(dates[29]).toBe('2026-09-30');
   });
 
-  it('경기가 있는 날에는 상대 팀과 승패를 담는다', () => {
+  it('경기가 있는 날에는 상대 팀·승패·스코어를 담는다', () => {
     const cells = calendarWeeks('2026-09', games, 'KT').flat();
     const day15 = cells.find((c) => c.date === '2026-09-15');
     expect(day15?.game?.gameId).toBe('20260915KTNC02026');
     expect(day15?.opponent).toBe('NC');
     expect(day15?.home).toBe(true);
     expect(day15?.result).toBe('승');
+    // 20-browse-ui step 0: 칸에 스코어를 넣는다. 내 팀 점수가 앞이다
+    expect(day15?.score).toEqual({ mine: 7, theirs: 4 });
   });
 
   it('경기가 없는 날은 비어 있다', () => {
@@ -133,6 +155,7 @@ describe('calendarWeeks', () => {
     const day2 = cells.find((c) => c.date === '2026-09-02');
     expect(day2?.game).toBeNull();
     expect(day2?.opponent).toBeNull();
+    expect(day2?.score).toBeNull();
   });
 
   it('그 달이 아닌 경기는 담지 않는다', () => {

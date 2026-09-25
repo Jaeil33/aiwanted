@@ -12,8 +12,8 @@ import { LiveStatus } from './LiveStatus';
 import styles from './TeamScreen.module.css';
 
 /*
- * 한 팀의 월 달력(ADR-032). 칸에는 상대 팀 색 점과 승패 한 글자만 둔다 — 390px 기준 칸 폭이 약 55px이라
- * 스코어가 들어가지 않는다. 날짜를 누르면 달력 아래에 그 경기 카드가 펼쳐져 스코어·구장·승부처를 보여준다.
+ * 한 팀의 월 달력(ADR-032). 칸에는 날짜·승패·상대 팀·스코어를 둔다(내 팀 점수가 앞이다).
+ * 날짜를 누르면 달력 아래에 그 경기 카드가 펼쳐져 구장과 승부처를 보여준다.
  */
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
@@ -100,10 +100,19 @@ export function TeamScreen({ code, month }: { code: TeamCode; month: string | nu
   );
 }
 
+/** 칸을 읽어 주는 이름: "9월 15일 두산 무 3:3". 색만으로 승패를 알리지 않는다 */
+function cellLabel(cell: CalendarCell): string {
+  const day = dayText(cell.date as string);
+  if (cell.game === null) return day;
+  const opponent = TEAMS[cell.opponent as TeamCode]?.name ?? cell.opponent ?? '';
+  const score = cell.score === null ? '' : `${cell.score.mine}:${cell.score.theirs}`;
+  return [day, opponent, cell.result ?? '', score].filter((part) => part !== '').join(' ');
+}
+
 /** 달력 칸 하나. 경기가 없으면 날짜만 */
 function Cell({ cell, open, onOpen }: { cell: CalendarCell; open: boolean; onOpen(date: string): void }) {
   if (cell.date === null) return <td className={styles.cell} role="presentation" aria-hidden="true" />;
-  const label = `${dayText(cell.date)}${cell.game ? ` ${TEAMS[cell.opponent as TeamCode]?.name ?? ''}${cell.result ?? ''}` : ''}`;
+  const label = cellLabel(cell);
   if (cell.game === null) {
     return (
       <td className={styles.cell} role="gridcell" aria-label={label}>
@@ -112,7 +121,7 @@ function Cell({ cell, open, onOpen }: { cell: CalendarCell; open: boolean; onOpe
     );
   }
   return (
-    <td className={styles.cell} role="gridcell" aria-label={label} data-open={String(open)}>
+    <td className={styles.cell} role="gridcell" aria-label={label} data-open={String(open)} data-result={cell.result ?? 'none'}>
       <button
         type="button"
         className={styles.cellButton}
@@ -121,17 +130,20 @@ function Cell({ cell, open, onOpen }: { cell: CalendarCell; open: boolean; onOpe
         aria-expanded={open}
         onClick={() => onOpen(cell.date as string)}
       >
-        <span className={styles.day}>{cell.day}</span>
+        <span className={styles.top}>
+          <span className={styles.day}>{cell.day}</span>
+          {cell.result !== null && (
+            <span className={styles.result} data-result={cell.result}>
+              {cell.result}
+            </span>
+          )}
+        </span>
         <span className={styles.opponent}>
           <i aria-hidden="true" />
           {cell.home ? '' : '@'}
           {TEAMS[cell.opponent as TeamCode]?.name ?? cell.opponent}
         </span>
-        {cell.result !== null && (
-          <span className={styles.result} data-result={cell.result}>
-            {cell.result}
-          </span>
-        )}
+        {cell.score !== null && <span className={styles.score}>{`${cell.score.mine}:${cell.score.theirs}`}</span>}
       </button>
     </td>
   );

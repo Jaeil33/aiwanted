@@ -28,6 +28,7 @@ const PUBLIC_API = [
   'recentFinished',
   'resultOf',
   'scoreText',
+  'teamScore',
   'calendarWeeks',
   // paList
   'paList',
