@@ -37,12 +37,17 @@ export interface NaverDeps {
 }
 
 /** 일정 조회 주소. 네이버가 fromDate·toDate 기간을 받으므로 한 팀의 한 달이 요청 한 번이다(ADR-032) */
+/** 한 번에 받아 오는 경기 수. 한 달 최대 31일 × 5경기 = 155 */
+export const SCHEDULE_PAGE_SIZE = 500;
+
 export function scheduleUrl(from: string, to: string): string {
   const url = new URL(BASE);
   // 'basic'만 주면 stadium이 빠진다(2026-09-26 실제 응답으로 확인). 구장은 상황 맥락(돔·날씨)에 쓴다
   url.searchParams.set('fields', 'basic,stadium');
   url.searchParams.set('upperCategoryId', 'kbaseball');
   url.searchParams.set('categoryId', 'kbo');
+  // size를 안 주면 10경기만 온다(2026-09-26 확인). 한 달이면 최대 155경기라 넉넉히 잡는다
+  url.searchParams.set('size', String(SCHEDULE_PAGE_SIZE));
   url.searchParams.set('fromDate', from);
   url.searchParams.set('toDate', to);
   return url.toString();

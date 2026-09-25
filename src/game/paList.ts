@@ -39,6 +39,11 @@ export interface PaListRow {
 export interface PaListOptions {
   /** 추천 승부처로 고를 개수. 없으면 고르지 않는다 */
   highlights?: number;
+  /**
+   * 선수 id → 이름. 중계 이름보다 먼저 본다.
+   * 중계에는 타석에 선 선수만 있어 **투수 이름이 없다**: 번들 core의 이름표(`nameMapOf`)를 넘겨야 한다.
+   */
+  names?: Record<string, string>;
 }
 
 /** 그 타석에서 홈 승리확률이 움직인 폭(0~1). 둘 중 하나라도 모르면 null */
@@ -48,7 +53,9 @@ function swingOf(before: number | null, after: number | null): number | null {
 
 /** 경기의 타석을 화면 한 줄씩으로. 번호·순서는 그대로 둔다 */
 export function paList(game: LiveGame, opts: PaListOptions = {}): PaListRow[] {
-  const nameOf = (id: string) => (Object.hasOwn(game.names, id) ? game.names[id] : id);
+  const known = opts.names ?? {};
+  const nameOf = (id: string) =>
+    Object.hasOwn(known, id) ? known[id] : Object.hasOwn(game.names, id) ? game.names[id] : id;
   const swings = game.plateAppearances.map((pa) => swingOf(pa.wpBeforeHome, pa.wpAfterHome));
 
   const picked = new Set<number>();

@@ -1,0 +1,68 @@
+.screen {
+  display: grid;
+  gap: 12px;
+  padding: 8px 16px 24px;
+}
+
+.title {
+  margin: 0;
+  color: var(--text);
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+}
+
+.note {
+  margin: 0;
+  color: var(--text-2);
+  font-size: 13px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.team {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  height: 56px;
+  padding: 0 14px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--ui);
+  font-size: 15px;
+  font-weight: 800;
+  text-align: left;
+  cursor: pointer;
+}
+
+.team i {
+  flex: none;
+  width: 10px;
+  height: 22px;
+  border-radius: 3px;
+  background: var(--c);
+}
+
+.team[aria-pressed='true'] {
+  border-color: var(--c);
+  background: var(--surface-2);
+}
+
+.clear {
+  justify-self: start;
+  height: 40px;
+  margin-top: 4px;
+  padding: 0 16px;
+  border-radius: var(--r-control);
+  font-size: 14px;
+}

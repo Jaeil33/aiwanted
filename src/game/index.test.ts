@@ -22,6 +22,16 @@ const PUBLIC_API = [
   // pitchers
   'pitcherPlanOf',
   'gameRowsOf',
+  // season
+  'monthOf',
+  'monthRange',
+  'shiftMonth',
+  'addDays',
+  'finishedGames',
+  'recentFinished',
+  'resultOf',
+  'scoreText',
+  'calendarWeeks',
   // paList
   'paList',
   'halfBlocks',

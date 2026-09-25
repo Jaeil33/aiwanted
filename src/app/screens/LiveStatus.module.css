@@ -1,0 +1,21 @@
+.status {
+  display: grid;
+  gap: 12px;
+  justify-items: center;
+  padding: 28px 16px;
+  color: var(--text-2);
+  font-size: 14px;
+  text-align: center;
+}
+
+.status p {
+  margin: 0;
+}
+
+.status button {
+  height: 40px;
+  padding: 0 16px;
+  border-radius: var(--r-control);
+  font-size: 14px;
+  font-weight: 700;
+}

@@ -1,0 +1,138 @@
+.screen {
+  display: grid;
+  gap: 14px;
+  padding: 8px 16px 24px;
+}
+
+.head {
+  display: grid;
+  gap: 8px;
+}
+
+.tagline {
+  margin: 0;
+  color: var(--text-2);
+  font-size: 14px;
+}
+
+.teamLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  justify-self: start;
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.teamLink i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--c);
+}
+
+.feed {
+  display: grid;
+  gap: 10px;
+}
+
+.feedTitle {
+  margin: 0;
+  color: var(--text);
+  font-size: 17px;
+  font-weight: 900;
+}
+
+.cards,
+.picks {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.picks {
+  gap: 6px;
+}
+
+.card {
+  display: grid;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+}
+
+.cardHead {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0;
+  font-size: 13px;
+}
+
+.cardHead b {
+  color: var(--text-2);
+  font-family: var(--num);
+  font-weight: 800;
+}
+
+.cardHead span {
+  overflow: hidden;
+  color: var(--text);
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mine {
+  margin-left: auto;
+  padding: 1px 7px;
+  border-radius: var(--r-chip);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.pick {
+  display: grid;
+  gap: 1px;
+  padding: 9px 10px;
+  border-radius: var(--r-row);
+  background: var(--surface-2);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.pick b {
+  font-family: var(--num);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.pick span {
+  overflow: hidden;
+  color: var(--text-2);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.more {
+  justify-self: start;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+}

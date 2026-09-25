@@ -9,7 +9,7 @@ import { butterflyPp } from '../../game/selectors';
 import type { SessionState } from '../../game/session';
 import type { Side } from '../../types/domain';
 import { useGame } from '../GameProvider';
-import { formatRoute } from '../router';
+import { formatRoute, routeForSituation } from '../router';
 import { useHashRoute } from '../useHashRoute';
 import { useEvaluationPair } from '../useSceneEvaluations';
 import styles from './ResultScreen.module.css';
@@ -99,11 +99,11 @@ function ResultBoard({ setup, final }: { setup: SituationSetup; final: Final }) 
   const replay = () => {
     setShareNote('');
     actions.resetPlay();
-    setRoute({ screen: 'play', sceneId: situation.id, share: null });
+    setRoute(routeForSituation(situation, null));
   };
   const share = async () => {
     const texts = effective.map((entry) => entry.text);
-    const hash = formatRoute({ screen: 'play', sceneId: situation.id, share: texts.length > 0 ? { sceneId: situation.id, texts, mode } : null });
+    const hash = formatRoute(routeForSituation(situation, texts.length > 0 ? { sceneId: situation.id, texts, mode } : null));
     const url = `${window.location.origin}${window.location.pathname}${hash}`;
     if (!platform.shareLink) {
       setShareNote('이 화면에서는 공유할 수 없어요. 주소창의 링크를 복사해 주세요.');

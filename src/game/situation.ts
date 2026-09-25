@@ -1,5 +1,5 @@
 import { situationText } from '../domain/format';
-import { HITTER_KEY_SUFFIX, hitterOf, pitcherOf } from '../domain/players';
+import { HITTER_KEY_SUFFIX, hitterOf, nameMapOf, pitcherOf } from '../domain/players';
 import { TEAMS, isTeamCode } from '../domain/teams';
 import { pitcherAt, type LineupSlot, type TeamConfig } from '../engine';
 import type { CoreData, PitchRow, PlayerRecord, SceneRecord, Situation, SituationKind } from '../types/data';
@@ -180,12 +180,11 @@ export function buildSituationSetup(core: CoreData, situation: Situation, extra:
   const away = teamOf('away');
   const home = teamOf('home');
 
-  const names: Record<string, string> = {};
-  const hands: Record<string, Hands> = {};
   // core.players의 키는 투수 <id>, 겸업 타자 <id>:H다. 화면은 꼬리 없는 id로만 찾으므로 둘을 합친다(ADR-035)
+  const names: Record<string, string> = { ...nameMapOf(core) };
+  const hands: Record<string, Hands> = {};
   for (const [key, p] of Object.entries(core.players)) {
     const id = key.endsWith(HITTER_KEY_SUFFIX) ? key.slice(0, -HITTER_KEY_SUFFIX.length) : key;
-    names[id] = p.name;
     hands[id] = { ...hands[id], ...handsOf(p) };
   }
   // 2026 기록이 없는 선수(신인·군 복귀·외국인 교체)는 중계에서 모은 이름·손으로 채운다

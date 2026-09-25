@@ -7,7 +7,7 @@ export type TabBarTab = 'lobby' | 'evidence' | 'about';
 const TABS: ReadonlyArray<{ id: TabBarTab; label: string; href: string; icon: ReactNode }> = [
   {
     id: 'lobby',
-    label: '명장면',
+    label: '경기',
     href: '#/',
     icon: (
       <>
@@ -40,7 +40,7 @@ export interface TabBarProps {
   current: TabBarTab | null;
 }
 
-/** 로비·판정소·만든 이유의 하단 탭바(중계 시안: 명장면·판정소·만든 이유). 지금 탭은 aria-current="page" */
+/** 탐색 화면의 하단 탭바(경기·판정소·만든 이유). 지금 탭은 aria-current="page" */
 export function TabBar({ current }: TabBarProps) {
   return (
     <nav className={styles.bar} aria-label="주 메뉴">

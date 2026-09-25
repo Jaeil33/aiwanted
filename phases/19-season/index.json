@@ -83,9 +83,11 @@
     {
       "step": 9,
       "name": "screens",
-      "status": "pending",
+      "status": "completed",
       "absorbs": "16-broadcast-ui step 3·5·6",
-      "note": "신규(ADR-032). 홈 피드·팀 그리드·달력·타석 목록·타석 화면·결과 화면"
+      "note": "신규(ADR-032). 홈 피드·팀 그리드·달력·타석 목록·타석 화면·결과 화면",
+      "completed_at": "2026-09-26T03:25:00+0900",
+      "summary": "라우트 #/teams·#/team/:code?m=·#/game/:gameId·#/pa/:gameId/:no?t= 추가, routeForSituation으로 결과·공유 주소를 맞춘다. useFavouriteTeam(localStorage tmi.team 한 값, ADR-034). 화면 다섯: HomeScreen(추천 승부처 피드, 팀 없어도 돈다), TeamsScreen(10구단), TeamScreen(월 달력 + 펼친 경기 카드), GameScreen(승부처 + 반이닝별 전 타석), PaScreen(경기를 받아 openSituation → PlayScreen). 공용 LiveStatus. 원안의 새 타석 화면은 만들지 않았다 — PlayScreen이 이미 그 화면이다. 실제로 띄워 보고 잡은 버그 셋: (1) LiveGame.names에는 타석에 선 선수만 있어 투수 이름이 id로 보였다 → nameMapOf(core)를 목록에 넘긴다. (2) 네이버 일정 API는 size를 안 주면 10경기만 준다 → size=500. 달력이 이틀치만 찼다. (3) 화면 안쪽 <header>가 banner 랜드마크를 둘로 만들었다 → <div>. 실제 2026 데이터로 홈 → 팀 → 달력 → 9월 15일 KT 13:3 한화 → 1회초 1사 만루 김현수 vs 왕옌청까지 이어지는 것을 브라우저에서 확인했다."
     },
     {
       "step": 10,

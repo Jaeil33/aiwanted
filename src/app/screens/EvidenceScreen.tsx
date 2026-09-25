@@ -3,7 +3,7 @@ import { TrustPanel } from '../../components/TrustPanel';
 import type { EvidenceData } from '../../types/data';
 import type { Verdict } from '../../types/domain';
 import { useGame } from '../GameProvider';
-import { formatRoute } from '../router';
+import { formatRoute, routeForSituation } from '../router';
 import styles from './EvidenceScreen.module.css';
 
 const INTRO =
@@ -75,7 +75,7 @@ export function EvidenceScreen() {
   const { data, session } = useGame();
   const { evidence, trust } = data;
   const backHref =
-    session.situation === null ? formatRoute({ screen: 'home' }) : formatRoute({ screen: 'play', sceneId: session.situation.id, share: null });
+    session.situation === null ? formatRoute({ screen: 'home' }) : formatRoute(routeForSituation(session.situation, null));
 
   return (
     <div className={styles.screen}>

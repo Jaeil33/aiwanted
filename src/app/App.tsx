@@ -6,12 +6,16 @@ import type { AppData } from '../types/data';
 import styles from './App.module.css';
 import { GameProvider, useGame } from './GameProvider';
 import { localPlatform, type Platform } from './platform';
-import { formatRoute } from './router';
+import { formatRoute, routeForSituation, type Route } from './router';
 import { AboutScreen } from './screens/AboutScreen';
 import { EvidenceScreen } from './screens/EvidenceScreen';
-import { LobbyScreen } from './screens/LobbyScreen';
+import { GameScreen } from './screens/GameScreen';
+import { HomeScreen } from './screens/HomeScreen';
+import { PaScreen } from './screens/PaScreen';
 import { PlayScreen } from './screens/PlayScreen';
 import { ResultScreen } from './screens/ResultScreen';
+import { TeamScreen } from './screens/TeamScreen';
+import { TeamsScreen } from './screens/TeamsScreen';
 import { useHashRoute } from './useHashRoute';
 
 /** 출처 한 줄(ADR-005): MenuFrame에 둔다. 타석 화면의 출처는 결과 카드가 싣는다 */
@@ -72,12 +76,12 @@ export function App({ data = APP_DATA, platformPromise }: AppProps) {
 
 interface MenuFrameProps {
   current: TabBarTab;
-  /** 상단 바 오른쪽 한 줄(로비의 오늘 날짜) */
+  /** 상단 바 오른쪽 한 줄(오늘 날짜) */
   meta?: string;
   children: ReactNode;
 }
 
-/** 로비·만든 이유: 상단 바 52px(브랜드) + 본문 + 출처 한 줄 + 하단 TabBar */
+/** 탐색 화면: 상단 바 52px(브랜드) + 본문 + 출처 한 줄 + 하단 TabBar */
 function MenuFrame({ current, meta, children }: MenuFrameProps) {
   return (
     <div className={styles.column}>
@@ -106,16 +110,35 @@ function GameFrame({ children }: { children: ReactNode }) {
   );
 }
 
+/** 라우트를 세션 화면 값으로. 탐색 화면은 모두 home이다 */
+function screenOf(route: Route): 'home' | 'play' | 'result' | 'evidence' | 'about' {
+  switch (route.screen) {
+    case 'pa':
+    case 'play':
+      return 'play';
+    case 'result':
+      return 'result';
+    case 'evidence':
+      return 'evidence';
+    case 'about':
+      return 'about';
+    default:
+      return 'home';
+  }
+}
+
 /**
  * 해시 라우트 → 틀과 화면. 장면 라우트는 장면을 열고(같은 장면이 열려 있으면 그대로), 결과 해시는 끝난 판이 있으면 결과 화면,
- * 없으면 열린 장면으로, 모르는 장면은 첫 화면으로 되돌려 보낸다(되돌려 보내기는 방문 기록을 쌓지 않는다)
+ * 없으면 열린 상황으로, 모르는 장면은 첫 화면으로 되돌려 보낸다(되돌려 보내기는 방문 기록을 쌓지 않는다).
+ * 타석 라우트(`#/pa/…`)는 PaScreen이 경기를 받아 직접 연다.
  */
 function Shell() {
   const { data, session, dispatch, actions } = useGame();
   const [route, setRoute] = useHashRoute();
-  /** 이미 열기를 요청한 타석 해시 (StrictMode에서 effect가 두 번 돌아도 한 번만 연다) */
+  /** 이미 열기를 요청한 장면 해시 (StrictMode에서 effect가 두 번 돌아도 한 번만 연다) */
   const openedFor = useRef<string | null>(null);
-  const openSceneId = session.situation === null ? null : session.situation.id;
+  const situation = session.situation;
+  const openId = situation === null ? null : situation.id;
   const finished = session.final !== null;
 
   useEffect(() => {
@@ -125,7 +148,7 @@ function Shell() {
         return;
       }
       const key = formatRoute(route);
-      if (openSceneId === route.sceneId) {
+      if (openId === route.sceneId) {
         openedFor.current = key;
         dispatch({ type: 'navigate', screen: 'play' });
         return;
@@ -136,34 +159,52 @@ function Shell() {
       return;
     }
     if (route.screen === 'result') {
-      if (openSceneId !== null && finished) {
+      if (situation !== null && finished) {
         dispatch({ type: 'navigate', screen: 'result' });
         return;
       }
-      setRoute(openSceneId === null ? { screen: 'home' } : { screen: 'play', sceneId: openSceneId, share: null }, { replace: true });
+      setRoute(situation === null ? { screen: 'home' } : routeForSituation(situation, null), { replace: true });
       return;
     }
-    dispatch({ type: 'navigate', screen: route.screen });
-  }, [route, data, openSceneId, finished, dispatch, actions, setRoute]);
-
-  const lobby = (
-    <MenuFrame current="lobby" meta="2026 시즌 명장면">
-      <LobbyScreen />
-    </MenuFrame>
-  );
+    dispatch({ type: 'navigate', screen: screenOf(route) });
+  }, [route, data, situation, openId, finished, dispatch, actions, setRoute]);
 
   switch (route.screen) {
+    case 'pa':
+      return (
+        <GameFrame>
+          <PaScreen gameId={route.gameId} no={route.no} share={route.share} />
+        </GameFrame>
+      );
     case 'play':
       return data.scenes.some((scene) => scene.id === route.sceneId) ? (
         <GameFrame>
           <PlayScreen />
         </GameFrame>
       ) : (
-        lobby
+        <Home />
       );
     case 'result':
-      if (openSceneId === null) return lobby;
+      if (situation === null) return <Home />;
       return <GameFrame>{finished ? <ResultScreen /> : <PlayScreen />}</GameFrame>;
+    case 'teams':
+      return (
+        <MenuFrame current="lobby">
+          <TeamsScreen />
+        </MenuFrame>
+      );
+    case 'team':
+      return (
+        <MenuFrame current="lobby">
+          <TeamScreen code={route.code} month={route.month} />
+        </MenuFrame>
+      );
+    case 'game':
+      return (
+        <MenuFrame current="lobby">
+          <GameScreen gameId={route.gameId} />
+        </MenuFrame>
+      );
     case 'evidence':
       return (
         <MenuFrame current="evidence">
@@ -177,6 +218,15 @@ function Shell() {
         </MenuFrame>
       );
     default:
-      return lobby;
+      return <Home />;
   }
+}
+
+function Home() {
+  const { platform } = useGame();
+  return (
+    <MenuFrame current="lobby" meta={todayText(platform.today())}>
+      <HomeScreen />
+    </MenuFrame>
+  );
 }

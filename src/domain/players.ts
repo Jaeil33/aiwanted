@@ -27,3 +27,21 @@ export function pitcherOf(core: CoreData, id: string): PlayerRecord | null {
 export function anyPlayerOf(core: CoreData, id: string): PlayerRecord | null {
   return hitterOf(core, id) ?? pitcherOf(core, id);
 }
+
+/** core 하나당 한 번만 만든다. 화면이 매 렌더 576명을 훑지 않게 */
+const NAME_CACHE = new WeakMap<CoreData, Record<string, string>>();
+
+/**
+ * 선수 id → 화면 이름. 겸업 키(`<id>:H`)는 꼬리 없는 id에 합친다.
+ * 중계(`LiveGame.names`)에는 타석에 선 선수만 있어서 투수 이름이 없다. 번들 core에는 2026 전 선수가 있다(ADR-035).
+ */
+export function nameMapOf(core: CoreData): Record<string, string> {
+  const cached = NAME_CACHE.get(core);
+  if (cached) return cached;
+  const names: Record<string, string> = {};
+  for (const [key, player] of Object.entries(core.players)) {
+    names[key.endsWith(HITTER_KEY_SUFFIX) ? key.slice(0, -HITTER_KEY_SUFFIX.length) : key] = player.name;
+  }
+  NAME_CACHE.set(core, names);
+  return names;
+}

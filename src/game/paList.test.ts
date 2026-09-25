@@ -30,6 +30,16 @@ describe('paList', () => {
     expect(paList(noNames)[0].batter).toBe('a1');
   });
 
+  it('넘긴 이름표가 중계 이름보다 앞선다', () => {
+    // 중계에는 타석에 선 선수만 있어 투수 이름이 없다. 번들 core 이름표를 넘겨 채운다(ADR-035)
+    const named = paList(GAME, { names: { a1: '핵심타자', zz: '아무도' } });
+    expect(named[0].batter).toBe('핵심타자');
+    expect(named[0].pitcher).toBe('최투수');
+
+    const noRelayNames: LiveGame = { ...GAME, names: {} };
+    expect(paList(noRelayNames, { names: { hp1: '최투수' } })[0].pitcher).toBe('최투수');
+  });
+
   it('타석 직전 점수를 담는다', () => {
     expect(rows[0].score).toEqual({ away: 0, home: 0 });
     expect(rows[3].score).toEqual({ away: 2, home: 0 });

@@ -33,6 +33,49 @@ describe('parseHash', () => {
     expect(parseHash(`#/scene/fixture-walkoff?t=${encodeShare({ ...SHARE, sceneId: 'other' })}`)).toEqual(play);
   });
 
+  it('#/teams는 팀 고르기', () => {
+    expect(parseHash('#/teams')).toEqual({ screen: 'teams' });
+  });
+
+  it('#/team/:code는 그 팀 일정, ?m=으로 달을 고른다', () => {
+    expect(parseHash('#/team/HH')).toEqual({ screen: 'team', code: 'HH', month: null });
+    expect(parseHash('#/team/HH?m=2026-05')).toEqual({ screen: 'team', code: 'HH', month: '2026-05' });
+  });
+
+  it('모르는 팀 코드·이상한 달은 첫 화면·달 없음', () => {
+    expect(parseHash('#/team/ZZ')).toEqual({ screen: 'home' });
+    expect(parseHash('#/team/hh')).toEqual({ screen: 'home' });
+    expect(parseHash('#/team/HH?m=2026-13')).toEqual({ screen: 'team', code: 'HH', month: null });
+    expect(parseHash('#/team/HH?m=nope')).toEqual({ screen: 'team', code: 'HH', month: null });
+  });
+
+  it('#/game/:gameId는 타석 목록', () => {
+    expect(parseHash('#/game/20260915LGOB02026')).toEqual({ screen: 'game', gameId: '20260915LGOB02026' });
+    expect(parseHash('#/game/nope')).toEqual({ screen: 'home' });
+  });
+
+  it('#/pa/:gameId/:no는 그 타석', () => {
+    expect(parseHash('#/pa/20260915LGOB02026/37')).toEqual({
+      screen: 'pa', gameId: '20260915LGOB02026', no: 37, share: null,
+    });
+  });
+
+  it('타석 번호가 1 이상 정수가 아니면 첫 화면', () => {
+    for (const hash of ['#/pa/20260915LGOB02026/0', '#/pa/20260915LGOB02026/-1', '#/pa/20260915LGOB02026/x', '#/pa/20260915LGOB02026/1.5']) {
+      expect(parseHash(hash), hash).toEqual({ screen: 'home' });
+    }
+  });
+
+  it('타석 공유 값은 그 타석 id와 맞을 때만 읽는다', () => {
+    const paShare: SharePayload = { ...SHARE, sceneId: '20260915LGOB02026-37' };
+    expect(parseHash(`#/pa/20260915LGOB02026/37?t=${encodeShare(paShare)}`)).toEqual({
+      screen: 'pa', gameId: '20260915LGOB02026', no: 37, share: paShare,
+    });
+    expect(parseHash(`#/pa/20260915LGOB02026/38?t=${encodeShare(paShare)}`)).toEqual({
+      screen: 'pa', gameId: '20260915LGOB02026', no: 38, share: null,
+    });
+  });
+
   it('결과·판정소·만든 이유', () => {
     expect(parseHash('#/result')).toEqual({ screen: 'result' });
     expect(parseHash('#/evidence')).toEqual({ screen: 'evidence' });
@@ -43,6 +86,20 @@ describe('parseHash', () => {
     for (const hash of ['#/nope', '#/scene', '#/scene/', '#/scene/a/b', '#/result/x', 'garbage', '#/scene/%E0%A4%A', '#/ABOUT']) {
       expect(parseHash(hash), hash).toEqual({ screen: 'home' });
     }
+  });
+});
+
+describe('formatRoute — 시즌 경로', () => {
+  it('왕복한다', () => {
+    const routes: Route[] = [
+      { screen: 'teams' },
+      { screen: 'team', code: 'HH', month: null },
+      { screen: 'team', code: 'HH', month: '2026-05' },
+      { screen: 'game', gameId: '20260915LGOB02026' },
+      { screen: 'pa', gameId: '20260915LGOB02026', no: 37, share: null },
+      { screen: 'pa', gameId: '20260915LGOB02026', no: 37, share: { ...SHARE, sceneId: '20260915LGOB02026-37' } },
+    ];
+    for (const route of routes) expect(parseHash(formatRoute(route)), formatRoute(route)).toEqual(route);
   });
 });
 

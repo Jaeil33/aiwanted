@@ -1,8 +1,9 @@
 import { act, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { fixtureGameSummaries, fixtureLiveGame } from '../test/fixtures/live';
 import { fixtureAppData } from '../test/fixtures/appData';
-import { fakePlatform } from '../test/gameHarness';
-import type { AppData, SceneRecord } from '../types/data';
+import { fakeLiveApi, fakePlatform } from '../test/gameHarness';
+import type { AppData } from '../types/data';
 import { App, todayText } from './App';
 import styles from './App.module.css';
 import appCss from './App.module.css?raw';
@@ -11,6 +12,10 @@ import type { Platform } from './platform';
 const SOURCES = '기록·중계: 네이버 스포츠(KBO) · 날씨: Open-Meteo · 확률: TMI 야구 엔진 계산값';
 const TAGLINE = '쓸모없는 변수, 진짜 쓸모없을까?';
 const SCENE = fixtureAppData.scenes[0];
+const LIVE_GAME = fixtureLiveGame();
+const SEASON_GAMES = [{ ...fixtureGameSummaries()[2], gameId: '20260814HTLT02026', date: '2026-08-14' }];
+/** 시즌 탐색이 도는 플랫폼: 일정 하나, 경기 하나 */
+const seasonPlatform = () => fakePlatform({ liveApi: fakeLiveApi({ games: SEASON_GAMES, game: LIVE_GAME }) });
 
 const goto = (hash: string) => window.history.replaceState(null, '', `/${hash}`);
 beforeEach(() => goto(''));
@@ -67,14 +72,37 @@ describe('App', () => {
     expect(tabCurrents()).toEqual(['page', null, null]);
   });
 
-  it('로비(#/)는 MenuFrame: 상단 바에 브랜드와 "2026 시즌 명장면", 본문에 로비, 탭바는 명장면이 지금 탭', () => {
+  it('홈(#/)은 MenuFrame: 상단 바에 브랜드와 오늘 날짜, 본문에 추천 승부처, 탭바는 경기가 지금 탭', () => {
     render(<App data={fixtureAppData} />);
     expectMenuFrame();
-    expect(within(screen.getByRole('banner')).getByText('2026 시즌 명장면')).toBeInTheDocument();
+    expect(within(screen.getByRole('banner')).getByText(/^\d+월 \d+일/)).toBeInTheDocument();
     expect(within(screen.getByRole('main')).getByText(TAGLINE)).toBeInTheDocument();
-    expect(within(tabBar()).getByRole('link', { name: '명장면' })).toHaveAttribute('href', '#/');
+    expect(within(tabBar()).getByRole('link', { name: '경기' })).toHaveAttribute('href', '#/');
     expect(tabCurrents()).toEqual(['page', null, null]);
   });
+
+  it('시즌 경로: 팀 고르기 → 그 팀 달력 → 경기 타석 목록 → 타석', async () => {
+    goto('#/teams');
+    render(<App data={fixtureAppData} platformPromise={Promise.resolve(seasonPlatform())} />);
+    expect(await screen.findByRole('heading', { level: 2, name: '응원하는 팀' })).toBeInTheDocument();
+    expectMenuFrame();
+
+    act(() => {
+      window.location.hash = '#/team/HT?m=2026-08';
+    });
+    expect(await screen.findByRole('heading', { level: 2, name: 'KIA · 2026년 8월' })).toBeInTheDocument();
+
+    act(() => {
+      window.location.hash = '#/game/20260814HTLT02026';
+    });
+    expect(await screen.findByRole('list', { name: '전체 타석' })).toBeInTheDocument();
+
+    act(() => {
+      window.location.hash = '#/pa/20260814HTLT02026/3';
+    });
+    expect(await screen.findByRole('group', { name: '스코어버그' }, { timeout: 90_000 })).toBeInTheDocument();
+    expectGameFrame();
+  }, 120_000);
 
   it('만든 이유와 판정소도 MenuFrame이고, 해시가 바뀌면 화면과 탭바의 지금 탭이 바뀐다', async () => {
     goto('#/about');
@@ -123,14 +151,14 @@ describe('App', () => {
     expectMenuFrame();
   });
 
-  it('오늘의 명장면 카드의 "TMI 걸고 다시 치르기"를 누르면 그 장면 화면으로 간다', async () => {
+  it('홈에서 응원팀 고르기로 간다', async () => {
     render(<App data={fixtureAppData} />);
     act(() => {
-      within(screen.getByRole('region', { name: '오늘의 명장면' })).getByRole('link', { name: 'TMI 걸고 다시 치르기' }).click();
+      within(screen.getByRole('main')).getByRole('link', { name: '응원팀 고르기' }).click();
     });
-    expect(await screen.findByRole('heading', { level: 2, name: SCENE.title })).toBeInTheDocument();
-    expect(window.location.hash).toBe('#/scene/fixture-walkoff');
-    expectGameFrame();
+    expect(await screen.findByRole('heading', { level: 2, name: '응원하는 팀' })).toBeInTheDocument();
+    expect(window.location.hash).toBe('#/teams');
+    expectMenuFrame();
   });
 
   it('"경기 끝까지"로 판이 끝나면 결과 화면(GameFrame)으로 가고, 끝난 판이 있으면 결과 해시를 그대로 둔다', { timeout: 180_000 }, async () => {
@@ -161,22 +189,21 @@ describe('App', () => {
   });
 
   it('플랫폼을 알아내는 동안에도 첫 화면을 그리고, 준비되면 그 플랫폼을 쓴다', async () => {
-    const second: SceneRecord = { ...SCENE, id: 'fixture-second', title: '두 번째 픽스처 장면', date: '2026-08-20' };
-    const data: AppData = { ...fixtureAppData, scenes: [SCENE, second] };
+    const data: AppData = fixtureAppData;
     let resolvePlatform: (platform: Platform) => void = () => undefined;
     const platformPromise = new Promise<Platform>((resolve) => {
       resolvePlatform = resolve;
     });
     render(<App data={data} platformPromise={platformPromise} />);
     expect(screen.getByText(TAGLINE)).toBeInTheDocument();
+    // 플랫폼 전에는 경기 API가 없다고 알린다
+    expect(screen.getByText(/경기를 불러올 수 없/)).toBeInTheDocument();
 
-    // todaySceneIndex('2026-01-02', 2) = 1
     await act(async () => {
-      resolvePlatform(fakePlatform({ today: () => '2026-01-02' }));
+      resolvePlatform(fakePlatform({ today: () => '2026-01-02', liveApi: fakeLiveApi({ games: SEASON_GAMES, game: LIVE_GAME }) }));
       await platformPromise;
     });
-    const today = screen.getByRole('region', { name: '오늘의 명장면' });
-    expect(within(today).getByText('오늘의 명장면 · 8월 20일 (목) · 픽스처 구장')).toBeInTheDocument();
+    expect(within(screen.getByRole('banner')).getByText('1월 2일 (금)')).toBeInTheDocument();
   });
 
   it('게임 열 CSS: 가운데 최대 480px·폭 100%·최소 높이 100dvh·가로 넘침 자름, 1024px 이상 그림자와 1px --hair-2', () => {

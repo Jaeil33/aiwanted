@@ -20,6 +20,8 @@ describe('scheduleUrl', () => {
     expect(url.searchParams.get('upperCategoryId')).toBe('kbaseball');
     // fields에 stadium이 빠지면 구장이 빈 문자열로 온다
     expect(url.searchParams.get('fields')).toContain('stadium');
+    // size를 안 주면 10경기만 온다: 한 달 달력이 이틀치만 차는 버그가 났다(2026-09-26)
+    expect(Number(url.searchParams.get('size'))).toBeGreaterThanOrEqual(155);
   });
 });
 

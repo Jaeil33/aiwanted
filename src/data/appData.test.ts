@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { fixtureAppData } from '../test/fixtures/appData';
 import type { PitchRow } from '../types/data';
+import { nameMapOf } from '../domain/players';
 import { APP_DATA, hitterOf, loadAppData, pitcherOf, todaySceneIndex } from './appData';
 
 const DIR = '../../data/build/app';
@@ -155,6 +156,21 @@ describe('hitterOf·pitcherOf', () => {
     const c = dualCore();
     expect(pitcherOf(c, 'x9')?.kind).toBe('P');
     expect(pitcherOf(c, 'x9')?.rel[0]).toBe(1);
+  });
+
+  it('nameMapOf는 겸업 키를 꼬리 없는 id에 합치고 투수 이름도 담는다', () => {
+    // 중계(LiveGame.names)에는 타석에 선 선수만 있어 투수 이름이 없다. 목록 화면은 이 표로 채운다
+    const names = nameMapOf(dualCore());
+    expect(names.x9).toBe('정선수');
+    expect(names['x9:H']).toBeUndefined();
+    const pitcherId = Object.keys(loose(core).players as Record<string, { kind: string }>).find(
+      (k) => (loose(core).players as Record<string, { kind: string }>)[k].kind === 'P',
+    )!;
+    expect(names[pitcherId]).toBeTruthy();
+  });
+
+  it('nameMapOf는 같은 core면 같은 표를 돌려준다', () => {
+    expect(nameMapOf(core)).toBe(nameMapOf(core));
   });
 
   it('겸업이 아니면 타자도 꼬리 없는 id로 찾는다', () => {

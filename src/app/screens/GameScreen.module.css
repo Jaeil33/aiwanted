@@ -1,0 +1,209 @@
+.screen {
+  display: grid;
+  gap: 16px;
+  padding: 8px 16px 24px;
+}
+
+.srTitle {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.head {
+  display: grid;
+  gap: 8px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+}
+
+.eyebrow {
+  margin: 0;
+  color: var(--text-2);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+}
+
+.score {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 8px;
+}
+
+.team {
+  display: grid;
+  gap: 2px;
+  justify-items: center;
+}
+
+.team[data-side='away'] {
+  order: 0;
+}
+
+.team[data-side='home'] {
+  order: 2;
+}
+
+.team b {
+  color: var(--text-2);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.team em {
+  color: var(--text);
+  font-family: var(--num);
+  font-size: 34px;
+  font-style: normal;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.team[data-side='away'] b {
+  color: var(--away);
+}
+
+.team[data-side='home'] b {
+  color: var(--home);
+}
+
+.colon {
+  order: 1;
+  color: var(--text-3);
+  font-family: var(--num);
+  font-size: 22px;
+}
+
+.block {
+  display: grid;
+  gap: 8px;
+}
+
+.blockTitle {
+  margin: 0;
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.picks,
+.list,
+.rows {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.list {
+  gap: 14px;
+}
+
+.half {
+  display: grid;
+  gap: 6px;
+}
+
+.halfHead {
+  margin: 0;
+  color: var(--text-2);
+  font-family: var(--num);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.pa {
+  display: grid;
+  grid-template-columns: minmax(58px, auto) 1fr auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-row);
+  background: var(--surface);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.picks .pa {
+  border-color: var(--line-2);
+  background: var(--surface-2);
+}
+
+.paWhere {
+  display: grid;
+  gap: 1px;
+}
+
+.paWhere b {
+  font-family: var(--num);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.paWhere small {
+  color: var(--text-2);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.paWho {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.paWho b {
+  overflow: hidden;
+  font-weight: 800;
+  text-overflow: ellipsis;
+}
+
+.paWho i {
+  flex: none;
+  color: var(--text-3);
+  font-size: 11px;
+  font-style: normal;
+}
+
+.paWho span {
+  overflow: hidden;
+  color: var(--text-2);
+  text-overflow: ellipsis;
+}
+
+.paSide {
+  display: grid;
+  gap: 2px;
+  justify-items: end;
+}
+
+.paScore {
+  color: var(--text-2);
+  font-family: var(--num);
+  font-size: 13px;
+}
+
+.paNote {
+  padding: 1px 6px;
+  border-radius: var(--r-chip);
+  background: var(--surface-3);
+  color: var(--text-3);
+  font-size: 10px;
+}

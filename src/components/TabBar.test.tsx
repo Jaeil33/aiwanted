@@ -6,13 +6,13 @@ import styles from './TabBar.module.css';
 const currents = () => screen.getAllByRole('link').map((link) => link.getAttribute('aria-current'));
 
 describe('TabBar', () => {
-  it('주 메뉴 내비에 명장면·판정소·만든 이유 링크 세 개를 아이콘과 라벨로 둔다(중계 시안)', () => {
+  it('주 메뉴 내비에 경기·판정소·만든 이유 링크 세 개를 아이콘과 라벨로 둔다(중계 시안)', () => {
     render(<TabBar current="lobby" />);
     const nav = screen.getByRole('navigation', { name: '주 메뉴' });
     expect(nav).toHaveClass(styles.bar);
     const links = within(nav).getAllByRole('link');
     expect(links.map((link) => [link.textContent, link.getAttribute('href')])).toEqual([
-      ['명장면', '#/'],
+      ['경기', '#/'],
       ['판정소', '#/evidence'],
       ['만든 이유', '#/about'],
     ]);
