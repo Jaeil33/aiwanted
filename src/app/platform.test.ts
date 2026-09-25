@@ -1,18 +1,17 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createGame, type Evaluation, type PlayoutResult } from '../engine';
 import {
-  buildSceneSetup,
   handleEngineMessage,
   type EngineClient,
   type EngineRequestMessage,
   type EvaluateRequest,
   type GameSpec,
 } from '../game';
-import { fixtureAppData } from '../test/fixtures/appData';
+import { fixtureSetup } from '../test/fixtures/appData';
 import { createPlatformEngineClient, detectPlatform, localPlatform, seoulDate, type EngineWorker } from './platform';
 
 const SLOW = { timeout: 120_000 };
-const setup = buildSceneSetup(fixtureAppData, 'fixture-walkoff');
+const setup = fixtureSetup();
 const START = setup.situation.state;
 const SPEC: GameSpec = { lg: setup.lg, away: setup.away, home: setup.home, countTable: setup.countTable, effects: [], mode: 'real' };
 const REQ: EvaluateRequest = { spec: SPEC, state: START, pitcher: setup.scenePitcher, first: true };

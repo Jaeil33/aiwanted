@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { gaugesAtCount, type Evaluation } from '../engine';
 import { createLocalEngineClient, type EngineClient, type EvaluateRequest, type PlayLogEntry } from '../game';
-import { fixtureAppData } from '../test/fixtures/appData';
+import { FIXTURE_FINAL, fixtureAppData, fixtureSituation } from '../test/fixtures/appData';
 import { fakePlatform } from '../test/gameHarness';
 import type { TmiEntry } from '../types/domain';
 import { GameProvider, useGame } from './GameProvider';
@@ -12,7 +12,7 @@ import { gameSpecFor, useEvaluationPair, useSceneEvaluations } from './useSceneE
 
 /** createGame은 수백 ms가 걸린다 */
 const SLOW = { timeout: 30_000 };
-const SCENE = fixtureAppData.scenes[0];
+const SCENE = fixtureSituation;
 
 const STAMINA: TmiEntry = {
   id: 'tmi-1',
@@ -70,7 +70,7 @@ type Rendered = ReturnType<typeof renderEvaluations>['result'];
 
 async function openScene(result: Rendered) {
   await act(async () => {
-    await result.current.game.actions.openScene(SCENE.id, null);
+    await result.current.game.actions.openSituation(fixtureSituation, { actualFinal: { ...FIXTURE_FINAL } }, null);
   });
 }
 
@@ -198,7 +198,7 @@ describe('useEvaluationPair', () => {
     );
     expect(result.current.pair).toEqual({ base: null, tmi: null, pending: false });
     await act(async () => {
-      await result.current.game.actions.openScene(SCENE.id, null);
+      await result.current.game.actions.openSituation(fixtureSituation, { actualFinal: { ...FIXTURE_FINAL } }, null);
     });
     await waitFor(() => expect(result.current.pair.tmi).not.toBeNull(), { timeout: 20_000 });
     const setup = result.current.game.setup;

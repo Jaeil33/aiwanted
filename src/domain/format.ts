@@ -25,6 +25,18 @@ export function josa(word: string, pair: '이/가' | '은/는' | '을/를' | '�
   return word + (jong ? withFinal : withoutFinal);
 }
 
+const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
+
+/** "2026-09-15" → "화". 날짜 모양이 아니거나 없는 날이면 빈 문자열 */
+export function weekdayOf(date: string): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
+  if (!match) return '';
+  const [y, m, d] = [Number(match[1]), Number(match[2]), Number(match[3])];
+  const t = new Date(Date.UTC(y, m - 1, d));
+  if (t.getUTCFullYear() !== y || t.getUTCMonth() !== m - 1 || t.getUTCDate() !== d) return '';
+  return WEEKDAYS[t.getUTCDay()];
+}
+
 const OUTS_TEXT = ['무사', '1사', '2사', '3아웃'];
 
 /** 주자 비트마스크(1루=1, 2루=2, 3루=4)를 글로 쓴다: "주자 없음", "1·3루", "만루" */

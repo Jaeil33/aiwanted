@@ -120,34 +120,18 @@ def _scene_game(scene: dict, schedule_by_game: dict[str, dict]) -> dict | None:
     return matches[0] if len(matches) == 1 else None
 
 
-def enrich_scenes_weather(scenes: list[dict], series_by_stadium: dict[str, HourlySeries], schedule_by_game: dict[str, dict]) -> list[dict]:
-    """장면 context.tempC·windMs를 경기 시작 정시 값(소수 첫째 자리)으로 채운 복사본. 돔이나 값이 없으면 그대로."""
-    enriched = []
-    for original in scenes:
-        scene = copy.deepcopy(original)
-        ctx = scene["context"]
-        game = _scene_game(scene, schedule_by_game)
-        series = series_by_stadium.get(scene["stadium"])
-        if not ctx.get("dome") and scene["stadium"] not in DOMES and game is not None and series is not None:
-            values = series.at(_start(game))
-            if values is not None:
-                temp, wind, _ = values
-                ctx["tempC"] = round(temp, 1) if temp is not None else None
-                ctx["windMs"] = round(wind, 1) if wind is not None else None
-        enriched.append(scene)
-    return enriched
-
-
 def write_context(raw_dir: Path, out_dir: Path) -> dict:
-    """build stage "context": out_dir/context/team_games.json을 쓰고, out_dir/app/scenes.json이 있으면 날씨를 채워 다시 쓴다."""
+    """build stage "context": out_dir/context/team_games.json을 쓴다(근거 표 학습용).
+
+    장면(app/scenes.json)에 날씨를 채우던 일은 없앴다(ADR-032): 장면을 더 만들지 않는다.
+    타석 상황의 기온·바람은 지금 비어 있다 — 임의의 지난 경기 날씨를 앱에 줄 경로가 아직 없다.
+    """
     raw_dir, out_dir = Path(raw_dir), Path(out_dir)
     schedule = load_schedule_games(raw_dir)
     games = regular_completed(schedule)
     end = max((g["gameDate"] for g in games), default=WEATHER_START)
-    scenes_path = out_dir / "app" / "scenes.json"
-    scenes = load_json(scenes_path) if scenes_path.is_file() else None
 
-    names = {g["stadium"] for g in games} | {s["stadium"] for s in scenes or []}
+    names = {g["stadium"] for g in games}
     series = load_stadium_series(sorted(n for n in names if n not in DOMES), WEATHER_START, end, raw_dir / "weather")
 
     rows = team_game_rows(games, series)
@@ -159,9 +143,4 @@ def write_context(raw_dir: Path, out_dir: Path) -> dict:
         "starter_rest_ratio": round(sum(r["opp_starter_rest_days"] is not None for r in rows) / len(rows), 4) if rows else 0.0,
         "weather_range": [WEATHER_START, end],
     }
-    if scenes is not None:
-        enriched = enrich_scenes_weather(scenes, series, {g["gameId"]: g for g in schedule})
-        write_json(scenes_path, enriched)
-        summary["scenes_with_weather"] = sum(1 for s in enriched if s["context"]["tempC"] is not None)
-        summary["scenes"] = len(enriched)
     return summary

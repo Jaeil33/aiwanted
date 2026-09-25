@@ -2,7 +2,7 @@ import { situationText } from '../domain/format';
 import { HITTER_KEY_SUFFIX, hitterOf, nameMapOf, pitcherOf } from '../domain/players';
 import { TEAMS, isTeamCode } from '../domain/teams';
 import { pitcherAt, type LineupSlot, type TeamConfig } from '../engine';
-import type { CoreData, PitchRow, PlayerRecord, SceneRecord, Situation, SituationKind } from '../types/data';
+import type { CoreData, PitchRow, PlayerRecord, Situation, SituationKind } from '../types/data';
 import type { EventVector, GameState, KnownPlayer, PitcherPlanEntry, PromptContext, RosterEntry, SceneContext, Side } from '../types/domain';
 import type { LiveGame } from '../types/live';
 
@@ -123,37 +123,6 @@ export function situationFromPa(game: LiveGame, no: number, kind: SituationKind)
         : null,
     naverWpBeforeHome: pa.wpBeforeHome,
     context: { tempC: null, windMs: null, dayGame: s.time < DAY_GAME_BEFORE, dome: s.stadium === DOME_STADIUM },
-  };
-}
-
-/**
- * 골라 둔 장면을 상황 계약으로 옮긴다(step 10에서 장면 경로가 사라질 때까지 쓰는 다리).
- * 장면 id는 경기 id와 타석 번호를 그대로 가리키지 않으므로 gameId·paNo는 비운다.
- */
-export function situationFromScene(scene: SceneRecord): Situation {
-  return {
-    id: scene.id,
-    kind: 'past',
-    gameId: null,
-    paNo: null,
-    date: scene.date,
-    stadium: scene.stadium || null,
-    away: { code: scene.away.code, name: scene.away.name },
-    home: { code: scene.home.code, name: scene.home.name },
-    state: scene.state,
-    count: { balls: 0, strikes: 0 },
-    batter: scene.batter,
-    pitcher: scene.pitcher,
-    lineups: scene.lineups,
-    actual: {
-      result: scene.actual.result,
-      event: scene.actual.event,
-      runs: scene.actual.runs,
-      pitches: scene.actual.pitches,
-      wpAfterHome: scene.actual.wpAfterHome,
-    },
-    naverWpBeforeHome: scene.naverWpBeforeHome,
-    context: scene.context,
   };
 }
 

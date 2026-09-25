@@ -1,11 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { situationText } from '../domain/format';
-import { fixtureAppData } from '../test/fixtures/appData';
+import { FIXTURE_FINAL, FIXTURE_TITLE, fixtureAppData, fixtureSetup, fixtureSituation } from '../test/fixtures/appData';
 import { fixtureGameSummaries, fixtureLiveGame } from '../test/fixtures/live';
 import type { LiveGame } from '../types/live';
-import { buildSceneSetup } from './scene';
 import { gameRowsOf, pitcherPlanOf } from './pitchers';
-import { batterFor, buildSituationSetup, pitcherFor, situationFromPa, situationFromScene, situationTitle } from './situation';
+import { batterFor, buildSituationSetup, pitcherFor, situationFromPa, situationTitle } from './situation';
 
 /*
  * 지난 경기의 아무 타석이나 되돌려볼 수 있게 하는 조립(ADR-032·033). 합성 데이터만 쓴다.
@@ -117,29 +116,19 @@ describe('situationTitle', () => {
 });
 
 describe('buildSituationSetup', () => {
-  const scene = fixtureAppData.scenes[0];
-
-  it('장면으로 만든 설정이 buildSceneSetup과 같다', () => {
-    // 옛 경로와 새 경로가 같은 엔진 설정을 내야 화면·확률이 그대로다
-    const fromScene = buildSceneSetup(fixtureAppData, scene.id);
-    const direct = buildSituationSetup(CORE, situationFromScene(scene), {
-      actualFinal: { away: scene.away.final, home: scene.home.final },
-    });
-    expect(direct.away).toEqual(fromScene.away);
-    expect(direct.home).toEqual(fromScene.home);
-    expect(direct.scenePitcher).toEqual(fromScene.scenePitcher);
-    expect(direct.batSide).toBe(fromScene.batSide);
-    expect(direct.fieldSide).toBe(fromScene.fieldSide);
-    expect(direct.sceneContext).toEqual(fromScene.sceneContext);
-    expect(direct.promptContext).toEqual(fromScene.promptContext);
-    expect(direct.teamColors).toEqual(fromScene.teamColors);
-    expect(direct.lg).toEqual(fromScene.lg);
+  it('제목·최종 점수를 담는다', () => {
+    const setup = fixtureSetup();
+    expect(setup.title).toBe(FIXTURE_TITLE);
+    expect(setup.actualFinal).toEqual({ ...FIXTURE_FINAL });
   });
 
-  it('장면 제목·최종 점수를 담는다', () => {
-    const setup = buildSceneSetup(fixtureAppData, scene.id);
-    expect(setup.title).toBe(scene.title);
-    expect(setup.actualFinal).toEqual({ away: scene.away.final, home: scene.home.final });
+  it('타선·불펜·상황 투수를 엔진 설정으로 세운다', () => {
+    const setup = fixtureSetup();
+    expect(setup.away.lineup.map((slot) => slot.id)).toEqual(fixtureSituation.lineups.away);
+    expect(setup.home.lineup.map((slot) => slot.id)).toEqual(fixtureSituation.lineups.home);
+    expect(setup.away.bullpen.id).toBe('HT-pen');
+    expect(setup.scenePitcher.id).toBe(fixtureSituation.pitcher);
+    expect(setup.sceneContext).toEqual({ batterId: 'h6', pitcherId: 'ap', batSide: 'home' });
   });
 
   it('기록이 없는 선수는 rel 1(리그 평균)이다', () => {
@@ -272,25 +261,6 @@ describe('실제 투수 차례(ADR-033)', () => {
   });
 });
 
-describe('situationFromScene', () => {
-  it('장면을 상황 계약으로 옮긴다', () => {
-    const scene = fixtureAppData.scenes[0];
-    const situation = situationFromScene(scene);
-    expect(situation.id).toBe(scene.id);
-    expect(situation.kind).toBe('past');
-    expect(situation.state).toEqual(scene.state);
-    expect(situation.lineups).toEqual(scene.lineups);
-    expect(situation.count).toEqual({ balls: 0, strikes: 0 });
-    expect(situation.actual).toEqual({
-      result: scene.actual.result,
-      event: scene.actual.event,
-      runs: scene.actual.runs,
-      pitches: scene.actual.pitches,
-      wpAfterHome: scene.actual.wpAfterHome,
-    });
-    expect(situation.context).toEqual(scene.context);
-  });
-});
 
 describe('fixtureGameSummaries와 맞물린다', () => {
   it('경기 전 경기에는 타석이 없다', () => {

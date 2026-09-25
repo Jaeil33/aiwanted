@@ -1,12 +1,11 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { createGame } from '../engine';
-import { fixtureAppData } from '../test/fixtures/appData';
+import { fixtureSetup } from '../test/fixtures/appData';
 import type { EngineResponseMessage, GameSpec } from './engineClient';
-import { buildSceneSetup } from './scene';
 
 type Listener = (event: { data: unknown }) => void;
 
-const setup = buildSceneSetup(fixtureAppData, 'fixture-walkoff');
+const setup = fixtureSetup();
 const START = setup.situation.state;
 const SPEC: GameSpec = { lg: setup.lg, away: setup.away, home: setup.home, countTable: setup.countTable, effects: [], mode: 'real' };
 

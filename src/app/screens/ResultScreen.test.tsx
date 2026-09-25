@@ -2,16 +2,15 @@ import { act, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { PlayLogEntry } from '../../game/session';
-import { fixtureAppData } from '../../test/fixtures/appData';
+import { FIXTURE_FINAL, FIXTURE_TITLE, fixtureSituation } from '../../test/fixtures/appData';
 import { fakePlatform, renderWithGame } from '../../test/gameHarness';
 import type { TmiEntry } from '../../types/domain';
 import type { Platform } from '../platform';
 import { ResultScreen } from './ResultScreen';
-import { situationFromScene } from '../../game';
 
 const SLOW = { timeout: 120_000 };
 const WAIT = { timeout: 90_000 };
-const SCENE = fixtureAppData.scenes[0]; // 9회말 2사 만루 4:4, 원정 KIA · 홈 롯데, 홈타자6 vs 원정투수
+const SCENE = fixtureSituation; // 9회말 2사 만루 4:4, 원정 KIA · 홈 롯데, 홈타자6 vs 원정투수
 
 const JJAJANG: TmiEntry = {
   id: 'tmi-1',
@@ -42,7 +41,7 @@ async function finishedResult(opts: { tmis?: TmiEntry[]; platform?: Platform } =
   const after = { ...SCENE.state, bases: 0, home: 8 };
   await act(async () => {
     const { dispatch } = view.game();
-    dispatch({ type: 'openSituation', situation: situationFromScene(SCENE), extra: { title: SCENE.title, actualFinal: { away: SCENE.away.final, home: SCENE.home.final } }, seed: 7, tmis: opts.tmis });
+    dispatch({ type: 'openSituation', situation: SCENE, extra: { title: FIXTURE_TITLE, actualFinal: { away: FIXTURE_FINAL.away, home: FIXTURE_FINAL.home } }, seed: 7, tmis: opts.tmis });
     dispatch({ type: 'paFinished', entry: WALKOFF, state: after });
     dispatch({ type: 'gameFinished', winner: 'home', walkoff: true, state: after });
   });
@@ -56,8 +55,8 @@ async function stoppedResult() {
     const { dispatch } = view.game();
     dispatch({
       type: 'openSituation',
-      situation: situationFromScene(SCENE),
-      extra: { title: SCENE.title, actualFinal: { away: SCENE.away.final, home: SCENE.home.final } },
+      situation: SCENE,
+      extra: { title: FIXTURE_TITLE, actualFinal: { away: FIXTURE_FINAL.away, home: FIXTURE_FINAL.home } },
       seed: 7,
     });
     dispatch({ type: 'paFinished', entry: { ...WALKOFF, headline: '삼진', score: { away: 4, home: 4 } }, state: after });
@@ -147,18 +146,18 @@ describe('ResultScreen', () => {
     expect(s.status).toBe('ready');
     expect(s.log).toHaveLength(0);
     expect(s.tmis).toHaveLength(1);
-    expect(window.location.hash).toBe('#/scene/fixture-walkoff');
+    expect(window.location.hash).toBe('#/pa/20260815HTLT02026/71');
   });
 
-  it('"결과 카드 공유"는 TMI가 담긴 장면 링크를 공유하고 결과를 알려 준다', SLOW, async () => {
+  it('"결과 카드 공유"는 TMI가 담긴 타석 링크를 공유하고 결과를 알려 준다', SLOW, async () => {
     const user = userEvent.setup();
     const shareLink = vi.fn(async () => 'copied' as const);
     await finishedResult({ tmis: [JJAJANG], platform: fakePlatform({ shareLink }) });
     await user.click(screen.getByRole('button', { name: '결과 카드 공유' }));
     expect(shareLink).toHaveBeenCalledTimes(1);
     const [url, title] = shareLink.mock.calls[0] as unknown as [string, string];
-    expect(url).toMatch(/#\/scene\/fixture-walkoff\?t=/);
-    expect(title).toBe(`TMI 야구 — ${SCENE.title}`);
+    expect(url).toMatch(/#\/pa\/20260815HTLT02026\/71\?t=/);
+    expect(title).toBe(`TMI 야구 — ${FIXTURE_TITLE}`);
     expect(await screen.findByText('링크를 복사했어요.')).toBeInTheDocument();
   });
 });

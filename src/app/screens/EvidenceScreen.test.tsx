@@ -1,6 +1,6 @@
 import { act, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { fixtureAppData } from '../../test/fixtures/appData';
+import { FIXTURE_FINAL, fixtureAppData, fixtureSituation } from '../../test/fixtures/appData';
 import { renderWithGame } from '../../test/gameHarness';
 import type { AppData, EvidenceData, EvidenceItem } from '../../types/data';
 import { EvidenceScreen } from './EvidenceScreen';
@@ -77,12 +77,12 @@ describe('EvidenceScreen', () => {
     expect(screen.queryByText(/^진짜 효과 \d+개/)).toBeNull();
   });
 
-  it('"장면으로 돌아가기"는 열린 장면이 없으면 첫 화면, 있으면 그 장면으로 간다', async () => {
+  it('"장면으로 돌아가기"는 열린 타석이 없으면 첫 화면, 있으면 그 타석으로 간다', async () => {
     const { game } = renderEvidence();
     expect(screen.getByRole('link', { name: '장면으로 돌아가기' })).toHaveAttribute('href', '#/');
     await act(async () => {
-      await game().actions.openScene('fixture-walkoff', null);
+      await game().actions.openSituation(fixtureSituation, { actualFinal: { ...FIXTURE_FINAL } }, null);
     });
-    expect(screen.getByRole('link', { name: '장면으로 돌아가기' })).toHaveAttribute('href', '#/scene/fixture-walkoff');
+    expect(screen.getByRole('link', { name: '장면으로 돌아가기' })).toHaveAttribute('href', '#/pa/20260815HTLT02026/71');
   });
 });

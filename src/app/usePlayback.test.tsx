@@ -3,7 +3,7 @@ import { useEffect, type ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { createLocalEngineClient, type PlayLogEntry, type PlayoutRequest } from '../game';
 import type { PitchPlayback, StageController } from '../stage';
-import { fixtureAppData } from '../test/fixtures/appData';
+import { FIXTURE_FINAL, fixtureAppData, fixtureSituation } from '../test/fixtures/appData';
 import { fakePlatform } from '../test/gameHarness';
 import type { GameState, TmiEntry } from '../types/domain';
 import { GameProvider, useGame, type GameContextValue } from './GameProvider';
@@ -12,7 +12,7 @@ import { usePlayback } from './usePlayback';
 
 /** createGame·재생은 수백 ms~수 초가 걸린다 */
 const SLOW = { timeout: 30_000 };
-const SCENE = fixtureAppData.scenes[0];
+const SCENE = fixtureSituation;
 const noSleep = async () => undefined;
 
 /** 호출을 기록하는 가짜 StageController. hold면 playPitch가 release() 때까지 기다린다 */
@@ -65,7 +65,7 @@ type Rendered = ReturnType<typeof renderPlayback>['result'];
 
 async function openScene(result: Rendered) {
   await act(async () => {
-    await result.current.game.actions.openScene(SCENE.id, null);
+    await result.current.game.actions.openSituation(fixtureSituation, { actualFinal: { ...FIXTURE_FINAL } }, null);
   });
 }
 
@@ -289,7 +289,7 @@ describe('usePlayback', () => {
       return box.game;
     };
     await act(async () => {
-      await game().actions.openScene(SCENE.id, null);
+      await game().actions.openSituation(fixtureSituation, { actualFinal: { ...FIXTURE_FINAL } }, null);
     });
     let running: Promise<void> = Promise.resolve();
     act(() => {

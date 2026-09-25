@@ -10,8 +10,8 @@ import {
   transitions,
   type Evaluation,
 } from '../engine';
-import { fixtureAppData } from '../test/fixtures/appData';
-import type { AppData, PitchRow, SceneRecord } from '../types/data';
+import { AP_ROWS, fixtureAppData, fixtureSetup, fixtureSituation } from '../test/fixtures/appData';
+import type { PitchRow, Situation } from '../types/data';
 import type { EventIndex, GameState, PitchCode, Transition } from '../types/domain';
 import {
   countBucket,
@@ -25,12 +25,11 @@ import {
   samplePitchCode,
   stageSceneFor,
 } from './playback';
-import { buildSceneSetup } from './scene';
+import { buildSituationSetup } from './situation';
 
-const setup = buildSceneSetup(fixtureAppData, 'fixture-walkoff');
+const setup = fixtureSetup();
 /** 9회말 2사 만루 4:4, h6(좌타) vs ap(우투) */
 const START = setup.situation.state;
-const AP_ROWS = fixtureAppData.pitches.byPitcher.ap;
 /** 9회말이 끝난 뒤 10회초: a4(우타) vs 홈 불펜 */
 const TENTH_TOP = startNextHalf({ ...START, outs: 3, bases: 0 });
 
@@ -191,30 +190,19 @@ describe('pickPitchRow', () => {
 describe('pitchRowsFor', () => {
   const { pitches } = fixtureAppData;
 
-  it('시즌 표본이 있으면 그것, 없거나 비었으면 투수 손 기준 리그 표본', () => {
-    expect(pitchRowsFor(fixtureAppData, setup, 'ap', 'R')).toBe(pitches.byPitcher.ap);
+  it('그 경기 표본이 없으면 투수 손 기준 리그 표본이다', () => {
+    // 번들에는 투수별 표본이 없다(ADR-035). 그 경기 투구는 /api/game이 돌려준다
+    expect(pitchRowsFor(fixtureAppData, setup, 'ap', 'R')).toBe(pitches.pools.R);
     expect(pitchRowsFor(fixtureAppData, setup, 'LT-pen', 'L')).toBe(pitches.pools.L);
-    expect(pitchRowsFor(fixtureAppData, setup, 'LT-pen', 'R')).toBe(pitches.pools.R);
-    const empty: AppData = { ...fixtureAppData, pitches: { ...pitches, byPitcher: { ...pitches.byPitcher, ap: [] } } };
-    expect(pitchRowsFor(empty, setup, 'ap', 'R')).toBe(pitches.pools.R);
   });
 
-  it('그 경기에서 던진 공이 넉넉하면 그것을 먼저 쓴다', () => {
-    // 시즌 표본(pitches.byPitcher)은 step 10에서 비운다. 그 뒤에는 이 경로만 남는다
+  it('그 경기에서 던진 공이 넉넉하면 그것만 쓴다', () => {
     const own = Array.from({ length: MIN_GAME_ROWS }, () => AP_ROWS[0]);
     const withGame = { ...setup, gameRows: { ap: own } };
     expect(pitchRowsFor(fixtureAppData, withGame, 'ap', 'R')).toBe(own);
   });
 
-  it('그 경기 공이 모자라면 시즌 표본과 합친다', () => {
-    const own = [AP_ROWS[0], AP_ROWS[1]];
-    const withGame = { ...setup, gameRows: { ap: own } };
-    const rows = pitchRowsFor(fixtureAppData, withGame, 'ap', 'R');
-    expect(rows.length).toBe(own.length + pitches.byPitcher.ap.length);
-    expect(rows[0]).toBe(own[0]);
-  });
-
-  it('합쳐도 모자라면 리그 표본을 뒤에 붙인다', () => {
+  it('모자라면 리그 표본을 뒤에 붙인다', () => {
     const own = [AP_ROWS[0]];
     const withGame = { ...setup, gameRows: { 'LT-pen': own } };
     const rows = pitchRowsFor(fixtureAppData, withGame, 'LT-pen', 'R');
@@ -275,14 +263,14 @@ describe('stageSceneFor', () => {
   });
 
   it('좌투 장면 투수면 throws L이고 스위치 타자는 우타석', () => {
-    const lefty: SceneRecord = {
-      ...fixtureAppData.scenes[0],
+    const lefty: Situation = {
+      ...fixtureSituation,
       id: 'fixture-lefty',
       batter: 'a5',
       pitcher: 'hp',
       state: { ...START, half: 0, slotAway: 4 },
     };
-    const s = buildSceneSetup({ ...fixtureAppData, scenes: [lefty] }, lefty.id);
+    const s = buildSituationSetup(fixtureAppData.core, lefty);
     expect(stageSceneFor(s, lefty.state)).toEqual({
       bat: { color: '#F0474B', home: false, bats: 'R' },
       fld: { color: '#5C8DF6', home: true, throws: 'L' },
@@ -310,7 +298,9 @@ describe('playbackFor', () => {
   it('타석이 이어지는 공: 투구 행·결과·번호·속도·타석 방향만 담고 결과 연출은 없다', () => {
     const r = scripted([0]);
     const pb = playbackFor(args({ code: 'B', balls: 1, strikes: 1, number: 3, fast: true, r }));
-    expect(pb).toEqual({ row: pickPitchRow(AP_ROWS, 'B', 1, 1, 'L', () => 0), code: 'B', number: 3, fast: true, bats: 'L', play: null });
+    // 번들에 투수별 표본이 없으므로 우투 리그 풀에서 고른다(ADR-035)
+    const pool = fixtureAppData.pitches.pools.R;
+    expect(pb).toEqual({ row: pickPitchRow(pool, 'B', 1, 1, 'L', () => 0), code: 'B', number: 3, fast: true, bats: 'L', play: null });
     expect(pb.row).not.toBeNull();
     expect(r.used()).toBe(1);
   });
@@ -327,7 +317,7 @@ describe('playbackFor', () => {
       basesAfter: after.bases,
       banner: { text: '끝내기 만루 홈런!', tone: 'big' },
     });
-    expect(pb.row).toBe(pickPitchRow(AP_ROWS, 'X', 1, 1, 'L', () => 0));
+    expect(pb.row).toBe(pickPitchRow(fixtureAppData.pitches.pools.R, 'X', 1, 1, 'L', () => 0));
   });
 
   it('삼진·볼넷은 play가 null이고, 톤은 끝내기일 때 big', () => {

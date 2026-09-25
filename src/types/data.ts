@@ -33,7 +33,7 @@ export type PitchRow = [
 ];
 
 /*
- * 되돌려볼 수 있는 한 타석(ADR-016). 실시간·지난 경기·직접 만들기가 모두 이 모양으로 모여 같은 타석 화면으로 들어간다.
+ * 되돌려볼 수 있는 한 타석(ADR-016·032). 지난 경기의 어떤 타석이든 이 모양으로 모여 같은 타석 화면으로 들어간다.
  * 'custom'은 ARCHITECTURE의 계약이라 갈래만 남겨 두고 이번 범위에서는 만들지 않는다(ADR-032).
  */
 export type SituationKind = 'live' | 'past' | 'custom';
@@ -61,42 +61,6 @@ export interface Situation {
   context: { tempC: number | null; windMs: number | null; dayGame: boolean; dome: boolean };
 }
 
-export interface SceneTeam {
-  code: TeamCode;
-  name: string;
-  final: number;
-}
-
-export interface SceneRecord {
-  id: string;
-  source: 'curated' | 'auto';
-  title: string;
-  /** YYYY-MM-DD */
-  date: string;
-  stadium: string;
-  away: SceneTeam;
-  home: SceneTeam;
-  state: GameState;
-  batter: string;
-  pitcher: string;
-  /** 타순 0~8의 player id */
-  lineups: { away: string[]; home: string[] };
-  /** 실제 결과의 |WPA|(네이버 wpaByPlate 절댓값, %p). 장면 선정용이며 화면에 표시하지 않는다(ADR-014) */
-  leverage: number;
-  /** 0~1 */
-  naverWpBeforeHome: number | null;
-  actual: {
-    result: string;
-    event: EventIndex;
-    runs: number;
-    notes: string[];
-    pitches: PitchRow[];
-    /** 0~1 */
-    wpAfterHome: number | null;
-  };
-  context: { tempC: number | null; windMs: number | null; dayGame: boolean; dome: boolean };
-}
-
 export interface CoreData {
   meta: { season: number; relayRange: [string, string]; relayGames: number; generatedAt: string; sources: string[] };
   /** 길이 7 리그 타석 결과 비율 */
@@ -110,8 +74,10 @@ export interface CoreData {
 
 export interface PitchData {
   pitchTypes: string[];
-  byPitcher: Record<string, PitchRow[]>;
-  /** 투수 손 기준 리그 투구 표본 */
+  /**
+   * 투수 손 기준 리그 투구 표본(ADR-035).
+   * 투수별 표본은 담지 않는다: `/api/game`이 그 경기 실제 투구를 돌려주고, 모자라면 이 풀로 떨어진다.
+   */
   pools: { L: PitchRow[]; R: PitchRow[] };
 }
 
@@ -153,7 +119,6 @@ export interface TrustData {
 export interface AppData {
   core: CoreData;
   pitches: PitchData;
-  scenes: SceneRecord[];
   evidence: EvidenceData | null;
   trust: TrustData | null;
 }

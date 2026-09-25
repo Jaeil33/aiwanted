@@ -98,9 +98,9 @@ export function pickPitchRow(
 export const MIN_GAME_ROWS = 12;
 
 /**
- * 투수의 투구 표본. 그 경기에서 실제로 던진 공(setup.gameRows)이 넉넉하면 그것,
- * 모자라면 시즌 표본(pitches.byPitcher)과 합치고, 그래도 모자라면 투수 손 기준 리그 표본을 뒤에 붙인다.
- * 시즌 표본은 step 10에서 비운다(ADR-035): 그 뒤에는 경기 표본 → 리그 표본만 남는다.
+ * 투수의 투구 표본. 그 경기에서 실제로 던진 공(`setup.gameRows`)이 `MIN_GAME_ROWS` 이상이면 그것,
+ * 모자라면 투수 손 기준 리그 표본을 뒤에 붙인다.
+ * 번들에는 투수별 표본이 없다(ADR-035): 그 경기 투구는 `/api/game`이 돌려준다.
  */
 export function pitchRowsFor(
   data: AppData,
@@ -108,13 +108,10 @@ export function pitchRowsFor(
   pitcherId: string,
   throws: 'L' | 'R',
 ): readonly PitchRow[] {
-  const { byPitcher, pools } = data.pitches;
+  const { pools } = data.pitches;
   const own = Object.hasOwn(setup.gameRows, pitcherId) ? setup.gameRows[pitcherId] : [];
   if (own.length >= MIN_GAME_ROWS) return own;
-  const season = Object.hasOwn(byPitcher, pitcherId) ? byPitcher[pitcherId] : [];
-  if (own.length === 0) return season.length > 0 ? season : pools[throws];
-  const merged = [...own, ...season];
-  return merged.length >= MIN_GAME_ROWS ? merged : [...merged, ...pools[throws]];
+  return own.length === 0 ? pools[throws] : [...own, ...pools[throws]];
 }
 
 /** 타석 결과 한 줄 (app.js headline): "끝내기 만루 홈런!", "밀어내기 볼넷", "병살타", "2타점 적시타" … */

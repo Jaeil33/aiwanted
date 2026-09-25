@@ -3,11 +3,10 @@ import { useState } from 'react';
 import { describe, expect, it } from 'vitest';
 import type { GaugeLike } from '../game';
 import type { SparkPoint } from '../game/broadcast';
-import { fixtureAppData } from '../test/fixtures/appData';
+import { FIXTURE_FINAL, fixtureSituation } from '../test/fixtures/appData';
 import { renderWithGame } from '../test/gameHarness';
 import { useSparkHistory } from './useSparkHistory';
 
-const SCENE = fixtureAppData.scenes[0];
 const g = (winHome: number): GaugeLike => ({ batterWin: 0.4, inningScore: 0.3, expRuns: 0.8, winHome, tie: 0.1, winAway: 0.9 - winHome });
 
 type Input = { gauge: GaugeLike | null; pending: boolean };
@@ -28,7 +27,7 @@ describe('useSparkHistory', () => {
   it('새 게이지마다 한 점(타석 번호·반이닝), 같은 게이지·계산 중에는 찍지 않는다', async () => {
     const { view, box } = setup();
     await act(async () => {
-      await view.game().actions.openScene(SCENE.id, null);
+      await view.game().actions.openSituation(fixtureSituation, { actualFinal: { ...FIXTURE_FINAL } }, null);
     });
     const first = g(0.6);
     act(() => box.set({ gauge: first, pending: false }));
@@ -45,7 +44,7 @@ describe('useSparkHistory', () => {
   it('처음부터 다시 하면(판 seed가 바뀌면) 지난 판의 점을 버리고 지금 게이지부터 다시 쌓는다', async () => {
     const { view, box } = setup();
     await act(async () => {
-      await view.game().actions.openScene(SCENE.id, null);
+      await view.game().actions.openSituation(fixtureSituation, { actualFinal: { ...FIXTURE_FINAL } }, null);
     });
     act(() => box.set({ gauge: g(0.6), pending: false }));
     act(() => box.set({ gauge: g(0.62), pending: false }));

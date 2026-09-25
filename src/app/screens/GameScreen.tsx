@@ -1,5 +1,5 @@
 import { useId, type CSSProperties } from 'react';
-import { weekdayOf } from '../../components/SituationCard';
+import { weekdayOf } from '../../domain/format';
 import { nameMapOf } from '../../domain/players';
 import { TEAMS, isTeamCode } from '../../domain/teams';
 import { halfBlocks, paList, scoreText, type PaListRow } from '../../game';

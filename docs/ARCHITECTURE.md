@@ -38,12 +38,12 @@ phases/                     # 하네스 step 정의
 네이버 일정·중계 → data/raw/naver/{schedule,relay}/ (collect, 로컬에서만)
 data/raw/naver/stats/stats_2026_{HITTER,PITCHER}_all.json
 data/raw/weather/                                  Open-Meteo 기록 캐시
-  → snapshot      → data/build/app/core.json(전체 선수·불펜·팀 기본 타선), pitches.json(투수당 최대 48행 + 리그 풀)
+  → snapshot      → data/build/app/core.json(2026 전 선수·10구단 불펜), pitches.json(좌·우 리그 투구 풀만)
   → matchups      → data/build/app/matchups.json(수집한 경기의 타석 색인)
   → context·evidence·trust_states → evidence.json, trust.json (그대로)
 
 [서버리스 (Vercel, icn1)]
-GET  /api/games?date=YYYY-MM-DD → 네이버 일정 → GameSummary[]                       s-maxage=60
+GET  /api/games?date= 또는 ?from=&to=(최대 45일) → 네이버 일정 → GameSummary[]        s-maxage=60
 GET  /api/game?id=<gameId>      → 네이버 relay(최신 이닝 + 빠진 이닝) → src/live 파서 → LiveGame
                                   진행 중 s-maxage=5 · 경기 전 60 · 끝남 86400, 인스턴스 안 같은 경기 요청 합치기
 POST /api/tally {gameId|null, keys} → Upstash Redis REST INCR (TTL 2일)
@@ -51,13 +51,15 @@ GET  /api/tally?gameId=         → 상위 5개 TallyRow                        
 POST /api/interpret, /api/verdict → Anthropic Messages API (키가 없으면 503 → 규칙)
 
 [브라우저]
-로비: /api/games(오늘) · /api/tally · 지난 경기 날짜 고르기 · 매치업 찾기(matchups.json 지연 로드)
-경기: useLiveGame(/api/game 폴링) → PaRecord 목록(최신순)
-상황 만들기: situationFromPa(LiveGame, no) | customSituation(core, CustomForm) → Situation
-타석 화면: buildSituationSetup(core, situation) → engineClient.evaluate(TMI 없음·TMI·TMI 만화)
-          → gaugesAtCount(situation.count) → headline selectors(그 결과 확률·1,000타석·경기 승률 한 줄·만화 한 줄)
-TMI: ai.interpretTmi(provider) → normalize | rules → TmiEntry → /api/tally(효과 키만)
-쳐보기: usePaPlayback(시드 난수 생성기 하나) → samplePitchCode → pickPitchRow(그 경기 그 투수 행 | pitches.json | 리그 풀) → createTracker.throwPitch
+홈(#/): useGames(최근 2주) → recentFinished → useLiveGame ×3 → paList(승부처) 피드
+팀(#/team/:code?m=): useGames(그 달) → calendarWeeks(상대 팀·승패 한 글자) → 날짜를 누르면 경기 카드
+경기(#/game/:gameId): useLiveGame → paList(승부처 + 반이닝별 전 타석). 타석 결과는 싣지 않는다
+상황 만들기: situationFromPa(LiveGame, no, kind) → Situation (customSituation은 아직 없다)
+타석 화면(#/pa/:gameId/:no): buildSituationSetup(core, situation, extra) → engineClient.evaluate(TMI 없음·TMI·TMI 만화)
+          → gaugesAtCount(count) → broadcast.tierReadout(경기·이닝·타석 3단)
+TMI: ai.interpretTmi(provider) → normalize | rules → TmiEntry(건 타석·대상 함께) → /api/tally(효과 키만)
+쳐보기: usePlayback(시드 난수 생성기 하나) → samplePitchCode → pickPitchRow(그 경기 그 투수 행 | 리그 풀) → tracker.playPitch
+이어가기: 타석이 끝나면 직접 이어 치기 · 경기 끝까지(playout) · 여기까지 보기 가운데 고른다(ADR-033)
 진짜야?: ai.judgeTmi(provider, lookupEvidence 도구) → Verdict
 ```
 
@@ -149,7 +151,7 @@ export interface MatchupIndex {
 export type TallyKey = string;
 export interface TallyRow { key: TallyKey; count: number }
 ```
-- `situationFromPa(game, no)`: count 0-0, `before` 상태, 그 타석 타선·투수, `actual`은 `event`가 null이 아니고 `complete`일 때만 채운다(아니면 되돌려보기 불가로 표시). `dayGame`은 시작 17:00 이전, `dome`은 고척.
+- `situationFromPa(game, no, kind)`: count 0-0, `before` 상태, 그 타석 타선·투수, `actual`은 `event`가 null이 아니고 `complete`일 때만 채운다(아니면 되돌려보기 불가로 표시). `dayGame`은 시작 17:00 이전, `dome`은 고척. **`tempC`·`windMs`는 null이다**: 임의의 지난 경기 날씨를 앱에 줄 경로가 아직 없다(19-season step 10).
 - `customSituation(core, form)`: 타선은 `core.teamLineups[팀]`(없으면 그 팀 타석 수 상위 9명)으로 채우고 고른 타자를 `slot`에 넣는다(이미 있으면 자리를 바꾼다). 공격 팀 slot = `form.slot`, 수비 팀 slot = 0.
 - 선수 조회: 타자는 `<id>:H` 키를 먼저, 투수는 `<id>` 키를 본다. 기록이 없으면 rel 1(리그 평균).
 

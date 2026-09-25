@@ -7,7 +7,6 @@ import {
   initialSession,
   measuredAvailable,
   sessionReducer,
-  situationFromScene,
   type EngineClient,
   type SessionAction,
   type SessionState,
@@ -22,8 +21,6 @@ import type { Platform } from './platform';
 export interface GameActions {
   /** 상황(되돌려볼 한 타석)을 연다. 같은 상황의 공유 값이 있으면 모드를 정하고 TMI를 순서대로 건다 */
   openSituation(situation: Situation, extra: SituationExtra, share: SharePayload | null): Promise<void>;
-  /** 골라 둔 장면을 연다(장면 경로는 step 10에서 사라진다). 모르는 id는 무시 */
-  openScene(sceneId: string, share: SharePayload | null): Promise<void>;
   /** TMI 한 줄을 해석해 붙인다. 편집이 잠겼거나 해석 중이거나 3개면 AI를 부르지 않는다 */
   submitTmi(text: string): Promise<void>;
   removeTmi(id: string): void;
@@ -215,14 +212,6 @@ export function GameProvider({ data, platform, children }: { data: AppData; plat
       }
     }
 
-    async function openScene(sceneId: string, share: SharePayload | null): Promise<void> {
-      const scene = latest.current.data.scenes.find((x) => x.id === sceneId);
-      if (!scene) return;
-      await openSituation(situationFromScene(scene), {
-        title: scene.title,
-        actualFinal: { away: scene.away.final, home: scene.home.final },
-      }, share);
-    }
 
     function removeTmi(id: string): void {
       const s = stateRef.current;
@@ -278,7 +267,7 @@ export function GameProvider({ data, platform, children }: { data: AppData; plat
       dispatch({ type: 'stopHere' });
     }
 
-    return { openSituation, openScene, submitTmi, removeTmi, setMode, judge, resetPlay, stopHere };
+    return { openSituation, submitTmi, removeTmi, setMode, judge, resetPlay, stopHere };
   }, [dispatch]);
 
   const value = useMemo<GameContextValue>(

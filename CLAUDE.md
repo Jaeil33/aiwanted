@@ -18,6 +18,8 @@
 - 배포(Vercel, https://aiwanted.vercel.app)에서 AI 해석이 켜지려면 환경변수 두 개가 **새 배포와 함께** 들어가야 한다: 빌드 변수 `VITE_AI_API_BASE`(`/api`, 없으면 `apiBase` null이라 브라우저가 `/api`를 아예 안 부른다)와 함수 변수 `ANTHROPIC_API_KEY`. 저장만으로는 기존 배포에 적용되지 않는다(ADR-028·ADR-029). 키를 workspace 밖(조직 단위)에서 발급했다면 `ANTHROPIC_WORKSPACE_ID`도 함께 넣는다. 없으면 모든 호출이 400이다(ADR-030).
 - Anthropic 모델 이름은 날짜 접미사 없는 별칭을 쓴다(해석 `claude-haiku-4-5`, 판정 `claude-sonnet-5`). 날짜가 붙은 이름은 404가 날 수 있다.
 - CRITICAL: 네이버 API는 `api/_lib/naver.ts`에서만 부른다. 브라우저에서 직접 부르지 말고, 원문 대신 `LiveGame`·`GameSummary` 요약만 돌려준다(ADR-017).
+- 앱의 주 경로는 2026 시즌 전체 탐색이다(ADR-032): 홈(추천 승부처) → 팀 달력 → 경기 타석 목록 → 타석. 골라 둔 명장면(`scenes.json`)은 없앴다. 어떤 타석이든 `/api/game`으로 연다.
+- 브라우저 저장소에는 응원팀 코드 한 값(`tmi.team`)만 둔다(ADR-034). 그 밖의 값은 URL 해시에 둔다.
 - 인기 TMI 집계에는 효과 키만 저장한다. TMI 문장·IP·기기 정보는 저장하지 마라(ADR-022).
 - 실존 선수에 대한 범죄·음주·도박·폭력·질병·부상·사망·사생활·성적 내용·비하 TMI는 계산하지 않고 거부한다.
 - 확률을 보여주는 곳에는 근거 등급(실측/그럴듯함/상상)을 함께 둔다. 만화 모드 값은 모드 라벨("만화 ×6", "만화 모드 · 효과 6배 과장")과 함께만 보여준다(ADR-025).
@@ -37,7 +39,7 @@ npm run dev             # 개발 서버 (/api도 Vite 미들웨어로 함께 뜬
 npm run build           # 타입 검사 + 프로덕션 빌드
 npm run build:vercel    # build + api 함수 번들 → .vercel/output (Vercel 빌드 명령, ADR-024, 14-live-data step 3 이후)
 npm run check:vercel    # .vercel/output 함수 번들 스모크 점검(네트워크 없음)
-npm run build:artifact  # 단일 HTML 빌드 (dist-artifact/index.html)
+npm run build:artifact  # 단일 HTML 빌드 (dist-artifact/index.html). 서버가 없어 경기를 못 부른다 — UI 미리보기용
 npm run lint            # ESLint
 npm run test            # Vitest + pytest(pipeline, scripts)
 npm run collect         # 네이버 일정·중계 수집 → data/raw (15-data-v2 이후, 로컬 전용)

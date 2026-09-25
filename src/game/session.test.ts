@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { fixtureAppData } from '../test/fixtures/appData';
+import { fixtureSituation } from '../test/fixtures/appData';
 import type { Situation } from '../types/data';
 import type { GameState, PitchCode, TmiEntry, VerdictResult } from '../types/domain';
 import {
@@ -13,11 +13,10 @@ import {
   type SessionAction,
   type SessionState,
 } from './session';
-import { situationFromScene } from './situation';
 
-const SCENE = fixtureAppData.scenes[0];
+const SCENE = fixtureSituation;
 const START: GameState = SCENE.state;
-const SITUATION: Situation = situationFromScene(SCENE);
+const SITUATION: Situation = SCENE;
 const otherSituation = (state: GameState): Situation => ({ ...SITUATION, id: 'other-situation', state });
 
 const reduce = (s: SessionState, ...actions: SessionAction[]): SessionState => actions.reduce(sessionReducer, s);

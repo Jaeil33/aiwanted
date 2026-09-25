@@ -11,7 +11,6 @@ import type { Platform } from './platform';
 
 const SOURCES = '기록·중계: 네이버 스포츠(KBO) · 날씨: Open-Meteo · 확률: TMI 야구 엔진 계산값';
 const TAGLINE = '쓸모없는 변수, 진짜 쓸모없을까?';
-const SCENE = fixtureAppData.scenes[0];
 const LIVE_GAME = fixtureLiveGame();
 const SEASON_GAMES = [{ ...fixtureGameSummaries()[2], gameId: '20260814HTLT02026', date: '2026-08-14' }];
 /** 시즌 탐색이 도는 플랫폼: 일정 하나, 경기 하나 */
@@ -126,22 +125,20 @@ describe('App', () => {
   });
 
   it('타석 해시로 들어오면 GameFrame(머리말·탭바·출처 없음)에 그 타석을 연다', async () => {
-    goto('#/scene/fixture-walkoff');
-    render(<App data={fixtureAppData} />);
-    const title = await screen.findByRole('heading', { level: 2, name: SCENE.title });
+    goto(`#/pa/${LIVE_GAME.summary.gameId}/3`);
+    render(<App data={fixtureAppData} platformPromise={Promise.resolve(seasonPlatform())} />);
+    expect(await screen.findByRole('group', { name: '스코어버그' }, { timeout: 90_000 })).toBeInTheDocument();
     expectGameFrame();
-    expect(screen.getByRole('main')).toContainElement(title);
-    expect(screen.getByRole('group', { name: '스코어버그' })).toBeInTheDocument();
-  });
+  }, 120_000);
 
   it('결과 해시(#/result)는 열린 타석으로 돌려보내고, 열린 타석이 없으면 첫 화면으로 보낸다', async () => {
-    goto('#/scene/fixture-walkoff');
-    const first = render(<App data={fixtureAppData} />);
-    expect(await screen.findByRole('heading', { level: 2, name: SCENE.title })).toBeInTheDocument();
+    goto(`#/pa/${LIVE_GAME.summary.gameId}/3`);
+    const first = render(<App data={fixtureAppData} platformPromise={Promise.resolve(seasonPlatform())} />);
+    await screen.findByRole('group', { name: '스코어버그' }, { timeout: 90_000 });
     act(() => {
       window.location.hash = '#/result';
     });
-    await waitFor(() => expect(window.location.hash).toBe('#/scene/fixture-walkoff'));
+    await waitFor(() => expect(window.location.hash).toBe(`#/pa/${LIVE_GAME.summary.gameId}/3`));
     first.unmount();
 
     goto('#/result');
@@ -149,7 +146,7 @@ describe('App', () => {
     await waitFor(() => expect(window.location.hash).toBe('#/'));
     expect(screen.getByText(TAGLINE)).toBeInTheDocument();
     expectMenuFrame();
-  });
+  }, 120_000);
 
   it('홈에서 응원팀 고르기로 간다', async () => {
     render(<App data={fixtureAppData} />);
@@ -162,9 +159,9 @@ describe('App', () => {
   });
 
   it('"경기 끝까지"로 판이 끝나면 결과 화면(GameFrame)으로 가고, 끝난 판이 있으면 결과 해시를 그대로 둔다', { timeout: 180_000 }, async () => {
-    goto('#/scene/fixture-walkoff');
-    render(<App data={fixtureAppData} />);
-    expect(await screen.findByRole('heading', { level: 2, name: SCENE.title })).toBeInTheDocument();
+    goto(`#/pa/${LIVE_GAME.summary.gameId}/3`);
+    render(<App data={fixtureAppData} platformPromise={Promise.resolve(seasonPlatform())} />);
+    await screen.findByRole('group', { name: '스코어버그' }, { timeout: 90_000 });
     const dock = screen.getByRole('navigation', { name: '다시 치르기' });
     await waitFor(() => expect(within(dock).getByRole('button', { name: '경기 끝까지' })).toBeEnabled(), { timeout: 60_000 });
     act(() => {
@@ -172,7 +169,7 @@ describe('App', () => {
     });
     await waitFor(() => expect(window.location.hash).toBe('#/result'), { timeout: 150_000 });
     expect(await screen.findByText('경기 종료 · 다시 치른 결과')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { level: 2, name: /^(KIA 승리|롯데 승리|무승부)$/ })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: /^(LG 승리|두산 승리|무승부)$/ })).toBeInTheDocument();
     // 결과 화면은 GameFrame이고, 출처 한 줄은 결과 카드 아래에 스스로 싣는다
     expect(document.querySelector(`.${styles.topbar}`)).toBeNull();
     expect(screen.queryByRole('navigation', { name: '주 메뉴' })).toBeNull();
@@ -180,10 +177,9 @@ describe('App', () => {
     expect(within(screen.getByRole('main')).getByText(SOURCES)).toBeInTheDocument();
   });
 
-  it('모르는 장면 해시는 첫 화면(MenuFrame)으로 보낸다', async () => {
-    goto('#/scene/nope');
+  it('모르는 해시는 첫 화면(MenuFrame)으로 보낸다', () => {
+    goto('#/nope/nope');
     render(<App data={fixtureAppData} />);
-    await waitFor(() => expect(window.location.hash).toBe('#/'));
     expect(screen.getByText(TAGLINE)).toBeInTheDocument();
     expectMenuFrame();
   });

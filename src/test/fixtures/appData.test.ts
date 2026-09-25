@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { MEASURED } from '../../domain/measured';
 import type { PitchRow } from '../../types/data';
-import { fixtureAppData } from './appData';
+import { AP_ROWS, HP_ROWS, fixtureAppData, fixtureSituation } from './appData';
 
 const sum = (xs: readonly number[]) => xs.reduce((a, b) => a + b, 0);
 
 describe('fixtureAppData', () => {
-  const { core, pitches, scenes, evidence, trust } = fixtureAppData;
-  const scene = scenes[0];
+  const { core, pitches, evidence, trust } = fixtureAppData;
+  const scene = fixtureSituation;
 
   it('리그 타석 결과 비율은 길이 7이고 합이 1', () => {
     expect(core.league).toHaveLength(7);
@@ -39,9 +39,8 @@ describe('fixtureAppData', () => {
     }
   });
 
-  it('장면은 fixture-walkoff: 9회말 2사 만루 동점, h6 대 ap, 실제 결과 만루 홈런', () => {
-    expect(scenes).toHaveLength(1);
-    expect(scene.id).toBe('fixture-walkoff');
+  it('상황은 9회말 2사 만루 동점, h6 대 ap, 실제 결과 만루 홈런', () => {
+    expect(scene.kind).toBe('past');
     expect(scene.state).toMatchObject({ inning: 9, half: 1, outs: 2, bases: 7, away: 4, home: 4 });
     expect(scene.batter).toBe('h6');
     expect(scene.pitcher).toBe('ap');
@@ -61,8 +60,8 @@ describe('fixtureAppData', () => {
     expect(core.players.hp?.throws).toBe('L');
   });
 
-  it('장면 투수의 투구 행이 10개 이상이고 code 0~4와 좌·우타가 모두 있다', () => {
-    const rows = pitches.byPitcher[scene.pitcher] ?? [];
+  it('투구 표본이 10개 이상이고 code 0~4와 좌·우타가 모두 있다', () => {
+    const rows = AP_ROWS;
     expect(rows.length).toBeGreaterThanOrEqual(10);
     expect(new Set(rows.map((r) => r[2]))).toEqual(new Set([0, 1, 2, 3, 4]));
     expect(new Set(rows.map((r) => r[5]))).toEqual(new Set([0, 1]));
@@ -72,10 +71,11 @@ describe('fixtureAppData', () => {
 
   it('모든 PitchRow는 길이 16이고 구종·카운트가 범위 안에 있다', () => {
     const rows: PitchRow[] = [
-      ...Object.values(pitches.byPitcher).flat(),
+      ...AP_ROWS,
+      ...HP_ROWS,
       ...pitches.pools.L,
       ...pitches.pools.R,
-      ...scene.actual.pitches,
+      ...(scene.actual?.pitches ?? []),
     ];
     for (const row of rows) {
       expect(row).toHaveLength(16);

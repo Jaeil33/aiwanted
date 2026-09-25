@@ -178,27 +178,6 @@ def _scene(scene_id, date, stadium, away, home, dome=False):
     }
 
 
-def test_enrich_scenes_weather_fills_start_hour_values(season_games, weather_by_stadium):
-    schedule = {g["gameId"]: g for g in season_games}
-    scenes = [
-        _scene("g1-57", "2026-04-03", "사직", "HT", "LT"),
-        _scene("fixture-pick", "2026-04-07", "잠실", "LT", "LG"),  # id에 경기 id가 없으면 날짜·팀이 하나로 맞는 경기(g4)
-        _scene("g5-12", "2026-04-08", "고척", "LT", "WO", dome=True),
-        _scene("by-date-only", "2026-04-11", "광주", "LT", "HT"),
-        _scene("unknown-1", "2026-05-01", "대구", "SS", "OB"),
-    ]
-    before = copy.deepcopy(scenes)
-    enriched = context.enrich_scenes_weather(scenes, weather_by_stadium, schedule)
-    assert scenes == before  # 입력은 그대로
-    ctx = {s["id"]: s["context"] for s in enriched}
-    assert (ctx["g1-57"]["tempC"], ctx["g1-57"]["windMs"]) == (15.4, 4.2)
-    assert (ctx["fixture-pick"]["tempC"], ctx["fixture-pick"]["windMs"]) == (17.5, None)
-    assert (ctx["g5-12"]["tempC"], ctx["g5-12"]["windMs"]) == (None, None)  # 돔
-    # 같은 날 같은 팀 더블헤더라 경기를 하나로 정할 수 없다 → 그대로
-    assert (ctx["by-date-only"]["tempC"], ctx["by-date-only"]["windMs"]) == (None, None)
-    assert (ctx["unknown-1"]["tempC"], ctx["unknown-1"]["windMs"]) == (None, None)
-    assert [s["id"] for s in enriched] == [s["id"] for s in scenes]
-
 
 def _write_month(raw_dir, name, games):
     path = raw_dir / "naver" / "schedule" / name
@@ -206,13 +185,15 @@ def _write_month(raw_dir, name, games):
     path.write_text(json.dumps({"result": {"games": games}}, ensure_ascii=False), encoding="utf-8")
 
 
-def test_context_stage_writes_rows_and_enriches_scenes(tmp_path, season_games, monkeypatch):
+def test_context_stage_writes_rows_and_leaves_app_files_alone(tmp_path, season_games, monkeypatch):
     raw, out = tmp_path / "raw", tmp_path / "build"
     _write_month(raw, "sched_full_2025-09.json", [g for g in season_games if g["gameDate"] < "2026"])
     _write_month(raw, "sched_full_2026-04.json", [g for g in season_games if g["gameDate"] >= "2026"])
+    # 옛 장면 파일이 남아 있어도 이 단계는 건드리지 않는다(ADR-032: 장면을 더 만들지 않는다)
     scenes_path = out / "app" / "scenes.json"
     scenes_path.parent.mkdir(parents=True)
-    scenes_path.write_text(json.dumps([_scene("g1-3", "2026-04-03", "사직", "HT", "LT")], ensure_ascii=False), encoding="utf-8")
+    before = json.dumps([_scene("g1-3", "2026-04-03", "사직", "HT", "LT")], ensure_ascii=False)
+    scenes_path.write_text(before, encoding="utf-8")
 
     requested = []
 
@@ -234,8 +215,8 @@ def test_context_stage_writes_rows_and_enriches_scenes(tmp_path, season_games, m
     assert summary["games_by_season"] == {"2025": 1, "2026": 7}
     assert summary["weather_missing_ratio"] == pytest.approx(sum(r["weather_missing"] for r in rows) / 16, abs=1e-4)
     assert summary["starter_rest_ratio"] == pytest.approx(sum(r["opp_starter_rest_days"] is not None for r in rows) / 16, abs=1e-4)
-    scenes = json.loads(scenes_path.read_text(encoding="utf-8"))
-    assert (scenes[0]["context"]["tempC"], scenes[0]["context"]["windMs"]) == (16.0, 2.5)
+    assert scenes_path.read_text(encoding="utf-8") == before
+    assert "scenes" not in summary
 
 
 def test_context_stage_without_scenes_file(tmp_path, season_games, monkeypatch):

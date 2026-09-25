@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { EV } from '../domain/events';
-import { fixtureAppData } from '../test/fixtures/appData';
+import { fixtureAppData, fixtureSituation } from '../test/fixtures/appData';
 import type { Bases, EventIndex } from '../types/domain';
 import { RMAX, halfInning, halfSummary } from './halfInning';
 import { matchup } from './matchup';
 import { createRng } from './rng';
 import { sampleEvent, sampleTransition } from './transitions';
 
-const { core, scenes } = fixtureAppData;
+const { core } = fixtureAppData;
 const LG = core.league;
 const ONES = [1, 1, 1, 1, 1, 1, 1];
 const N = 200_000;
@@ -121,7 +121,7 @@ describe('halfInning', () => {
   });
 
   it('픽스처 홈 타선·첫 타석 분포·2사 만루에서 시작해도 몬테카를로 20만 반이닝과 3σ 이내', () => {
-    const scene = scenes[0];
+    const scene = fixtureSituation;
     const pitcherRel = core.players[scene.pitcher].rel;
     const dists = scene.lineups.home.map((id) => matchup(core.players[id].rel, pitcherRel, LG));
     const firstDist = matchup(core.players[scene.batter].rel, pitcherRel, LG, [0.8, 1.2, 1.5, 1, 1.1, 1.1, 0.95]);

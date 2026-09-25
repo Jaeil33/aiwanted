@@ -2,11 +2,11 @@ import { act, render, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { SampleLike } from '../ai';
 import type { PlayLogEntry, SharePayload } from '../game';
-import { fixtureAppData } from '../test/fixtures/appData';
+import { FIXTURE_FINAL, fixtureAppData, fixtureSituation } from '../test/fixtures/appData';
 import { fakePlatform, renderWithGame } from '../test/gameHarness';
 import { sceneSeed, useGame } from './GameProvider';
 
-const SCENE = fixtureAppData.scenes[0];
+const SCENE = fixtureSituation;
 const HEAT = '오늘 폭염';
 const JJAJANG = '원정투수가 경기 전 짜장면 곱빼기를 먹었다';
 
@@ -40,7 +40,7 @@ function hangingSample() {
 
 async function openFixture(game: ReturnType<typeof renderWithGame>['game'], share: SharePayload | null = null) {
   await act(async () => {
-    await game().actions.openScene(SCENE.id, share);
+    await game().actions.openSituation(fixtureSituation, { actualFinal: { ...FIXTURE_FINAL } }, share);
   });
 }
 
@@ -101,13 +101,15 @@ describe('GameProvider', () => {
     expect(setup?.promptContext.situation).toBe('9회말 2사 만루');
   });
 
-  it('openScene: 모르는 장면 id는 무시한다', async () => {
+  it('openSituation: 다른 상황의 공유 값은 받지 않는다', async () => {
     const { game } = renderWithGame(null);
-    const before = game().session;
     await act(async () => {
-      await game().actions.openScene('nope', null);
+      await game().actions.openSituation(fixtureSituation, {}, { sceneId: 'other', texts: ['오늘 폭염'], mode: 'toon' });
     });
-    expect(game().session).toBe(before);
+    const s = game().session;
+    expect(s.situation?.id).toBe(fixtureSituation.id);
+    expect(s.tmis).toHaveLength(0);
+    expect(s.mode).toBe('real');
   });
 
   it('submitTmi: AI가 없으면 규칙 해석 entry를 tmi-1, tmi-2 순서로 붙인다', async () => {
@@ -230,7 +232,7 @@ describe('GameProvider', () => {
     await waitFor(() => expect(sample.json).toHaveBeenCalledTimes(1));
     expect(game().session.interpreting).toBe(true);
     await act(async () => {
-      await game().actions.openScene(SCENE.id, null);
+      await game().actions.openSituation(fixtureSituation, { actualFinal: { ...FIXTURE_FINAL } }, null);
       await pending;
     });
     expect(signals[0].aborted).toBe(true);

@@ -1,12 +1,12 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { weekdayOf } from '../components/SituationCard';
+import { useEffect, useState, type ReactNode } from 'react';
+import { weekdayOf } from '../domain/format';
 import { TabBar, type TabBarTab } from '../components/TabBar';
 import { APP_DATA } from '../data/appData';
 import type { AppData } from '../types/data';
 import styles from './App.module.css';
 import { GameProvider, useGame } from './GameProvider';
 import { localPlatform, type Platform } from './platform';
-import { formatRoute, routeForSituation, type Route } from './router';
+import { routeForSituation, type Route } from './router';
 import { AboutScreen } from './screens/AboutScreen';
 import { EvidenceScreen } from './screens/EvidenceScreen';
 import { GameScreen } from './screens/GameScreen';
@@ -128,36 +128,16 @@ function screenOf(route: Route): 'home' | 'play' | 'result' | 'evidence' | 'abou
 }
 
 /**
- * 해시 라우트 → 틀과 화면. 장면 라우트는 장면을 열고(같은 장면이 열려 있으면 그대로), 결과 해시는 끝난 판이 있으면 결과 화면,
- * 없으면 열린 상황으로, 모르는 장면은 첫 화면으로 되돌려 보낸다(되돌려 보내기는 방문 기록을 쌓지 않는다).
- * 타석 라우트(`#/pa/…`)는 PaScreen이 경기를 받아 직접 연다.
+ * 해시 라우트 → 틀과 화면. 타석 라우트(`#/pa/…`)는 PaScreen이 경기를 받아 직접 연다.
+ * 결과 해시는 끝난 판이 있으면 결과 화면, 없으면 열린 상황으로 되돌려 보낸다(방문 기록을 쌓지 않는다).
  */
 function Shell() {
-  const { data, session, dispatch, actions } = useGame();
+  const { session, dispatch } = useGame();
   const [route, setRoute] = useHashRoute();
-  /** 이미 열기를 요청한 장면 해시 (StrictMode에서 effect가 두 번 돌아도 한 번만 연다) */
-  const openedFor = useRef<string | null>(null);
   const situation = session.situation;
-  const openId = situation === null ? null : situation.id;
   const finished = session.final !== null;
 
   useEffect(() => {
-    if (route.screen === 'play') {
-      if (!data.scenes.some((scene) => scene.id === route.sceneId)) {
-        setRoute({ screen: 'home' }, { replace: true });
-        return;
-      }
-      const key = formatRoute(route);
-      if (openId === route.sceneId) {
-        openedFor.current = key;
-        dispatch({ type: 'navigate', screen: 'play' });
-        return;
-      }
-      if (openedFor.current === key) return;
-      openedFor.current = key;
-      void actions.openScene(route.sceneId, route.share);
-      return;
-    }
     if (route.screen === 'result') {
       if (situation !== null && finished) {
         dispatch({ type: 'navigate', screen: 'result' });
@@ -167,7 +147,7 @@ function Shell() {
       return;
     }
     dispatch({ type: 'navigate', screen: screenOf(route) });
-  }, [route, data, situation, openId, finished, dispatch, actions, setRoute]);
+  }, [route, situation, finished, dispatch, setRoute]);
 
   switch (route.screen) {
     case 'pa':
@@ -175,14 +155,6 @@ function Shell() {
         <GameFrame>
           <PaScreen gameId={route.gameId} no={route.no} share={route.share} />
         </GameFrame>
-      );
-    case 'play':
-      return data.scenes.some((scene) => scene.id === route.sceneId) ? (
-        <GameFrame>
-          <PlayScreen />
-        </GameFrame>
-      ) : (
-        <Home />
       );
     case 'result':
       if (situation === null) return <Home />;

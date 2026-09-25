@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { EV } from '../domain/events';
-import { fixtureAppData } from '../test/fixtures/appData';
+import { fixtureAppData, fixtureSituation } from '../test/fixtures/appData';
 import type { EventIndex, GameState, KnobPart, SceneContext, Transition } from '../types/domain';
 import { compileKnobPart } from './effects';
 import {
@@ -18,8 +18,8 @@ import {
 } from './game';
 import { transitions } from './transitions';
 
-const { core, scenes } = fixtureAppData;
-const SCENE = scenes[0];
+const { core } = fixtureAppData;
+const SCENE = fixtureSituation;
 const LG = core.league;
 const ONES = [1, 1, 1, 1, 1, 1, 1];
 const EVENTS: readonly EventIndex[] = [0, 1, 2, 3, 4, 5, 6];

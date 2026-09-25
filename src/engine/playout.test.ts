@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { EV } from '../domain/events';
-import { fixtureAppData } from '../test/fixtures/appData';
+import { fixtureAppData, fixtureSituation } from '../test/fixtures/appData';
 import type { GameState, KnobPart, SceneContext } from '../types/domain';
 import { compileKnobPart } from './effects';
 import { applyTransition, createGame, startNextHalf, type Game, type GameConfig, type LineupSlot, type TeamConfig } from './game';
@@ -8,8 +8,8 @@ import { expectedCounts, pickHighlights, playout, type PlayoutInput, type Playou
 import { createRng } from './rng';
 import { transitions } from './transitions';
 
-const { core, scenes } = fixtureAppData;
-const SCENE = scenes[0];
+const { core } = fixtureAppData;
+const SCENE = fixtureSituation;
 const LG = core.league;
 const TABLE = core.countTable;
 /** createGame·재생 수천 번은 수 초가 걸릴 수 있다 */

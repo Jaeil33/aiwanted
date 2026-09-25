@@ -1,10 +1,11 @@
 import { PITCH_TYPES } from '../../domain/events';
+import { buildSituationSetup, type SituationSetup } from '../../game';
 import type {
   AppData,
   BullpenRecord,
   PitchRow,
   PlayerRecord,
-  SceneRecord,
+  Situation,
   TeamCode,
 } from '../../types/data';
 
@@ -68,7 +69,8 @@ const bullpens: Record<string, BullpenRecord> = {
 // [type, speed, code, balls, strikes, stance, x0, z0, vx0, vy0, vz0, ax, ay, az, topSz, bottomSz]
 
 /** 원정투수 ap(우투, x0 < 0): code 0~4와 좌타(0)·우타(1)가 모두 들어 있다 */
-const AP_ROWS: PitchRow[] = [
+/** 우투 원정투수의 합성 투구 표본. 리그 풀(pools.R)의 원본이다 */
+export const AP_ROWS: PitchRow[] = [
   [0, 148, 0, 0, 0, 1, -1.52, 5.81, 5.1, -131.2, -5.3, -8.1, 28.4, -14.8, 3.42, 1.61],
   [3, 134, 1, 1, 0, 1, -1.48, 5.77, 4.2, -121.5, -3.9, 2.4, 25.1, -30.2, 3.42, 1.61],
   [0, 149, 3, 1, 1, 1, -1.55, 5.84, 5.4, -132, -5.6, -8.6, 28.9, -13.9, 3.42, 1.61],
@@ -84,7 +86,8 @@ const AP_ROWS: PitchRow[] = [
 ];
 
 /** 홈투수 hp(좌투, x0 > 0) */
-const HP_ROWS: PitchRow[] = [
+/** 좌투 홈투수의 합성 투구 표본. 리그 풀(pools.L)의 원본이다 */
+export const HP_ROWS: PitchRow[] = [
   [0, 142, 0, 0, 0, 1, 1.62, 5.95, -6.1, -127.4, -4.8, 7.9, 27.1, -16.2, 3.41, 1.62],
   [6, 125, 2, 0, 1, 1, 1.58, 5.9, -4.8, -113.6, -2.9, 11.4, 22.8, -27.3, 3.41, 1.62],
   [5, 118, 1, 1, 1, 0, 1.66, 6.02, -3.9, -107.9, 1.8, -5.2, 20.6, -39.5, 3.36, 1.57],
@@ -98,30 +101,41 @@ const ACTUAL_ROWS: PitchRow[] = [
   [0, 149, 4, 1, 1, 0, -1.53, 5.82, 5.2, -132.1, -5.5, -8.4, 28.8, -14.1, 3.4, 1.6],
 ];
 
-const scene: SceneRecord = {
-  id: 'fixture-walkoff',
-  source: 'curated',
-  title: '9회말 2사 만루, 픽스처 끝내기',
+/** 픽스처 상황: 9회말 2사 만루 4:4, 홈 롯데 공격, 홈타자6(좌타) 대 원정투수(우투). 실제 결과는 끝내기 만루 홈런 */
+export const fixtureSituation: Situation = {
+  id: '20260815HTLT02026-71',
+  kind: 'past',
+  gameId: '20260815HTLT02026',
+  paNo: 71,
   date: '2026-08-15',
   stadium: '픽스처 구장',
-  away: { code: 'HT', name: 'KIA', final: 4 },
-  home: { code: 'LT', name: '롯데', final: 8 },
+  away: { code: 'HT', name: 'KIA' },
+  home: { code: 'LT', name: '롯데' },
   state: { inning: 9, half: 1, outs: 2, bases: 7, away: 4, home: 4, slotAway: 3, slotHome: 5 },
+  count: { balls: 0, strikes: 0 },
   batter: 'h6',
   pitcher: 'ap',
   lineups: { away: AWAY_HITTERS.map((p) => p.id), home: HOME_HITTERS.map((p) => p.id) },
-  leverage: 38.5,
-  naverWpBeforeHome: 0.62,
   actual: {
     result: '홈타자6 : 우익수 뒤 만루 홈런',
     event: 2,
     runs: 4,
-    notes: ['3루주자 홈인', '2루주자 홈인', '1루주자 홈인'],
     pitches: ACTUAL_ROWS,
     wpAfterHome: 1,
   },
+  naverWpBeforeHome: 0.62,
   context: { tempC: 27.5, windMs: 2.1, dayGame: false, dome: false },
 };
+
+/** 그 경기가 실제로 끝난 점수 */
+export const FIXTURE_FINAL = { away: 4, home: 8 } as const;
+/** 화면 제목(상황에서 만든 값과 같다) */
+export const FIXTURE_TITLE = '9회말 2사 만루';
+
+/** 픽스처 상황의 조립 결과. 테스트가 buildSceneSetup 대신 이것을 쓴다 */
+export function fixtureSetup(): SituationSetup {
+  return buildSituationSetup(fixtureAppData.core, fixtureSituation, { actualFinal: { ...FIXTURE_FINAL } });
+}
 
 export const fixtureAppData: AppData = {
   core: {
@@ -153,10 +167,8 @@ export const fixtureAppData: AppData = {
   },
   pitches: {
     pitchTypes: [...PITCH_TYPES],
-    byPitcher: { ap: AP_ROWS, hp: HP_ROWS },
     pools: { L: HP_ROWS.slice(), R: AP_ROWS.slice(0, 4) },
   },
-  scenes: [scene],
   evidence: {
     method: '팀-경기 포아송 GLM (합성 픽스처)',
     trainSeasons: [2021, 2022, 2023, 2024, 2025],

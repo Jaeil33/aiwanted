@@ -1,12 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { compileEffects } from '../engine';
-import { fixtureAppData } from '../test/fixtures/appData';
+import { fixtureAppData, fixtureSetup } from '../test/fixtures/appData';
 import type { EvidenceData } from '../types/data';
 import type { EffectPart, EngineEffect, KnobPart, MeasuredPart, TmiEntry } from '../types/domain';
 import { compileSessionEffects, effectsKey, measuredAvailable } from './effects';
-import { buildSceneSetup } from './scene';
 
-const setup = buildSceneSetup(fixtureAppData, 'fixture-walkoff');
+const setup = fixtureSetup();
 const EVIDENCE = fixtureAppData.evidence as EvidenceData;
 
 function entry(id: string, parts: EffectPart[], refused = false): TmiEntry {

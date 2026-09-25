@@ -2,18 +2,18 @@ import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import controls from '../../components/controls.module.css';
-import { fixtureAppData } from '../../test/fixtures/appData';
+import { FIXTURE_FINAL, FIXTURE_TITLE, fixtureSituation } from '../../test/fixtures/appData';
 import { renderWithGame } from '../../test/gameHarness';
 import { PlayScreen } from './PlayScreen';
 
 const SLOW = { timeout: 120_000 };
 const WAIT = { timeout: 90_000 };
-const SCENE = fixtureAppData.scenes[0]; // 9회말 2사 만루 4:4, 홈 롯데 공격, 홈타자6 vs 원정투수
+const SCENE = fixtureSituation; // 9회말 2사 만루 4:4, 홈 롯데 공격, 홈타자6 vs 원정투수
 
 async function openPlay() {
   const view = renderWithGame(<PlayScreen />);
   await act(async () => {
-    await view.game().actions.openScene(SCENE.id, null);
+    await view.game().actions.openSituation(fixtureSituation, { actualFinal: { ...FIXTURE_FINAL } }, null);
   });
   return view;
 }
@@ -33,7 +33,7 @@ describe('PlayScreen', () => {
 
   it('스코어버그·트래커 자막·승부 확률 판(경기 탭)·TMI 줄·세 버튼 도크를 그리고 실제 결과는 숨긴다', SLOW, async () => {
     await openPlay();
-    expect(screen.getByRole('heading', { level: 2, name: SCENE.title })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: FIXTURE_TITLE })).toBeInTheDocument();
     const bug = screen.getByRole('group', { name: '스코어버그' });
     expect(within(bug).getByLabelText('9회말')).toBeInTheDocument();
     expect(within(bug).getByLabelText('0볼 0스트라이크')).toBeInTheDocument();
@@ -49,7 +49,7 @@ describe('PlayScreen', () => {
     const dock = screen.getByRole('navigation', { name: '다시 치르기' });
     expect(within(dock).getAllByRole('button').map((b) => b.textContent)).toEqual(['타석 끝까지', '한 구 던지기', '경기 끝까지']);
     expect(screen.queryByText(/^실제/)).toBeNull();
-    expect(screen.queryByText(SCENE.actual.result)).toBeNull();
+    expect(screen.queryByText(SCENE.actual!.result)).toBeNull();
   });
 
   it('탭을 바꾸면 이닝 득점확률·타석 출루확률로 바뀐다', SLOW, async () => {

@@ -1,4 +1,4 @@
-"""앱 스냅숏: 문자중계·시즌 기록 → data/build/app/core.json, pitches.json, scenes.json.
+"""앱 스냅숏: 문자중계·시즌 기록 → data/build/app/core.json, pitches.json.
 
 reference/tmi-prototype/build_data.py의 SCENARIOS와 main()(카운트 표, 장면 조립, 라인업·타순, 투수 손 추정)에서 이식했다.
 출력 필드 이름은 src/types/data.ts(CoreData, PitchData, SceneRecord, PlayerRecord, BullpenRecord)와 같다.
@@ -416,30 +416,19 @@ def _season_rows(raw_dir: Path, kind: str) -> list[dict]:
 
 
 def build_snapshot(raw_dir: Path) -> dict:
-    """{"core": CoreData, "pitches": PitchData, "scenes": SceneRecord[]}."""
+    """{"core": CoreData, "pitches": PitchData}.
+
+    장면(scenes.json)은 더 만들지 않는다(ADR-032·035): 앱이 `/api/game`으로 어떤 타석이든 연다.
+    투수별 투구 표본(byPitcher)도 싣지 않는다: 그 경기 투구는 중계가 돌려주고, 모자라면 리그 풀로 떨어진다.
+    """
     rates = season_rates(_season_rows(raw_dir, "HITTER"), _season_rows(raw_dir, "PITCHER"))
     games = [load_game(path) for path in relay_game_paths(raw_dir)]
     by_id = {game["game"]["gameId"]: game for game in games}
     by_pitcher = pitches_by_pitcher(games)
     throws = {pid: infer_throws(rows) for pid, rows in by_pitcher.items()}
 
-    # 시즌 기록이 있는 모든 선수를 먼저 싣는다(ADR-035). 장면 순회는 시즌 기록이 없는 선수만 덧붙인다.
+    # 시즌 기록이 있는 모든 선수를 싣는다(ADR-035): 임의의 타석을 열려면 그 타자·투수 능력치가 번들에 있어야 한다.
     players: dict[str, dict] = all_player_records(rates, hit_types_of(games), throws)
-    scenes: list[dict] = []
-    for cur in CURATED:
-        label = f"{cur['game']} {situation_text(cur['inning'], cur['half'], cur['outs'], cur['bases'])} {cur['batter']}"
-        game = by_id.get(cur["game"])
-        if game is None:
-            print(f"[snapshot] 경고: 선정 장면 {label} — 경기가 원자료에 없어 건너뜀")
-            continue
-        pa = find_curated(game, cur)
-        if pa is None:
-            print(f"[snapshot] 경고: 선정 장면 {label} — 타석을 찾지 못해 건너뜀")
-            continue
-        scenes.append(build_scene(game, pa.index, "curated", None, rates, throws, players=players))
-    for game, index in scene_candidates(games, {cur["game"] for cur in CURATED}):
-        scenes.append(build_scene(game, index, "auto", None, rates, throws, players=players))
-    scenes.sort(key=lambda s: (s["date"], s["id"]))
 
     # 임의의 경기를 열 수 있어야 하므로 시즌 기록에 있는 모든 팀의 불펜을 싣는다(ADR-032)
     bullpens = {code: bullpen(rates, code) for code in sorted({p["team"] for p in rates.pitchers.values()})}
@@ -464,32 +453,30 @@ def build_snapshot(raw_dir: Path) -> dict:
         pools[throws[pid]].extend(rows)
     pitches = {
         "pitchTypes": list(PITCH_TYPES),
-        "byPitcher": {
-            pid: sample_rows(by_pitcher.get(pid, []), PITCHER_SAMPLE_CAP, SEED)
-            for pid in sorted({scene["pitcher"] for scene in scenes})
-        },
         "pools": {hand: sample_rows(rows, POOL_SAMPLE_CAP, SEED) for hand, rows in pools.items()},
     }
-    return {"core": core, "pitches": pitches, "scenes": scenes}
+    return {"core": core, "pitches": pitches}
 
 
 def write_snapshot(raw_dir: Path, out_dir: Path) -> dict:
-    """build stage "snapshot": out_dir/app/core.json·pitches.json·scenes.json을 쓰고 요약을 돌려준다."""
+    """build stage "snapshot": out_dir/app/core.json·pitches.json을 쓰고 요약을 돌려준다.
+
+    이미 있던 scenes.json은 지운다: 앱이 더 읽지 않고, 남아 있으면 옛 데이터가 번들에 섞인다.
+    """
     data = build_snapshot(raw_dir)
     app_dir = Path(out_dir) / "app"
     kb: dict[str, float] = {}
-    for key in ("core", "pitches", "scenes"):
+    for key in ("core", "pitches"):
         path = app_dir / f"{key}.json"
         write_json(path, data[key])
         kb[path.name] = round(path.stat().st_size / 1024, 1)
     if kb["core.json"] > CORE_SIZE_BUDGET_KB:
         raise ValueError(f"core.json {kb['core.json']}KB > 예산 {CORE_SIZE_BUDGET_KB}KB (ADR-035)")
-    scenes = data["scenes"]
-    curated = sum(1 for scene in scenes if scene["source"] == "curated")
+    stale = app_dir / "scenes.json"
+    if stale.exists():
+        stale.unlink()
     return {
-        "scenes": len(scenes),
-        "curated": curated,
-        "auto": len(scenes) - curated,
         "players": len(data["core"]["players"]),
+        "bullpens": len(data["core"]["bullpens"]),
         "kb": kb,
     }

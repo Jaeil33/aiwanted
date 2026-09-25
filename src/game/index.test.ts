@@ -1,13 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import type { Evaluation } from '../engine';
-import { fixtureAppData } from '../test/fixtures/appData';
+import { fixtureAppData, fixtureSetup } from '../test/fixtures/appData';
 import * as game from './index';
 import indexSource from './index.ts?raw';
 
 /** game 공개 API 전체 목록 (값만. 타입은 아래 테스트가 컴파일 때 확인한다) */
 const PUBLIC_API = [
-  // scene (장면 경로는 step 10에서 사라진다)
-  'buildSceneSetup',
   // situation
   'batterStanceFor',
   'pitcherFor',
@@ -16,7 +14,6 @@ const PUBLIC_API = [
   'currentSituation',
   'nameOf',
   'situationFromPa',
-  'situationFromScene',
   'situationTitle',
   'throwsOf',
   // pitchers
@@ -99,7 +96,7 @@ describe('game 공개 API', () => {
   });
 
   it('공개 타입으로 장면을 열고 확률판·칩·공유 값을 만든다', () => {
-    const setup: game.SituationSetup = game.buildSceneSetup(fixtureAppData, fixtureAppData.scenes[0].id);
+    const setup: game.SituationSetup = fixtureSetup();
     const gauge: game.GaugeLike = { batterWin: 0.3, inningScore: 0.4, winHome: 0.5, tie: 0.05, winAway: 0.45 };
     const tiers: game.TierView[] = game.selectTiers(setup, setup.situation.state, gauge, gauge);
     expect(tiers).toHaveLength(3);
@@ -123,7 +120,7 @@ describe('game 공개 API', () => {
   });
 
   it('공개 타입으로 엔진 요청·워커 메시지·연출 명령을 만든다', async () => {
-    const setup = game.buildSceneSetup(fixtureAppData, fixtureAppData.scenes[0].id);
+    const setup = fixtureSetup();
     const spec: game.GameSpec = {
       lg: setup.lg,
       away: setup.away,

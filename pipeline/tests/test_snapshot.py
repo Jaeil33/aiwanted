@@ -7,7 +7,7 @@ import pytest
 
 from fixture_games import CASES_GAME_ID, FIXTURE_RAW, cases_game, load_fixture_game, make_raw_dir, pa_relay, shifted_game
 from tmi_pipeline import build, relay, snapshot, stats
-from tmi_pipeline.contract import PITCH_TYPES
+from tmi_pipeline.contract import HITTER_KEY_SUFFIX, PITCH_TYPES
 
 # src/types/data.ts 필드 이름
 SCENE_KEYS = {
@@ -23,7 +23,7 @@ META_KEYS = {"season", "relayRange", "relayGames", "generatedAt", "sources"}
 HITTER_KEYS = {"id", "name", "team", "kind", "bats", "rel", "line"}
 PITCHER_KEYS = {"id", "name", "team", "kind", "throws", "rel", "line"}
 BULLPEN_KEYS = {"id", "team", "name", "rel", "n"}
-PITCH_DATA_KEYS = {"pitchTypes", "byPitcher", "pools"}
+PITCH_DATA_KEYS = {"pitchTypes", "pools"}
 # 장면 id는 결과를 드러내지 않는 <gameId>-<타석 번호>(ADR-014)
 SCENE_ID = re.compile(r"\d{8}[A-Z]{4}\d{5}-\d+")
 
@@ -469,37 +469,10 @@ def snapshot_raw(tmp_path, game, monkeypatch):
     return make_raw_dir(tmp_path / "raw", games)
 
 
-def test_build_snapshot_matches_the_data_contract(snapshot_raw, rates, game, capsys):
+def test_build_snapshot_matches_the_data_contract(snapshot_raw, rates, game):
+    """장면(scenes)은 더 만들지 않는다(ADR-032·035): core와 pitches만 낸다."""
     data = snapshot.build_snapshot(snapshot_raw)
-    printed = capsys.readouterr().out
-    assert "20260101NCLG02026" in printed
-    assert "없는타자" in printed
-    assert set(data) == {"core", "pitches", "scenes"}
-
-    scenes = data["scenes"]
-    # 선정 1 + 자동 12(선정 장면 경기 03·04일 제외한 12경기)
-    assert len(scenes) == 13
-    assert [s["date"] for s in scenes] == sorted(s["date"] for s in scenes)
-    for scene in scenes:
-        assert set(scene) == SCENE_KEYS
-        assert SCENE_ID.fullmatch(scene["id"])
-        assert set(scene["away"]) == SCENE_TEAM_KEYS and set(scene["home"]) == SCENE_TEAM_KEYS
-        assert set(scene["state"]) == GAME_STATE_KEYS
-        assert set(scene["actual"]) == ACTUAL_KEYS
-        assert set(scene["context"]) == CONTEXT_KEYS
-        assert set(scene["lineups"]) == {"away", "home"}
-        assert all(len(scene["lineups"][side]) == 9 and all(scene["lineups"][side]) for side in ("away", "home"))
-
-    curated = [s for s in scenes if s["source"] == "curated"]
-    assert [(s["id"], s["title"], s["batter"], s["state"]["inning"], s["state"]["half"]) for s in curated] == [
-        ("20260803HTLT02026-23", "7회말 무사 주자 없음", "h2", 7, 1),
-    ]
-    autos = [s for s in scenes if s["source"] == "auto"]
-    assert {s["id"] for s in autos} == {f"202608{day:02d}HTLT02026-22" for day in (1, 2, *range(5, 15))}
-    assert all(
-        s["title"] == snapshot.situation_text(s["state"]["inning"], s["state"]["half"], s["state"]["outs"], s["state"]["bases"])
-        for s in autos
-    )
+    assert set(data) == {"core", "pitches"}
 
     core = data["core"]
     assert set(core) == CORE_KEYS
@@ -513,10 +486,8 @@ def test_build_snapshot_matches_the_data_contract(snapshot_raw, rates, game, cap
     assert core["countTable"] == snapshot.count_table([game])
 
     players = core["players"]
-    needed = {p for s in scenes for p in s["lineups"]["away"] + s["lineups"]["home"] + [s["batter"], s["pitcher"]]}
-    assert needed <= set(players)
     assert all(set(p) == (HITTER_KEYS if p["kind"] == "H" else PITCHER_KEYS) for p in players.values())
-    assert all(p["id"] == pid for pid, p in players.items())
+    assert all(p["id"] == pid.removesuffix(HITTER_KEY_SUFFIX) for pid, p in players.items())
     assert set(core["bullpens"]) == {"HT", "LT"}
     assert all(set(b) == BULLPEN_KEYS for b in core["bullpens"].values())
     assert core["bullpens"]["HT"]["n"] == 1
@@ -524,8 +495,6 @@ def test_build_snapshot_matches_the_data_contract(snapshot_raw, rates, game, cap
     pitches = data["pitches"]
     assert set(pitches) == PITCH_DATA_KEYS
     assert pitches["pitchTypes"] == PITCH_TYPES
-    assert set(pitches["byPitcher"]) == {s["pitcher"] for s in scenes} == {"ap1"}
-    assert len(pitches["byPitcher"]["ap1"]) == 300  # 46 × 14 = 644 → 300
     assert set(pitches["pools"]) == {"L", "R"}
     assert len(pitches["pools"]["L"]) == 21 * 14  # 좌투 hp1 전부(600 이하)
     assert len(pitches["pools"]["R"]) == 600  # ap1 644 + hp2 224 → 600
@@ -534,45 +503,39 @@ def test_build_snapshot_matches_the_data_contract(snapshot_raw, rates, game, cap
     assert "http" not in text
 
 
-def test_build_snapshot_scenes_with_substitutions_keep_the_app_contract(tmp_path, monkeypatch):
+def test_build_snapshot_carries_every_player_with_season_stats(tmp_path, monkeypatch):
+    """core에는 2026 시즌 기록이 있는 선수만 싣는다(ADR-035).
+
+    기록이 없는 선수(그날 처음 나온 대주자 등)는 빠지고, 앱은 중계에서 모은 이름과 rel 1(리그 평균)로 떨어진다.
+    """
     games = [
         shifted_game(cases_game(), f"202608{day:02d}HTLT02026", f"2026-08-{day:02d}", wpa_factor=1 + day / 10)
         for day in (20, 21, 22)
     ]
-    monkeypatch.setattr(snapshot, "CURATED", [
-        {"game": "20260821HTLT02026", "inning": 8, "half": 1, "outs": 0, "bases": 0, "batter": "홈대타6"},
-    ])
+    monkeypatch.setattr(snapshot, "CURATED", [])
     data = snapshot.build_snapshot(make_raw_dir(tmp_path / "raw", games))
-    scenes = data["scenes"]
-    assert [(s["id"], s["source"]) for s in scenes] == [
-        ("20260820HTLT02026-22", "auto"), ("20260821HTLT02026-31", "curated"), ("20260822HTLT02026-22", "auto"),
-    ]
-    for scene in scenes:
-        assert set(scene) == SCENE_KEYS
-        assert set(scene["state"]) == GAME_STATE_KEYS and set(scene["actual"]) == ACTUAL_KEYS
-        assert SCENE_ID.fullmatch(scene["id"])
-        assert all(len(scene["lineups"][side]) == 9 and all(isinstance(p, str) and p for p in scene["lineups"][side])
-                   for side in ("away", "home"))
-        assert 0 <= scene["state"]["slotAway"] <= 8 and 0 <= scene["state"]["slotHome"] <= 8
-        assert 0 <= scene["actual"]["event"] <= 6
-    curated = scenes[1]
-    assert (curated["title"], curated["batter"], curated["pitcher"]) == ("8회말 무사 주자 없음, 대타", "h6b", "ap1")
-    assert curated["lineups"]["away"] == ["a1", "a2", "a3b", "a4", "a5r", "a6", "a7d", "a8", "a9"]
-    assert curated["actual"]["notes"] == ["3구째부터 원정투수2 등판"]
-    assert data["core"]["players"]["a5r"]["name"] == "원정대주자5"
-    assert "ap1" in data["pitches"]["byPitcher"]
+    players = data["core"]["players"]
+    rates = snapshot.season_rates(_season_rows("HITTER"), _season_rows("PITCHER"))
+    expected = {snapshot.hitter_key(pid, rates) for pid in rates.hitters} | set(rates.pitchers)
+    assert set(players) == expected
+    # 시즌 기록이 없는 대주자는 빠진다
+    assert "a5r" not in players
 
 
-def test_snapshot_stage_writes_three_app_files(snapshot_raw, tmp_path):
+def test_snapshot_stage_writes_two_app_files(snapshot_raw, tmp_path):
     out = tmp_path / "build"
+    names = ("core.json", "pitches.json")
+    # 옛 생성물이 남아 있으면 지운다: 앱이 더 읽지 않는 파일이 번들에 섞이면 안 된다
+    stale = out / "app" / "scenes.json"
+    stale.parent.mkdir(parents=True, exist_ok=True)
+    stale.write_text("[]", encoding="utf-8")
+
     summary = build.STAGES["snapshot"](snapshot_raw, out)
-    names = ("core.json", "pitches.json", "scenes.json")
     assert all((out / "app" / name).is_file() for name in names)
-    scenes = json.loads((out / "app" / "scenes.json").read_text(encoding="utf-8"))
+    assert not stale.exists()
     core = json.loads((out / "app" / "core.json").read_text(encoding="utf-8"))
-    assert summary["scenes"] == len(scenes) == 13
-    assert (summary["curated"], summary["auto"]) == (1, 12)
     assert summary["players"] == len(core["players"])
+    assert summary["bullpens"] == len(core["bullpens"])
     assert set(summary["kb"]) == set(names)
     assert all(size > 0 for size in summary["kb"].values())
 

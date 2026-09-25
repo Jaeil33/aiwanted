@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { createGame, createRng, playout, type Evaluation, type Game, type LineupSlot, type PlayoutResult, type TeamConfig } from '../engine';
-import { fixtureAppData } from '../test/fixtures/appData';
+import { fixtureAppData, fixtureSetup } from '../test/fixtures/appData';
 import type { EngineEffect, GameState, TmiEntry } from '../types/domain';
 import { compileSessionEffects } from './effects';
 import {
@@ -15,12 +15,11 @@ import {
   type PlayoutRequest,
   type WorkerLike,
 } from './engineClient';
-import { buildSceneSetup } from './scene';
 
 /** createGame은 수백 ms가 걸린다 */
 const SLOW = { timeout: 120_000 };
 
-const setup = buildSceneSetup(fixtureAppData, 'fixture-walkoff');
+const setup = fixtureSetup();
 const START: GameState = setup.situation.state;
 
 const knobEntry = (id: string, part: TmiEntry['interpretation']['parts'][number]): TmiEntry => ({

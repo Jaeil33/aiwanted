@@ -1,11 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { fixtureAppData } from '../test/fixtures/appData';
+import { fixtureSetup } from '../test/fixtures/appData';
 import type { GameState, TmiEntry } from '../types/domain';
 import { deltaText, sparkSeries, tierReadout, tmiPill, type SparkPoint } from './broadcast';
-import { buildSceneSetup } from './scene';
 import type { GaugeLike } from './selectors';
 
-const setup = buildSceneSetup(fixtureAppData, 'fixture-walkoff'); // 9회말 2사 만루, 홈 롯데 공격, 홈타자6 vs 원정투수
+const setup = fixtureSetup(); // 9회말 2사 만루, 홈 롯데 공격, 홈타자6 vs 원정투수
 const START = setup.situation.state;
 const BASE: GaugeLike = { batterWin: 0.4, inningScore: 0.35, expRuns: 0.9, winHome: 0.6, tie: 0.1, winAway: 0.3 };
 const TMI: GaugeLike = { batterWin: 0.42, inningScore: 0.37, expRuns: 0.95, winHome: 0.62, tie: 0.09, winAway: 0.29 };

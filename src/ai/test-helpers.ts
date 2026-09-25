@@ -1,16 +1,16 @@
 import { situationText } from '../domain/format';
 import { TEAMS } from '../domain/teams';
-import { fixtureAppData } from '../test/fixtures/appData';
+import { fixtureAppData, fixtureSituation } from '../test/fixtures/appData';
 import type { EvidenceData, TeamCode } from '../types/data';
 import type { KnownPlayer, PromptContext, RosterEntry } from '../types/domain';
 
 /*
- * src/ai·api 테스트 전용 도우미. 합성 픽스처 장면(9회말 2사 만루, 홈타자6 대 원정투수)으로
- * PromptContext를 만든다(buildSceneSetup과 같은 모양). 실존 선수 이름을 쓰지 않는다(ADR-005).
- * 공격 타순은 홈타자1~9, 수비 타순은 원정타자1~9, 장면 밖 선수는 홈투수 한 명이다.
+ * src/ai·api 테스트 전용 도우미. 합성 픽스처 상황(9회말 2사 만루, 홈타자6 대 원정투수)으로
+ * PromptContext를 만든다(buildSituationSetup과 같은 모양). 실존 선수 이름을 쓰지 않는다(ADR-005).
+ * 공격 타순은 홈타자1~9, 수비 타순은 원정타자1~9, 상황 밖 선수는 홈투수 한 명이다.
  */
 
-const scene = fixtureAppData.scenes[0];
+const scene = fixtureSituation;
 const players = fixtureAppData.core.players;
 
 function roster(ids: readonly string[]): RosterEntry[] {
@@ -37,7 +37,7 @@ export function fixtureContext(overrides: Partial<PromptContext> = {}): PromptCo
   const fieldSide = batSide === 'away' ? 'home' : 'away';
   return {
     date: scene.date,
-    stadium: scene.stadium,
+    stadium: scene.stadium ?? '',
     awayName: scene.away.name,
     homeName: scene.home.name,
     awayScore: scene.state.away,
