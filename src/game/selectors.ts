@@ -27,7 +27,7 @@ export function battingWin(g: GaugeLike, batSide: Side): number {
 /**
  * 승부처 지수(ADR-014): 이번 타석이 끝났을 때 공격 팀 승리 가치가 평균적으로 얼마나 움직이는지(%p).
  * 100 × Σ_e pa[e] × |B(after[e]) − B(지금)|, B = 공격 팀 승리 + 무승부 / 2.
- * after가 비어 있으면(detail: false 평가) null. 실제 결과의 |WPA|(SceneRecord.leverage)는 쓰지 않는다.
+ * after가 비어 있으면(detail: false 평가) null. 실제 결과의 |WPA|는 쓰지 않는다(ADR-014: 승부처 고르기 전용).
  */
 export function expectedSwing(ev: Pick<Evaluation, 'batSide' | 'pa' | 'after' | 'winHome' | 'winAway' | 'tie'>): number | null {
   if (ev.after.length === 0) return null;

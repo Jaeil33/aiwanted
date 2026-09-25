@@ -1,7 +1,11 @@
 """앱 스냅숏: 문자중계·시즌 기록 → data/build/app/core.json, pitches.json.
 
 reference/tmi-prototype/build_data.py의 SCENARIOS와 main()(카운트 표, 장면 조립, 라인업·타순, 투수 손 추정)에서 이식했다.
-출력 필드 이름은 src/types/data.ts(CoreData, PitchData, SceneRecord, PlayerRecord, BullpenRecord)와 같다.
+출력 필드 이름은 src/types/data.ts(CoreData, PitchData, PlayerRecord, BullpenRecord)와 같다.
+
+장면 관련 함수(CURATED, scene_title, find_curated, scene_candidates, build_scene)는 빌드 출력에 더 쓰이지 않는다
+(19-season step 10, ADR-032: 앱이 /api/game으로 어떤 타석이든 연다). 중계에서 타선·교체를 읽는 부분
+(scene_lineups, situation_text, _substitution_names)은 테스트와 함께 남겨 뒀다 — 타석 색인 같은 뒤 작업이 다시 쓴다.
 선수 사진·엠블럼 URL은 싣지 않는다(ADR-005). 장면의 투수·타선·id·제목은 그 타석 첫 투구 시점 기록을 따른다(ADR-014).
 """
 

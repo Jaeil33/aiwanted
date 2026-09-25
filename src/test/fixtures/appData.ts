@@ -132,7 +132,7 @@ export const FIXTURE_FINAL = { away: 4, home: 8 } as const;
 /** 화면 제목(상황에서 만든 값과 같다) */
 export const FIXTURE_TITLE = '9회말 2사 만루';
 
-/** 픽스처 상황의 조립 결과. 테스트가 buildSceneSetup 대신 이것을 쓴다 */
+/** 픽스처 상황의 조립 결과. 화면·게임 테스트가 공통으로 쓰는 setup이다 */
 export function fixtureSetup(): SituationSetup {
   return buildSituationSetup(fixtureAppData.core, fixtureSituation, { actualFinal: { ...FIXTURE_FINAL } });
 }
