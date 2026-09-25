@@ -84,14 +84,51 @@ describe('seoulDate', () => {
 
 describe('detectPlatform', () => {
   it('아티팩트 밖(claude 없음)·Worker 없음이면 AI 런타임·다운로드가 없고 오늘은 서울 날짜', async () => {
+    vi.stubEnv('VITE_API_BASE', '');
     vi.stubEnv('VITE_AI_API_BASE', '');
     const now = () => new Date('2026-09-13T15:30:00Z');
     const platform = await detectPlatform({} as Window & typeof globalThis, { now });
     expect(platform.artifactSample).toBeNull();
     expect(platform.downloads).toBeNull();
-    expect(platform.apiBase).toBeNull();
     expect(platform.fetch).toBeUndefined();
     expect(platform.today()).toBe('2026-09-14');
+  });
+
+  it('환경변수가 없으면 apiBase 기본값은 같은 출처의 /api다', async () => {
+    // 2026-09-22 배포는 VITE_AI_API_BASE가 없어 apiBase가 null이었고, 브라우저가 /api를 아예 부르지 않았다(ADR-028·029).
+    vi.stubEnv('VITE_API_BASE', '');
+    vi.stubEnv('VITE_AI_API_BASE', '');
+    const platform = await detectPlatform({} as Window & typeof globalThis);
+    expect(platform.apiBase).toBe('/api');
+  });
+
+  it('아티팩트 모드에는 서버가 없으므로 apiBase·liveApi가 null이다', async () => {
+    vi.stubEnv('MODE', 'artifact');
+    const fetchImpl = vi.fn() as unknown as typeof fetch;
+    const platform = await detectPlatform({ fetch: fetchImpl } as unknown as Window & typeof globalThis);
+    expect(platform.apiBase).toBeNull();
+    expect(platform.liveApi).toBeNull();
+  });
+
+  it('VITE_API_BASE가 VITE_AI_API_BASE보다 앞선다', async () => {
+    vi.stubEnv('VITE_API_BASE', 'https://new.example/api');
+    vi.stubEnv('VITE_AI_API_BASE', 'https://old.example/api');
+    const platform = await detectPlatform({} as Window & typeof globalThis);
+    expect(platform.apiBase).toBe('https://new.example/api');
+  });
+
+  it('apiBase와 fetch가 모두 있으면 liveApi를 만들고, fetch가 없으면 null이다', async () => {
+    vi.stubEnv('VITE_API_BASE', '/api');
+    const fetchImpl = vi.fn<typeof fetch>().mockImplementation(
+      async () => new Response(JSON.stringify({ games: [] }), { status: 200, headers: { 'content-type': 'application/json' } }),
+    );
+    const withFetch = await detectPlatform({ fetch: fetchImpl } as unknown as Window & typeof globalThis);
+    expect(withFetch.liveApi).not.toBeNull();
+    await expect(withFetch.liveApi?.games({ from: '2026-09-15', to: '2026-09-15' })).resolves.toEqual([]);
+    expect(String(fetchImpl.mock.calls[0][0])).toContain('/api/games?');
+
+    const noFetch = await detectPlatform({} as Window & typeof globalThis);
+    expect(noFetch.liveApi).toBeNull();
   });
 
   it('아티팩트 런타임이면 sample과 downloads를 쓴다', async () => {
@@ -125,6 +162,7 @@ describe('detectPlatform', () => {
   });
 
   it('배포 AI 주소는 VITE_AI_API_BASE, fetch는 창의 fetch를 그대로 넘긴다', async () => {
+    vi.stubEnv('VITE_API_BASE', '');
     vi.stubEnv('VITE_AI_API_BASE', 'https://tmi.example/api');
     const fetchImpl = vi.fn() as unknown as typeof fetch;
     const platform = await detectPlatform({ fetch: fetchImpl } as unknown as Window & typeof globalThis);
@@ -155,7 +193,7 @@ describe('detectPlatform', () => {
 describe('localPlatform', () => {
   it('플랫폼을 알아내기 전 기본값: 지역 엔진, AI·다운로드 없음', async () => {
     const platform = localPlatform({ now: () => new Date('2026-08-24T16:00:00Z') });
-    expect([platform.artifactSample, platform.downloads, platform.apiBase]).toEqual([null, null, null]);
+    expect([platform.artifactSample, platform.downloads, platform.apiBase, platform.liveApi]).toEqual([null, null, null, null]);
     expect(platform.today()).toBe('2026-08-25');
     expect(platform.createEngineClient().evaluate).toBeTypeOf('function');
   });

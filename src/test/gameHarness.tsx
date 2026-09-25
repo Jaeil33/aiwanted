@@ -16,6 +16,7 @@ export function fakePlatform(over: Partial<Platform> = {}): Platform {
     artifactSample: null,
     downloads: null,
     apiBase: null,
+    liveApi: null,
     createEngineClient: () => createLocalEngineClient(),
     today: () => '2026-08-15',
     ...over,

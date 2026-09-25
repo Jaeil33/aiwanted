@@ -18,6 +18,8 @@ describe('scheduleUrl', () => {
     expect(url.searchParams.get('toDate')).toBe('2026-09-30');
     expect(url.searchParams.get('categoryId')).toBe('kbo');
     expect(url.searchParams.get('upperCategoryId')).toBe('kbaseball');
+    // fields에 stadium이 빠지면 구장이 빈 문자열로 온다
+    expect(url.searchParams.get('fields')).toContain('stadium');
   });
 });
 

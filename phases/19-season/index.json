@@ -41,9 +41,11 @@
     {
       "step": 4,
       "name": "live-client",
-      "status": "pending",
+      "status": "completed",
       "absorbs": "14-live-data step 2",
-      "note": "폴링 없음(ADR-032). 가시성·백오프는 뒤로"
+      "note": "폴링 없음(ADR-032). 가시성·백오프는 뒤로",
+      "completed_at": "2026-09-26T02:05:00+0900",
+      "summary": "src/live/providers/http.ts(LiveApi·createLiveApi·LiveError, 상태→코드 옮김, 제한 시간 games 10초·game 25초, 재시도 없음), src/app/useLiveData.ts(useGames·useLiveGame, 폴링 없음·refresh()만), platform.liveApi, scripts/vite-api-dev.ts + vite.config.ts 플러그인(npm run dev가 /api를 함께 띄운다). apiBase 기본값을 /api로 바꿨다(아티팩트 모드만 null). VITE_API_BASE → VITE_AI_API_BASE 순으로 읽는다. 실제로 띄워 보고 잡은 것 둘: (1) 일정 fields=basic에는 stadium이 없어 구장이 빈 문자열이었다 → fields=basic,stadium. (2) parseRelay가 slotAway·slotHome을 0으로 두고 있었다 → snapshot.py와 같은 규칙으로 채운다(공격 쪽 batOrder−1, 수비 쪽 마지막 타순 %9, 끝낸 타석만 민다). 실제 경기 74타석에서 타순 칸이 가리키는 선수 = 그 타석 타자, 어긋남 0. 이게 없으면 이어서 플레이할 때 1번 타자부터 다시 선다(ADR-033). 기다리는 중 표시는 상태가 아니라 렌더에서 셈한다(react-hooks/set-state-in-effect)."
     },
     {
       "step": 5,

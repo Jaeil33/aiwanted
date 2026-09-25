@@ -462,13 +462,17 @@ export function parseRelay({ summary, payloads, names = {}, fetchedAt = EPOCH }:
   }
 
   const plateAppearanceRecords: PaRecord[] = [];
+  // 끝낸 타석만 다음 타순을 민다(타석 도중 이닝이 끝난 타자는 다음 이닝에 다시 선다). snapshot.py와 같은 규칙이다
+  const lastOrder = { away: 0, home: 0 };
   for (const pa of pas) {
     const lineups = lineupsAt(pas, subs, pa);
+    const slots = slotsOf(lastOrder, pa);
+    if (pa.complete) lastOrder[pa.side] = pa.batOrder;
     // 타순 아홉 칸이 다 확정된 타석만 되돌려볼 수 있다
     if (lineups.away.some((x) => x === null) || lineups.home.some((x) => x === null)) continue;
     plateAppearanceRecords.push({
       no: plateAppearanceRecords.length + 1,
-      before: pa.state,
+      before: { ...pa.state, ...slots },
       batter: pa.batterId,
       pitcher: pa.pitcherId,
       lineups: { away: lineups.away as string[], home: lineups.home as string[] },
@@ -490,9 +494,20 @@ export function parseRelay({ summary, payloads, names = {}, fetchedAt = EPOCH }:
     names: foundNames,
     hands,
     plateAppearances: plateAppearanceRecords,
-    current: currentOf(payloads, summary),
+    current: currentOf(payloads, summary, pas, lastOrder),
     fetchedAt,
   };
+}
+
+/**
+ * 타순 칸: 공격 쪽은 지금 타자의 자리(batOrder − 1), 수비 쪽은 다음 차례(마지막 타순 % 9).
+ * 중계 원문에는 이 값이 없다. 이어서 플레이할 때 다음 타자를 여기서 안다(ADR-033).
+ */
+function slotsOf(lastOrder: { away: number; home: number }, pa: RawPa): { slotAway: number; slotHome: number } {
+  const field = pa.side === 'away' ? 'home' : 'away';
+  const mine = pa.batOrder >= 1 && pa.batOrder <= LINEUP_SIZE ? pa.batOrder - 1 : lastOrder[pa.side] % LINEUP_SIZE;
+  const theirs = lastOrder[field] % LINEUP_SIZE;
+  return pa.side === 'away' ? { slotAway: mine, slotHome: theirs } : { slotAway: theirs, slotHome: mine };
 }
 
 function batsOf(hitType: string): 'L' | 'R' | 'S' | undefined {
@@ -502,7 +517,12 @@ function batsOf(hitType: string): 'L' | 'R' | 'S' | undefined {
 }
 
 /** 진행 중 타석. 머리 필드 currentGameState는 이닝 인자와 무관하게 언제나 현재다 */
-function currentOf(payloads: readonly unknown[], summary: GameSummary): LiveGame['current'] {
+function currentOf(
+  payloads: readonly unknown[],
+  summary: GameSummary,
+  pas: readonly RawPa[],
+  lastOrder: { away: number; home: number },
+): LiveGame['current'] {
   if (summary.status !== 'live') return null;
   const last = payloads[payloads.length - 1];
   const gs = rec(rec(last).currentGameState);
@@ -511,6 +531,13 @@ function currentOf(payloads: readonly unknown[], summary: GameSummary): LiveGame
   if (!batter || !pitcher) return null;
   const inning = latestInning(last);
   const half: 0 | 1 = str(rec(last).homeOrAway) === '1' ? 1 : 0;
+  const side = half ? 'home' : 'away';
+  // 지금 타석이 이미 중계에 적혀 있으면(투구는 있고 결과가 없는 타석) 그 타순을, 아니면 다음 차례를 쓴다
+  const started = [...pas].reverse().find((pa) => pa.side === side && pa.batterId === batter && !pa.complete);
+  const batting = started && started.batOrder >= 1 && started.batOrder <= LINEUP_SIZE
+    ? started.batOrder - 1
+    : lastOrder[side] % LINEUP_SIZE;
+  const fielding = lastOrder[side === 'away' ? 'home' : 'away'] % LINEUP_SIZE;
   return {
     state: {
       inning,
@@ -519,8 +546,8 @@ function currentOf(payloads: readonly unknown[], summary: GameSummary): LiveGame
       bases: basesOf(gs),
       away: Math.trunc(num(gs.awayScore)),
       home: Math.trunc(num(gs.homeScore)),
-      slotAway: 0,
-      slotHome: 0,
+      slotAway: side === 'away' ? batting : fielding,
+      slotHome: side === 'home' ? batting : fielding,
     },
     balls: Math.min(Math.trunc(num(gs.ball)), 3),
     strikes: Math.min(Math.trunc(num(gs.strike)), 2),

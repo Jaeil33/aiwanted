@@ -110,6 +110,34 @@ describe('parseRelay', () => {
     expect(merged.plateAppearances).toHaveLength(game.plateAppearances.length);
   });
 
+  it('타순 칸을 채운다: 공격 쪽은 지금 타자, 수비 쪽은 다음 차례', () => {
+    // 이어서 플레이하려면 다음 타자를 알아야 한다(ADR-033). 0으로 두면 1번 타자부터 다시 선다
+    const pas = game.plateAppearances;
+    expect(pas[0].before).toMatchObject({ half: 0, slotAway: 0, slotHome: 0 });
+    expect(pas[1].before).toMatchObject({ half: 0, slotAway: 1, slotHome: 0 });
+    expect(pas[8].before).toMatchObject({ half: 0, slotAway: 8, slotHome: 0 });
+    // 1회말 첫 타자: 원정은 아홉 명이 다 돌아 0으로 돌아온다
+    expect(pas[9].before).toMatchObject({ half: 1, slotAway: 0, slotHome: 0 });
+    expect(pas[17].before).toMatchObject({ half: 1, slotAway: 0, slotHome: 8 });
+    // 2회초 원정 1번
+    expect(pas[18].before).toMatchObject({ half: 0, slotAway: 0, slotHome: 0 });
+  });
+
+  it('끝나지 않은 타석은 다음 타순을 밀지 않는다', () => {
+    // 타석 도중 이닝이 끝난 타자는 다음 이닝에 다시 선다(snapshot.py와 같은 규칙)
+    const pas = game.plateAppearances;
+    const last = pas[pas.length - 1];
+    expect(last.complete).toBe(false);
+    expect(last.before).toMatchObject({ half: 1, slotHome: 1, slotAway: 1 });
+  });
+
+  it('타순 칸은 타선 배열 안을 가리킨다', () => {
+    for (const pa of game.plateAppearances) {
+      const slot = pa.before.half === 0 ? pa.before.slotAway : pa.before.slotHome;
+      expect(pa.lineups[pa.before.half === 0 ? 'away' : 'home'][slot]).toBe(pa.batter);
+    }
+  });
+
   it('결과가 없는 타석은 complete false이고 event가 null이다', () => {
     const broken = game.plateAppearances.filter((pa) => !pa.complete);
     expect(broken.length).toBeGreaterThan(0);

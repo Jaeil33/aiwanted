@@ -1,5 +1,6 @@
 import { resolveArtifactSample, type SampleLike } from '../ai';
 import { createLocalEngineClient, createWorkerEngineClient, type EngineClient, type WorkerLike } from '../game';
+import { createLiveApi, type LiveApi } from '../live/providers/http';
 import { shareLinkWith, type NavigatorLike, type ShareOutcome } from './shareLink';
 
 /*
@@ -15,10 +16,12 @@ export interface Platform {
   artifactSample: SampleLike | null;
   /** 아티팩트 런타임 claude.use('downloads'). 없으면 null */
   downloads: DownloadsLike | null;
-  /** 배포 AI 프록시 주소(VITE_AI_API_BASE). 없으면 null */
+  /** 서버리스 함수 주소. 아티팩트 모드면 null, 아니면 기본 `/api`. AI와 경기 API가 같은 주소를 쓴다 */
   apiBase: string | null;
-  /** 배포 AI 호출에 넘길 fetch. 없으면 배포 AI를 쓰지 않는다 */
+  /** 배포 AI·경기 API 호출에 넘길 fetch. 없으면 서버를 쓰지 않는다 */
   fetch?: typeof fetch;
+  /** 지난 경기·실시간 경기 클라이언트. apiBase나 fetch가 없으면 null */
+  liveApi: LiveApi | null;
   createEngineClient(): EngineClient;
   /** 오늘 날짜 YYYY-MM-DD (Asia/Seoul) */
   today(): string;
@@ -54,9 +57,22 @@ async function resolveDownloads(win: unknown): Promise<DownloadsLike | null> {
   }
 }
 
+/** 환경변수가 없을 때의 서버 주소: 같은 출처의 /api */
+const DEFAULT_API_BASE = '/api';
+
+/**
+ * 서버 주소를 정한다. 단일 HTML 아티팩트에는 서버가 없으므로 그 모드에서만 null이고, 그 밖에는 기본이 `/api`다.
+ * 2026-09-22 배포는 `VITE_AI_API_BASE`가 없어 apiBase가 null이었고 브라우저가 `/api`를 아예 부르지 않았다(ADR-028·029).
+ * 환경변수는 `VITE_API_BASE`를 먼저 보고, 이미 배포에 들어 있는 `VITE_AI_API_BASE`도 그대로 받는다.
+ * (Vite는 `import.meta.env.VITE_*`를 빌드 때 글자로 바꾼다. 키를 변수로 찾지 말고 하나씩 적어야 한다)
+ */
 function apiBaseFromEnv(): string | null {
-  const base: unknown = import.meta.env.VITE_AI_API_BASE;
-  return typeof base === 'string' && base.trim() !== '' ? base.trim() : null;
+  if (import.meta.env.MODE === 'artifact') return null;
+  const explicit: unknown[] = [import.meta.env.VITE_API_BASE, import.meta.env.VITE_AI_API_BASE];
+  for (const value of explicit) {
+    if (typeof value === 'string' && value.trim() !== '') return value.trim();
+  }
+  return DEFAULT_API_BASE;
 }
 
 /** 인라인 워커(단일 HTML에도 들어간다). 테스트 환경을 깨지 않게 동적으로만 불러온다 */
@@ -71,11 +87,14 @@ export async function detectPlatform(win: Window & typeof globalThis, opts: { no
   const now = opts.now ?? (() => new Date());
   const hasWorker = typeof (win as { Worker?: unknown }).Worker !== 'undefined';
   const fetchImpl: unknown = (win as { fetch?: unknown }).fetch;
+  const browserFetch = typeof fetchImpl === 'function' ? (fetchImpl as typeof fetch) : undefined;
+  const apiBase = apiBaseFromEnv();
   return {
     artifactSample,
     downloads,
-    apiBase: apiBaseFromEnv(),
-    fetch: typeof fetchImpl === 'function' ? (fetchImpl as typeof fetch) : undefined,
+    apiBase,
+    fetch: browserFetch,
+    liveApi: apiBase !== null && browserFetch ? createLiveApi({ baseUrl: apiBase, fetch: browserFetch }) : null,
     createEngineClient: () => createPlatformEngineClient({ loadWorker: hasWorker ? loadEngineWorker : null }),
     today: () => seoulDate(now()),
     shareLink: (url, title) => shareLinkWith((win as { navigator?: NavigatorLike }).navigator, url, title),
@@ -89,6 +108,7 @@ export function localPlatform(opts: { now?: () => Date } = {}): Platform {
     artifactSample: null,
     downloads: null,
     apiBase: null,
+    liveApi: null,
     createEngineClient: () => createLocalEngineClient(),
     today: () => seoulDate(now()),
   };

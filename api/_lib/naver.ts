@@ -39,7 +39,8 @@ export interface NaverDeps {
 /** 일정 조회 주소. 네이버가 fromDate·toDate 기간을 받으므로 한 팀의 한 달이 요청 한 번이다(ADR-032) */
 export function scheduleUrl(from: string, to: string): string {
   const url = new URL(BASE);
-  url.searchParams.set('fields', 'basic');
+  // 'basic'만 주면 stadium이 빠진다(2026-09-26 실제 응답으로 확인). 구장은 상황 맥락(돔·날씨)에 쓴다
+  url.searchParams.set('fields', 'basic,stadium');
   url.searchParams.set('upperCategoryId', 'kbaseball');
   url.searchParams.set('categoryId', 'kbo');
   url.searchParams.set('fromDate', from);

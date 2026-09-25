@@ -7,6 +7,8 @@
     "moduleResolution": "bundler",
     "types": ["node"],
     "resolveJsonModule": true,
+    // vite.config.ts가 ./scripts/vite-api-dev.ts를 확장자까지 적어 불러온다(Vite native config loader 요구)
+    "allowImportingTsExtensions": true,
     "skipLibCheck": true,
     "noEmit": true,
 
