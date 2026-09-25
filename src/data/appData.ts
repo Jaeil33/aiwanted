@@ -1,3 +1,4 @@
+import { hitterOf, pitcherOf } from '../domain/players';
 import type { AppData, CoreData, EvidenceData, PitchData, SceneRecord, TrustData } from '../types/data';
 
 /*
@@ -165,3 +166,6 @@ export function todaySceneIndex(isoDate: string, count: number): number {
 export const APP_DATA: AppData | null = loadAppData(
   import.meta.glob('../../data/build/app/*.json', { eager: true, import: 'default' }) as Record<string, unknown>,
 );
+
+/** 겸업 선수 조회는 순수 모듈에 있다(ADR-035). 화면·게임 층이 여기서도 가져다 쓴다 */
+export { hitterOf, pitcherOf };

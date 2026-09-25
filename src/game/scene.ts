@@ -1,4 +1,5 @@
 import { situationText } from '../domain/format';
+import { hitterOf, pitcherOf } from '../domain/players';
 import { TEAMS, isTeamCode } from '../domain/teams';
 import type { LineupSlot, TeamConfig } from '../engine';
 import type { AppData, PlayerRecord, SceneRecord } from '../types/data';
@@ -55,8 +56,9 @@ export function buildSceneSetup(data: AppData, sceneId: string): SceneSetup {
   const scene = data.scenes.find((s) => s.id === sceneId);
   if (!scene) throw new Error(`buildSceneSetup: 모르는 장면 id "${sceneId}"`);
   const { core } = data;
-  const playerOf = (id: string): PlayerRecord | undefined => (Object.hasOwn(core.players, id) ? core.players[id] : undefined);
-  const slotOf = (id: string): LineupSlot => ({ id, rel: playerOf(id)?.rel ?? ONE });
+  // 타선 슬롯은 타자, 장면 투수는 투수로 찾는다. 같은 id가 둘 다일 수 있다(ADR-035)
+  const slotOf = (id: string): LineupSlot => ({ id, rel: hitterOf(core, id)?.rel ?? ONE });
+  const pitcherSlotOf = (id: string): LineupSlot => ({ id, rel: pitcherOf(core, id)?.rel ?? ONE });
   const bullpenOf = (side: Side): LineupSlot => {
     const code = scene[side].code;
     const pen = Object.hasOwn(core.bullpens, code) ? core.bullpens[code] : undefined;
@@ -104,12 +106,12 @@ export function buildSceneSetup(data: AppData, sceneId: string): SceneSetup {
     awayScore: scene.state.away,
     homeScore: scene.state.home,
     situation: situationText(scene.state),
-    batter: { id: scene.batter, name: names[scene.batter], team: scene[batSide].name, bats: playerOf(scene.batter)?.bats ?? 'R' },
+    batter: { id: scene.batter, name: names[scene.batter], team: scene[batSide].name, bats: hitterOf(core, scene.batter)?.bats ?? 'R' },
     pitcher: {
       id: scene.pitcher,
       name: names[scene.pitcher],
       team: scene[fieldSide].name,
-      throws: playerOf(scene.pitcher)?.throws ?? 'R',
+      throws: pitcherOf(core, scene.pitcher)?.throws ?? 'R',
     },
     battingTeam: scene[batSide].name,
     fieldingTeam: scene[fieldSide].name,
@@ -130,7 +132,7 @@ export function buildSceneSetup(data: AppData, sceneId: string): SceneSetup {
     countTable: core.countTable,
     away,
     home,
-    scenePitcher: slotOf(scene.pitcher),
+    scenePitcher: pitcherSlotOf(scene.pitcher),
     batSide,
     fieldSide,
     sceneContext: { batterId: scene.batter, pitcherId: scene.pitcher, batSide },

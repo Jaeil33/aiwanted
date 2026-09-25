@@ -6,6 +6,7 @@ import { TmiRail, type QuickTmi, type RailPill, type TmiInvite } from '../../com
 import { TmiSheet } from '../../components/TmiSheet';
 import { WpPanel } from '../../components/WpPanel';
 import { josa } from '../../domain/format';
+import { hitterOf, pitcherOf } from '../../domain/players';
 import { batterFor, canEditTmi, pitcherFor, type SceneSetup } from '../../game';
 import { sparkSeries, tierReadout, tmiPill, type Tier } from '../../game/broadcast';
 import { gradeOf, statLine } from '../../game/headline';
@@ -60,12 +61,12 @@ function PlayBoard({ setup }: { setup: SceneSetup }) {
   const state = live ? live.state : scene.state;
   const batSide: Side = state.half === 0 ? 'away' : 'home';
   const fieldSide: Side = batSide === 'away' ? 'home' : 'away';
-  const player = (id: string) => (Object.hasOwn(data.core.players, id) ? data.core.players[id] : undefined);
+
   const batter = batterFor(setup, state);
-  const batterRecord = player(batter.id);
+  const batterRecord = hitterOf(data.core, batter.id) ?? undefined;
   const pitcherId = pitcherFor(setup, state).id;
   const pitcherName = nameOf(setup, pitcherId);
-  const pitcherRecord = player(pitcherId);
+  const pitcherRecord = pitcherOf(data.core, pitcherId) ?? undefined;
   const pitcherThrows = Object.hasOwn(setup.hands, pitcherId) ? setup.hands[pitcherId].throws : undefined;
 
   const batterCaption = useMemo<PlayerCaption>(

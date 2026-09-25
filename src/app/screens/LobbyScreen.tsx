@@ -3,6 +3,7 @@ import { BasesGlyph } from '../../components/BroadcastBug';
 import controls from '../../components/controls.module.css';
 import { weekdayOf } from '../../components/SituationCard';
 import { todaySceneIndex } from '../../data/appData';
+import { anyPlayerOf, hitterOf, pitcherOf } from '../../domain/players';
 import { TEAMS, isTeamCode } from '../../domain/teams';
 import type { PlayerRecord, SceneRecord } from '../../types/data';
 import { useGame } from '../GameProvider';
@@ -69,8 +70,7 @@ export function LobbyScreen() {
   const ordered = useMemo(() => (today ? [today, ...rest] : rest), [today, rest]);
   const { swings } = useSceneSwings(ordered);
 
-  const playerOf = (id: string) => (Object.hasOwn(core.players, id) ? core.players[id] : undefined);
-  const nameOf = (id: string) => playerOf(id)?.name ?? id;
+  const nameOf = (id: string) => anyPlayerOf(core, id)?.name ?? id;
   const swingOf = (id: string) => (Object.hasOwn(swings, id) ? swings[id] : undefined);
 
   return (
@@ -78,7 +78,7 @@ export function LobbyScreen() {
       <h2 className={controls.srOnly}>명장면 고르기</h2>
       <p className={styles.tagline}>쓸모없는 변수, 진짜 쓸모없을까?</p>
 
-      {today && <Feature scene={today} batter={playerOf(today.batter)} pitcher={playerOf(today.pitcher)} nameOf={nameOf} swing={swingOf(today.id)} />}
+      {today && <Feature scene={today} batter={hitterOf(core, today.batter) ?? undefined} pitcher={pitcherOf(core, today.pitcher) ?? undefined} nameOf={nameOf} swing={swingOf(today.id)} />}
 
       <section className={styles.listSection} aria-labelledby={listTitleId}>
         <div className={styles.listHead}>

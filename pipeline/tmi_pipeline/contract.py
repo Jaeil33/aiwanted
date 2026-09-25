@@ -16,6 +16,13 @@ PITCH_TYPES = ["직구", "투심", "커터", "슬라이더", "스위퍼", "커�
 # 네이버 중계 pitchResult → PitchRow code (0 B·1 T·2 S·3 F·4 X)
 PITCH_RESULT_CODE = {"B": 0, "T": 1, "S": 2, "V": 2, "F": 3, "W": 3, "H": 4}
 
+# 같은 선수 id가 타자·투수 둘 다일 때 타자 레코드에 붙이는 꼬리 (ADR-035).
+# 투수는 `<id>`, 타자는 `<id>:H`. TS 쪽은 src/data/appData.ts의 hitterOf·pitcherOf가 푼다.
+HITTER_KEY_SUFFIX = ":H"
+
+# data/build/app/core.json 크기 예산. 넘으면 build를 멈춘다 (ADR-023·ADR-035).
+CORE_SIZE_BUDGET_KB = 200
+
 
 def load_measured() -> list[dict]:
     """measured.json 전체를 파일 순서대로 읽는다."""

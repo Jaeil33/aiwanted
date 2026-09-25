@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { fixtureAppData } from '../test/fixtures/appData';
 import type { PitchRow } from '../types/data';
-import { APP_DATA, loadAppData, todaySceneIndex } from './appData';
+import { APP_DATA, hitterOf, loadAppData, pitcherOf, todaySceneIndex } from './appData';
 
 const DIR = '../../data/build/app';
 const { core, pitches, scenes, evidence, trust } = fixtureAppData;
@@ -131,5 +131,44 @@ describe('todaySceneIndex', () => {
 describe('APP_DATA', () => {
   it('빌드에 넣은 앱 데이터이거나, 파일이 없으면 null이다 (내용에는 기대지 않는다)', () => {
     expect(APP_DATA === null || (Array.isArray(APP_DATA.scenes) && APP_DATA.scenes.length > 0)).toBe(true);
+  });
+});
+
+// 19-season step 0: 겸업 선수 조회 (ADR-035)
+describe('hitterOf·pitcherOf', () => {
+  /** 같은 id가 타자·투수 둘 다인 합성 core */
+  function dualCore() {
+    const c = clone(core);
+    const pitcher = { id: 'x9', name: '정선수', team: 'HT', kind: 'P', throws: 'R', rel: [1, 1, 1, 1, 1, 1, 1], line: {} };
+    const hitter = { id: 'x9', name: '정선수', team: 'HT', kind: 'H', bats: 'R', rel: [2, 2, 2, 2, 2, 2, 2], line: {} };
+    loose(c).players = { ...(loose(c).players as object), x9: pitcher, 'x9:H': hitter };
+    return c;
+  }
+
+  it('`:H` 키가 있으면 타자 레코드를 돌려준다', () => {
+    const c = dualCore();
+    expect(hitterOf(c, 'x9')?.kind).toBe('H');
+    expect(hitterOf(c, 'x9')?.rel[0]).toBe(2);
+  });
+
+  it('투수는 언제나 꼬리 없는 id다', () => {
+    const c = dualCore();
+    expect(pitcherOf(c, 'x9')?.kind).toBe('P');
+    expect(pitcherOf(c, 'x9')?.rel[0]).toBe(1);
+  });
+
+  it('겸업이 아니면 타자도 꼬리 없는 id로 찾는다', () => {
+    const players = loose(core).players as Record<string, { kind: string }>;
+    const id = Object.keys(players).find((k) => !k.includes(':') && players[k].kind === 'H')!;
+    expect(hitterOf(core, id)?.id).toBe(id);
+  });
+
+  it('없는 선수는 null', () => {
+    expect(hitterOf(core, '없는id')).toBeNull();
+    expect(pitcherOf(core, '없는id')).toBeNull();
+  });
+
+  it('`:H` 키가 들어 있어도 core 검증을 통과한다', () => {
+    expect(loadAppData(files({ 'core.json': dualCore() }))).not.toBeNull();
   });
 });

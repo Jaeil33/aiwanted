@@ -575,3 +575,84 @@ def test_snapshot_stage_writes_three_app_files(snapshot_raw, tmp_path):
     assert summary["players"] == len(core["players"])
     assert set(summary["kb"]) == set(names)
     assert all(size > 0 for size in summary["kb"].values())
+
+
+# --- 19-season step 0: 전 선수 수록과 겸업 키 규칙 (ADR-035) ---
+# 가상 이름만 쓴다(공개 저장소, CLAUDE.md).
+
+
+def _hitter_row(pid: str, name: str, team: str = "HT") -> dict:
+    return {
+        "playerId": pid, "playerName": name, "teamId": team, "seasonId": "2026",
+        "hitterGameCount": 50, "hitterAb": 100, "hitterHit": 30, "hitterH2": 5, "hitterH3": 1,
+        "hitterHr": 3, "hitterBb": 10, "hitterHp": 1, "hitterKk": 20,
+        "hitterHra": 0.3, "hitterObp": 0.37, "hitterSlg": 0.45,
+    }
+
+
+def _pitcher_row(pid: str, name: str, team: str = "HT") -> dict:
+    return {
+        "playerId": pid, "playerName": name, "teamId": team, "seasonId": "2026",
+        "pitcherInning": "50", "pitcherGameCount": 20, "pitcherHit": 45, "pitcherHr": 5,
+        "pitcherBb": 15, "pitcherHp": 2, "pitcherKk": 40, "pitcherEra": 3.5, "pitcherWhip": 1.2,
+        "pitcherSave": 0, "pitcherHold": 0,
+    }
+
+
+def test_all_season_players_get_a_record():
+    rates = stats.season_rates(
+        [_hitter_row("b1", "김타자"), _hitter_row("b2", "이타자")],
+        [_pitcher_row("p1", "박투수")],
+    )
+    players = snapshot.all_player_records(rates, {}, {})
+    assert set(players) == {"b1", "b2", "p1"}
+    assert players["b1"]["kind"] == "H"
+    assert players["p1"]["kind"] == "P"
+    assert set(players["b1"]) == HITTER_KEYS
+    assert set(players["p1"]) == PITCHER_KEYS
+
+
+def test_players_without_season_counts_are_left_out():
+    empty = _hitter_row("z1", "최타자")
+    empty.update({"hitterAb": 0, "hitterBb": 0, "hitterHp": 0})
+    idle = _pitcher_row("z2", "한투수")
+    idle["pitcherInning"] = "0"
+    rates = stats.season_rates([empty, _hitter_row("b1", "김타자")], [idle, _pitcher_row("p1", "박투수")])
+    assert set(snapshot.all_player_records(rates, {}, {})) == {"b1", "p1"}
+
+
+def test_dual_role_id_keeps_the_pitcher_bare_and_the_hitter_at_H():
+    """같은 id가 타자·투수 둘 다면 투수는 <id>, 타자는 <id>:H. 레코드의 id는 원래 값이다(ADR-035)."""
+    rates = stats.season_rates(
+        [_hitter_row("x9", "정선수"), _hitter_row("b1", "김타자")],
+        [_pitcher_row("x9", "정선수")],
+    )
+    players = snapshot.all_player_records(rates, {}, {})
+    assert set(players) == {"b1", "x9", "x9:H"}
+    assert players["x9"]["kind"] == "P"
+    assert players["x9:H"]["kind"] == "H"
+    assert players["x9"]["id"] == "x9"
+    assert players["x9:H"]["id"] == "x9"
+
+
+def test_hands_come_from_relay_because_season_stats_have_none():
+    rates = stats.season_rates([_hitter_row("b1", "김타자")], [_pitcher_row("p1", "박투수")])
+    players = snapshot.all_player_records(rates, {"b1": "좌투좌타"}, {"p1": "L"})
+    assert players["b1"]["bats"] == "L"
+    assert players["p1"]["throws"] == "L"
+    # 중계에 없으면 기본값
+    plain = snapshot.all_player_records(rates, {}, {})
+    assert plain["b1"]["bats"] == "R"
+    assert plain["p1"]["throws"] == "R"
+
+
+def test_hitter_key_sends_a_hitter_to_H_when_the_id_is_a_pitcher():
+    rates = stats.season_rates([_hitter_row("x9", "정선수")], [_pitcher_row("x9", "정선수")])
+    assert snapshot.hitter_key("x9", rates) == "x9:H"
+    assert snapshot.hitter_key("b1", rates) == "b1"
+
+
+def test_core_size_budget_stops_the_build(snapshot_raw, tmp_path, monkeypatch):
+    monkeypatch.setattr(snapshot, "CORE_SIZE_BUDGET_KB", 0.001)
+    with pytest.raises(ValueError, match="core.json"):
+        snapshot.write_snapshot(snapshot_raw, tmp_path)

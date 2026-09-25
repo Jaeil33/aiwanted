@@ -205,3 +205,32 @@ describe('batterFor', () => {
     expect(s.promptContext.pitcher).toEqual({ id: 'hp', name: '홈투수', team: '롯데', throws: 'L' });
   });
 });
+
+// 19-season step 0: 겸업 선수 (ADR-035)
+describe('타자·투수 겸업 id', () => {
+  /** 장면 투수 ap가 타자 기록(ap:H)도 가진 core */
+  function dualData(): AppData {
+    const data = structuredClone(fixtureAppData) as AppData;
+    const pitcherRel = data.core.players.ap.rel;
+    data.core.players['ap:H'] = {
+      id: 'ap', name: '원정투수1', team: 'HT', kind: 'H', bats: 'L',
+      rel: pitcherRel.map((x) => x + 0.5), line: {},
+    } as PlayerRecord;
+    return data;
+  }
+
+  it('장면 투수는 타자 기록이 있어도 투수 rel을 쓴다', () => {
+    const data = dualData();
+    expect(buildSceneSetup(data, SCENE.id).scenePitcher.rel).toEqual(fixtureAppData.core.players.ap.rel);
+  });
+
+  it('타선에 선 겸업 선수는 타자 rel을 쓴다', () => {
+    const data = dualData();
+    const scene = structuredClone(SCENE) as SceneRecord;
+    scene.lineups.away = ['ap', ...scene.lineups.away.slice(1)];
+    data.scenes = [scene];
+    const slot = buildSceneSetup(data, scene.id).away.lineup[0];
+    expect(slot.rel).toEqual(data.core.players['ap:H'].rel);
+    expect(slot.rel).not.toEqual(fixtureAppData.core.players.ap.rel);
+  });
+});

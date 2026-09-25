@@ -10,7 +10,7 @@ import statistics
 from datetime import datetime, timezone
 from pathlib import Path
 
-from .contract import PITCH_RESULT_CODE, PITCH_TYPES
+from .contract import CORE_SIZE_BUDGET_KB, HITTER_KEY_SUFFIX, PITCH_RESULT_CODE, PITCH_TYPES
 from .io import load_json, relay_game_paths, season_stats_path, write_json
 from .relay import (
     NOTE_TYPES,
@@ -257,6 +257,39 @@ def _pitcher_record(pid: str, rates: SeasonRates, names: dict[str, str], throws_
     return {**record, "name": names.get(pid, pid), "team": team, "rel": list(ONES), "line": {}}
 
 
+def hitter_key(pid: str, rates: SeasonRates) -> str:
+    """타자 레코드 키. 같은 id가 투수로도 있으면 `<id>:H`, 아니면 `<id>` (ADR-035)."""
+    return f"{pid}{HITTER_KEY_SUFFIX}" if pid in rates.pitchers else pid
+
+
+def hit_types_of(games: list[dict]) -> dict[str, str]:
+    """수집한 중계 전체에서 타자 id → 투타 표기. 시즌 기록 파일에는 손 정보가 없다."""
+    found: dict[str, str] = {}
+    for game in games:
+        for pa in plate_appearances(game):
+            if pa.hit_type:
+                found[pa.batter_id] = pa.hit_type
+    return found
+
+
+def all_player_records(
+    rates: SeasonRates, hit_types: dict[str, str], throws_by_pitcher: dict[str, str]
+) -> dict[str, dict]:
+    """시즌 기록이 있는 모든 선수의 PlayerRecord (ADR-035).
+
+    장면에 나온 선수만 남기던 필터를 대신한다. 시즌 아무 타석이나 열려면 그 타자·투수가 번들에 있어야 한다.
+    손은 시즌 기록에 없으므로 중계에서 받은 것만 쓰고, 없으면 기본값이다.
+    """
+    players: dict[str, dict] = {}
+    for pid, season in rates.pitchers.items():
+        players[pid] = _pitcher_record(pid, rates, {}, throws_by_pitcher, season["team"])
+    for pid, season in rates.hitters.items():
+        players[hitter_key(pid, rates)] = _hitter_record(
+            pid, rates, season["name"], hit_types.get(pid, ""), season["team"]
+        )
+    return players
+
+
 def _substitution_names(game: dict) -> dict[str, str]:
     """교체 기록(playerChange)에 나온 선수 id → 이름."""
     names: dict[str, str] = {}
@@ -369,7 +402,9 @@ def build_scene(
             for pid in lineups[side]:
                 if pid is not None:
                     name = names.get(pid) or change_names.get(pid, pid)
-                    players[pid] = _hitter_record(pid, rates, name, hit_types.get(pid, ""), teams[side])
+                    players[hitter_key(pid, rates)] = _hitter_record(
+                        pid, rates, name, hit_types.get(pid, ""), teams[side]
+                    )
         players[target.pitcher_id] = _pitcher_record(
             target.pitcher_id, rates, change_names, throws_by_pitcher, teams[fielding]
         )
@@ -388,7 +423,8 @@ def build_snapshot(raw_dir: Path) -> dict:
     by_pitcher = pitches_by_pitcher(games)
     throws = {pid: infer_throws(rows) for pid, rows in by_pitcher.items()}
 
-    players: dict[str, dict] = {}
+    # 시즌 기록이 있는 모든 선수를 먼저 싣는다(ADR-035). 장면 순회는 시즌 기록이 없는 선수만 덧붙인다.
+    players: dict[str, dict] = all_player_records(rates, hit_types_of(games), throws)
     scenes: list[dict] = []
     for cur in CURATED:
         label = f"{cur['game']} {situation_text(cur['inning'], cur['half'], cur['outs'], cur['bases'])} {cur['batter']}"
@@ -405,11 +441,8 @@ def build_snapshot(raw_dir: Path) -> dict:
         scenes.append(build_scene(game, index, "auto", None, rates, throws, players=players))
     scenes.sort(key=lambda s: (s["date"], s["id"]))
 
-    bullpens: dict[str, dict] = {}
-    for scene in scenes:
-        for code in (scene["away"]["code"], scene["home"]["code"]):
-            if code not in bullpens:
-                bullpens[code] = bullpen(rates, code)
+    # 임의의 경기를 열 수 있어야 하므로 시즌 기록에 있는 모든 팀의 불펜을 싣는다(ADR-032)
+    bullpens = {code: bullpen(rates, code) for code in sorted({p["team"] for p in rates.pitchers.values()})}
 
     dates = sorted(game["game"]["gameDate"] for game in games)
     core = {
@@ -449,6 +482,8 @@ def write_snapshot(raw_dir: Path, out_dir: Path) -> dict:
         path = app_dir / f"{key}.json"
         write_json(path, data[key])
         kb[path.name] = round(path.stat().st_size / 1024, 1)
+    if kb["core.json"] > CORE_SIZE_BUDGET_KB:
+        raise ValueError(f"core.json {kb['core.json']}KB > 예산 {CORE_SIZE_BUDGET_KB}KB (ADR-035)")
     scenes = data["scenes"]
     curated = sum(1 for scene in scenes if scene["source"] == "curated")
     return {
