@@ -4,6 +4,7 @@ import { fixtureAppData } from '../test/fixtures/appData';
 import { fixtureGameSummaries, fixtureLiveGame } from '../test/fixtures/live';
 import type { LiveGame } from '../types/live';
 import { buildSceneSetup } from './scene';
+import { gameRowsOf, pitcherPlanOf } from './pitchers';
 import { batterFor, buildSituationSetup, pitcherFor, situationFromPa, situationFromScene, situationTitle } from './situation';
 
 /*
@@ -230,6 +231,44 @@ describe('batterFor·pitcherFor', () => {
     // core의 a2는 좌타
     expect(CORE.players.a2.bats).toBe('L');
     expect(batterFor(setup, { ...situation.state, slotAway: 1 }).stance).toBe('L');
+  });
+});
+
+describe('실제 투수 차례(ADR-033)', () => {
+  const situation = situationFromPa(GAME, 1, 'past')!;
+  const extra = { names: GAME.names, hands: GAME.hands, pitcherPlan: pitcherPlanOf(GAME), gameRows: gameRowsOf(GAME) };
+  const setup = buildSituationSetup(CORE, situation, extra);
+
+  it('상황 반이닝은 여전히 상황 투수가 끝까지 던진다', () => {
+    expect(pitcherFor(setup, situation.state).id).toBe('hp1');
+    expect(pitcherFor(setup, { ...situation.state, outs: 2 }).id).toBe('hp1');
+  });
+
+  it('다음 반이닝은 팀 불펜이 아니라 실제로 던진 투수다', () => {
+    const bottom = { ...situation.state, half: 1 as const };
+    expect(pitcherFor(setup, bottom).id).toBe('ap1');
+    expect(pitcherFor(setup, bottom).id).not.toBe(setup.away.bullpen.id);
+  });
+
+  it('차례를 모르는 반이닝은 팀 불펜으로 떨어진다', () => {
+    const noPlan = buildSituationSetup(CORE, situation, { names: GAME.names, hands: GAME.hands });
+    expect(pitcherFor(noPlan, { ...situation.state, half: 1 }).id).toBe(noPlan.away.bullpen.id);
+  });
+
+  it('실제 경기보다 뒤 이닝이면 마지막 투수가 계속 던진다', () => {
+    expect(pitcherFor(setup, { ...situation.state, inning: 12, half: 1 }).id).toBe('ap1');
+    expect(pitcherFor(setup, { ...situation.state, inning: 12, half: 0 }).id).toBe('hp1');
+  });
+
+  it('차례에 나오는 투수의 rel을 미리 찾아 둔다', () => {
+    // pitcherFor는 core를 받지 않는다. 조립할 때 한 번만 찾는다
+    expect(Object.keys(setup.pitcherSlots).sort()).toEqual(['ap1', 'hp1']);
+    expect([...setup.pitcherSlots.ap1.rel]).toEqual([1, 1, 1, 1, 1, 1, 1]);
+  });
+
+  it('그 경기의 투구 표본을 싣는다', () => {
+    expect(setup.gameRows.hp1.length).toBeGreaterThan(0);
+    expect(buildSituationSetup(CORE, situation).gameRows).toEqual({});
   });
 });
 

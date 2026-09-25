@@ -249,6 +249,8 @@ export function usePlayback(stageRef: RefObject<StageController | null>, opts: P
           spec: specOf(st, s, live.paIndex > 0),
           start,
           scenePitcher: pitcherFor(st, start),
+          // 남은 경기도 그 경기에서 실제로 던진 투수들이 던진다(ADR-033)
+          relief: { plan: st.pitcherPlan, slots: st.pitcherSlots },
           seed: nextSeed(s),
         });
       } catch {

@@ -1,8 +1,9 @@
-import type { EngineEffect, EventIndex, EventVector, GameOver, GameState, Mode, PitchSample, Side, Transition } from '../types/domain';
+import type { EngineEffect, EventIndex, EventVector, GameOver, GameState, Mode, PitcherPlanEntry, PitchSample, Side, Transition } from '../types/domain';
 import { calibrateCount, simulatePA, type CountModel } from './count';
 import { effectMultipliers, fieldSideOf } from './effects';
 import { applyTransition, startNextHalf, type Game, type LineupSlot, type TeamConfig } from './game';
 import { matchup } from './matchup';
+import { pitcherAt } from './relief';
 import { sampleEvent, sampleTransition } from './transitions';
 
 export interface PlayoutInput {
@@ -11,6 +12,11 @@ export interface PlayoutInput {
   start: GameState;
   /** 시작 반이닝을 끝까지 던지는 장면 투수 */
   scenePitcher: LineupSlot;
+  /**
+   * 그 경기에서 실제로 던진 투수 차례(ADR-033). 주면 시작 반이닝 뒤에도 팀 불펜 대신 이 투수들이 던진다.
+   * 함수가 아니라 값이다: 요청이 워커로 구조화 복제된다.
+   */
+  relief?: { plan: readonly PitcherPlanEntry[]; slots: Record<string, LineupSlot> };
   away: TeamConfig;
   home: TeamConfig;
   lg: EventVector;
@@ -63,7 +69,10 @@ const leaderOf = (st: GameState): Side | 'tie' => (st.home > st.away ? 'home' : 
 
 /**
  * 경기를 끝까지(또는 maxPlateAppearances까지) 시드 난수로 다시 치른다. 확률 계산이 아니라 재생 전용이다(ADR-002).
- * 시작 반이닝은 장면 투수, 그 뒤는 수비 팀 불펜이 던진다. 첫 타석에만 scope 'pa' 효과를 쓴다.
+ * 시작 반이닝은 장면 투수, 그 뒤는 실제 투수 차례(relief)나 수비 팀 불펜이 던진다. 첫 타석에만 scope 'pa' 효과를 쓴다.
+ *
+ * 승리확률 모델(game.evaluate) 자체는 여전히 "이후 반이닝은 팀 불펜"으로 셈한다(ARCHITECTURE 확률).
+ * 실제 투수는 지금 치르는 타석의 상대로만 쓴다.
  */
 export function playout(input: PlayoutInput): PlayoutResult {
   const { game, start, scenePitcher, away, home, lg, effects, mode, countTable, rng } = input;
@@ -71,8 +80,15 @@ export function playout(input: PlayoutInput): PlayoutResult {
   const maxPlateAppearances = input.maxPlateAppearances ?? DEFAULT_MAX_PLATE_APPEARANCES;
   const teamOf = (side: Side) => (side === 'away' ? away : home);
   const batSideOf = (st: GameState): Side => (st.half === 0 ? 'away' : 'home');
+  const reliefAt = (st: GameState): LineupSlot | null => {
+    if (!input.relief) return null;
+    const id = pitcherAt(input.relief.plan, st);
+    return id !== null && Object.hasOwn(input.relief.slots, id) ? input.relief.slots[id] : null;
+  };
   const pitcherFor = (st: GameState): LineupSlot =>
-    st.inning === start.inning && st.half === start.half ? scenePitcher : teamOf(fieldSideOf(batSideOf(st))).bullpen;
+    st.inning === start.inning && st.half === start.half
+      ? scenePitcher
+      : reliefAt(st) ?? teamOf(fieldSideOf(batSideOf(st))).bullpen;
   /** 같은 타석 분포의 카운트 모델은 한 번만 맞춘다 (분포는 공격 진영·타순·장면 투수 여부·첫 타석 여부로 정해진다) */
   const countModels = new Map<string, CountModel>();
 
@@ -98,7 +114,8 @@ export function playout(input: PlayoutInput): PlayoutResult {
     let event: EventIndex;
     let pitches: PitchSample[];
     if (countTable) {
-      const key = `${batSide}|${slot}|${pitcher === scenePitcher ? 'scene' : 'bullpen'}|${first}`;
+      // 같은 타석 분포면 카운트 모델을 다시 맞추지 않는다. 분포는 공격 진영·타순·투수·첫 타석 여부로 정해진다
+      const key = `${batSide}|${slot}|${pitcher.id}|${first}`;
       let model = countModels.get(key);
       if (!model) {
         model = calibrateCount(pa, countTable);

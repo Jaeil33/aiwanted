@@ -18,6 +18,7 @@ import {
   headline,
   logEntryFor,
   pickPitchRow,
+  MIN_GAME_ROWS,
   pitchRowsFor,
   playbackFor,
   resolvePitch,
@@ -188,13 +189,37 @@ describe('pickPitchRow', () => {
 });
 
 describe('pitchRowsFor', () => {
-  it('투수 표본이 있으면 그것, 없거나 비었으면 투수 손 기준 리그 표본', () => {
-    const { pitches } = fixtureAppData;
-    expect(pitchRowsFor(fixtureAppData, 'ap', 'R')).toBe(pitches.byPitcher.ap);
-    expect(pitchRowsFor(fixtureAppData, 'LT-pen', 'L')).toBe(pitches.pools.L);
-    expect(pitchRowsFor(fixtureAppData, 'LT-pen', 'R')).toBe(pitches.pools.R);
+  const { pitches } = fixtureAppData;
+
+  it('시즌 표본이 있으면 그것, 없거나 비었으면 투수 손 기준 리그 표본', () => {
+    expect(pitchRowsFor(fixtureAppData, setup, 'ap', 'R')).toBe(pitches.byPitcher.ap);
+    expect(pitchRowsFor(fixtureAppData, setup, 'LT-pen', 'L')).toBe(pitches.pools.L);
+    expect(pitchRowsFor(fixtureAppData, setup, 'LT-pen', 'R')).toBe(pitches.pools.R);
     const empty: AppData = { ...fixtureAppData, pitches: { ...pitches, byPitcher: { ...pitches.byPitcher, ap: [] } } };
-    expect(pitchRowsFor(empty, 'ap', 'R')).toBe(pitches.pools.R);
+    expect(pitchRowsFor(empty, setup, 'ap', 'R')).toBe(pitches.pools.R);
+  });
+
+  it('그 경기에서 던진 공이 넉넉하면 그것을 먼저 쓴다', () => {
+    // 시즌 표본(pitches.byPitcher)은 step 10에서 비운다. 그 뒤에는 이 경로만 남는다
+    const own = Array.from({ length: MIN_GAME_ROWS }, () => AP_ROWS[0]);
+    const withGame = { ...setup, gameRows: { ap: own } };
+    expect(pitchRowsFor(fixtureAppData, withGame, 'ap', 'R')).toBe(own);
+  });
+
+  it('그 경기 공이 모자라면 시즌 표본과 합친다', () => {
+    const own = [AP_ROWS[0], AP_ROWS[1]];
+    const withGame = { ...setup, gameRows: { ap: own } };
+    const rows = pitchRowsFor(fixtureAppData, withGame, 'ap', 'R');
+    expect(rows.length).toBe(own.length + pitches.byPitcher.ap.length);
+    expect(rows[0]).toBe(own[0]);
+  });
+
+  it('합쳐도 모자라면 리그 표본을 뒤에 붙인다', () => {
+    const own = [AP_ROWS[0]];
+    const withGame = { ...setup, gameRows: { 'LT-pen': own } };
+    const rows = pitchRowsFor(fixtureAppData, withGame, 'LT-pen', 'R');
+    expect(rows.length).toBe(1 + pitches.pools.R.length);
+    expect(rows[0]).toBe(own[0]);
   });
 });
 

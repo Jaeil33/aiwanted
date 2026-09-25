@@ -18,6 +18,7 @@ export type { Hands, SituationExtra, SituationSetup } from './situation';
 /** 옛 이름. 장면 경로가 사라질 때 함께 없앤다(19-season step 10) */
 export type { SituationSetup as SceneSetup } from './situation';
 export { compileSessionEffects, effectsKey, measuredAvailable } from './effects';
+export { gameRowsOf, pitcherPlanOf } from './pitchers';
 export { gamesByDate, gamesOfTeam, halfBlocks, paList } from './paList';
 export type { DateGroup, HalfBlock, PaListOptions, PaListRow } from './paList';
 export { battingWin, butterflyPp, entryChips, expectedSwing, selectTiers } from './selectors';
@@ -37,6 +38,7 @@ export type {
   WorkerLike,
 } from './engineClient';
 export {
+  MIN_GAME_ROWS,
   countBucket,
   headline,
   logEntryFor,

@@ -94,11 +94,27 @@ export function pickPitchRow(
   return null;
 }
 
-/** 투수의 투구 표본: pitches.byPitcher[id], 없거나 비었으면 투수 손 기준 리그 표본 */
-export function pitchRowsFor(data: AppData, pitcherId: string, throws: 'L' | 'R'): readonly PitchRow[] {
+/** 이만큼 모이면 그 표본만으로 연출한다 */
+export const MIN_GAME_ROWS = 12;
+
+/**
+ * 투수의 투구 표본. 그 경기에서 실제로 던진 공(setup.gameRows)이 넉넉하면 그것,
+ * 모자라면 시즌 표본(pitches.byPitcher)과 합치고, 그래도 모자라면 투수 손 기준 리그 표본을 뒤에 붙인다.
+ * 시즌 표본은 step 10에서 비운다(ADR-035): 그 뒤에는 경기 표본 → 리그 표본만 남는다.
+ */
+export function pitchRowsFor(
+  data: AppData,
+  setup: Pick<SituationSetup, 'gameRows'>,
+  pitcherId: string,
+  throws: 'L' | 'R',
+): readonly PitchRow[] {
   const { byPitcher, pools } = data.pitches;
-  const own = Object.hasOwn(byPitcher, pitcherId) ? byPitcher[pitcherId] : undefined;
-  return own && own.length > 0 ? own : pools[throws];
+  const own = Object.hasOwn(setup.gameRows, pitcherId) ? setup.gameRows[pitcherId] : [];
+  if (own.length >= MIN_GAME_ROWS) return own;
+  const season = Object.hasOwn(byPitcher, pitcherId) ? byPitcher[pitcherId] : [];
+  if (own.length === 0) return season.length > 0 ? season : pools[throws];
+  const merged = [...own, ...season];
+  return merged.length >= MIN_GAME_ROWS ? merged : [...merged, ...pools[throws]];
 }
 
 /** 타석 결과 한 줄 (app.js headline): "끝내기 만루 홈런!", "밀어내기 볼넷", "병살타", "2타점 적시타" … */
@@ -155,7 +171,7 @@ export function playbackFor(args: {
   const { setup, data, state, code, balls, strikes, number, ended, over, fast, r } = args;
   const pitcher = pitcherFor(setup, state);
   const bats = batterFor(setup, state).stance;
-  const rows = pitchRowsFor(data, pitcher.id, throwsOf(setup, pitcher.id));
+  const rows = pitchRowsFor(data, setup, pitcher.id, throwsOf(setup, pitcher.id));
   const playback: PitchPlayback = {
     row: pickPitchRow(rows, code, balls, strikes, bats, r),
     code,

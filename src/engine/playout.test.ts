@@ -68,6 +68,57 @@ function input(over: Partial<PlayoutInput> = {}): PlayoutInput {
   };
 }
 
+describe('playout — 실제 투수 차례(relief)', () => {
+  /** 9회말 장면. 10회초부터 홈 수비는 hp가 던진다(팀 불펜이 아니라) */
+  const RELIEF = {
+    plan: [{ inning: 10, half: 0 as const, outs: 0, pitcher: 'hp' }],
+    slots: { hp: HP },
+  };
+
+  it('시작 반이닝은 그대로 장면 투수다', () => {
+    const result = playout(input({ relief: RELIEF, rng: createRng(7) }));
+    const first = result.plateAppearances[0];
+    expect(first.before.inning).toBe(SCENE.state.inning);
+    expect(first.pitcherId).toBe(AP.id);
+  });
+
+  it('그 뒤 반이닝은 팀 불펜이 아니라 차례의 투수가 던진다', () => {
+    // 경기가 10회초까지 가는 시드를 찾는다
+    for (let seed = 1; seed < 200; seed++) {
+      const result = playout(input({ relief: RELIEF, rng: createRng(seed) }));
+      const tenth = result.plateAppearances.find((pa) => pa.before.inning === 10 && pa.before.half === 0);
+      if (!tenth) continue;
+      expect(tenth.pitcherId).toBe('hp');
+      expect(tenth.pitcherId).not.toBe(HOME.bullpen.id);
+      return;
+    }
+    throw new Error('10회초까지 가는 시드를 찾지 못했다');
+  });
+
+  it('차례를 주지 않으면 팀 불펜이 던진다', () => {
+    for (let seed = 1; seed < 200; seed++) {
+      const result = playout(input({ rng: createRng(seed) }));
+      const tenth = result.plateAppearances.find((pa) => pa.before.inning === 10 && pa.before.half === 0);
+      if (!tenth) continue;
+      expect(tenth.pitcherId).toBe(HOME.bullpen.id);
+      return;
+    }
+    throw new Error('10회초까지 가는 시드를 찾지 못했다');
+  });
+
+  it('차례에 없는 반이닝은 팀 불펜으로 떨어진다', () => {
+    const onlyBottom = { plan: [{ inning: 10, half: 1 as const, outs: 0, pitcher: 'hp' }], slots: { hp: HP } };
+    for (let seed = 1; seed < 200; seed++) {
+      const result = playout(input({ relief: onlyBottom, rng: createRng(seed) }));
+      const tenth = result.plateAppearances.find((pa) => pa.before.inning === 10 && pa.before.half === 0);
+      if (!tenth) continue;
+      expect(tenth.pitcherId).toBe(HOME.bullpen.id);
+      return;
+    }
+    throw new Error('10회초까지 가는 시드를 찾지 못했다');
+  });
+});
+
 function knob(id: KnobPart['knob'], subject: KnobPart['subject'], strength: number, scope: KnobPart['scope'] = 'game'): KnobPart {
   return { kind: 'knob', knob: id, subject, strength, scope, evidence: 'fun', why: '테스트' };
 }

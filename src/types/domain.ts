@@ -20,6 +20,19 @@ export interface GameState {
   slotHome: number;
 }
 
+/**
+ * 그 경기에서 투수가 바뀐 지점 하나(ADR-033). 실제 중계에서 읽어 둔다.
+ * `outs`는 그 투수가 그 반이닝에서 처음 던진 타석의 아웃 수다: 되돌려보다가 갈라진 경기에서도
+ * 같은 이닝·같은 아웃에 같은 투수가 올라온다.
+ */
+export interface PitcherPlanEntry {
+  inning: number;
+  half: Half;
+  outs: number;
+  /** 선수 id */
+  pitcher: string;
+}
+
 export type Play = 'K' | 'BB' | 'HR' | '3B' | '2B' | '1B' | 'DP' | 'GB' | 'FB' | 'SF' | 'LD';
 /** [출발, 도착]: 출발 0=타자, 1~3=루 / 도착 1~3=루, 4=득점, -1=아웃 */
 export type RunnerMove = readonly [from: number, to: number];

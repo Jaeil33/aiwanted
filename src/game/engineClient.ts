@@ -8,7 +8,7 @@ import {
   type PlayoutResult,
   type TeamConfig,
 } from '../engine';
-import type { EngineEffect, EventVector, GameState, Mode } from '../types/domain';
+import type { EngineEffect, EventVector, GameState, Mode, PitcherPlanEntry } from '../types/domain';
 import { effectsKey } from './effects';
 
 /** 경기 하나를 만드는 값. 구조화 복제가 되는 값만 담아 워커로 그대로 보낸다 */
@@ -33,6 +33,8 @@ export interface PlayoutRequest {
   start: GameState;
   scenePitcher: LineupSlot;
   seed: number;
+  /** 그 경기의 실제 투수 차례(ADR-033). 구조화 복제가 되는 값만 담는다 */
+  relief?: { plan: readonly PitcherPlanEntry[]; slots: Record<string, LineupSlot> };
   maxPlateAppearances?: number;
 }
 
@@ -120,6 +122,7 @@ export function createLocalEngineClient(
         effects: spec.effects,
         mode: spec.mode,
         countTable: spec.countTable,
+        relief: req.relief,
         rng: createRng(req.seed),
         maxPlateAppearances: req.maxPlateAppearances,
       });

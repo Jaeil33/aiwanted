@@ -18,6 +18,9 @@ const PUBLIC_API = [
   'situationFromScene',
   'situationTitle',
   'throwsOf',
+  // pitchers
+  'pitcherPlanOf',
+  'gameRowsOf',
   // paList
   'paList',
   'halfBlocks',
@@ -49,6 +52,7 @@ const PUBLIC_API = [
   'samplePitchCode',
   'resolvePitch',
   'countBucket',
+  'MIN_GAME_ROWS',
   'pickPitchRow',
   'pitchRowsFor',
   'headline',

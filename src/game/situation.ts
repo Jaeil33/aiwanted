@@ -1,9 +1,9 @@
 import { situationText } from '../domain/format';
 import { HITTER_KEY_SUFFIX, hitterOf, pitcherOf } from '../domain/players';
 import { TEAMS, isTeamCode } from '../domain/teams';
-import type { LineupSlot, TeamConfig } from '../engine';
-import type { CoreData, PlayerRecord, SceneRecord, Situation, SituationKind } from '../types/data';
-import type { EventVector, GameState, KnownPlayer, PromptContext, RosterEntry, SceneContext, Side } from '../types/domain';
+import { pitcherAt, type LineupSlot, type TeamConfig } from '../engine';
+import type { CoreData, PitchRow, PlayerRecord, SceneRecord, Situation, SituationKind } from '../types/data';
+import type { EventVector, GameState, KnownPlayer, PitcherPlanEntry, PromptContext, RosterEntry, SceneContext, Side } from '../types/domain';
 import type { LiveGame } from '../types/live';
 
 /*
@@ -32,6 +32,12 @@ export interface SituationSetup {
   home: TeamConfig;
   /** 상황 반이닝을 끝까지 던지는 투수 */
   scenePitcher: LineupSlot;
+  /** 그 경기에서 투수가 바뀐 지점(ADR-033). 비어 있으면 다음 반이닝부터 팀 불펜이 던진다 */
+  pitcherPlan: PitcherPlanEntry[];
+  /** 차례에 나오는 투수 id → 엔진 슬롯(rel). pitcherFor는 core를 다시 찾지 않는다 */
+  pitcherSlots: Record<string, LineupSlot>;
+  /** 투수 id → 그 경기에서 던진 투구 행. 연출이 리그 표본보다 이것을 먼저 쓴다 */
+  gameRows: Record<string, PitchRow[]>;
   /** 상황 시점의 공격·수비 진영 */
   batSide: Side;
   fieldSide: Side;
@@ -52,6 +58,10 @@ export interface SituationExtra {
   actualFinal?: { away: number; home: number } | null;
   /** 교체 기록까지 아는 쪽이 만든 제목(예: ", 대타"). 없으면 상황에서 만든다 */
   title?: string;
+  /** 그 경기의 실제 투수 차례(`pitcherPlanOf`) */
+  pitcherPlan?: PitcherPlanEntry[];
+  /** 그 경기의 투구 표본(`gameRowsOf`) */
+  gameRows?: Record<string, PitchRow[]>;
 }
 
 /** 기록이 없는 선수·불펜의 rel: 리그 평균 */
@@ -242,6 +252,10 @@ export function buildSituationSetup(core: CoreData, situation: Situation, extra:
     return isTeamCode(code) ? TEAMS[code].color : FALLBACK_COLOR;
   };
 
+  const pitcherPlan = extra.pitcherPlan ?? [];
+  const pitcherSlots: Record<string, LineupSlot> = {};
+  for (const entry of pitcherPlan) pitcherSlots[entry.pitcher] ??= pitcherSlotOf(entry.pitcher);
+
   return {
     situation,
     title: extra.title ?? situationTitle(situation),
@@ -251,6 +265,9 @@ export function buildSituationSetup(core: CoreData, situation: Situation, extra:
     away,
     home,
     scenePitcher: pitcherSlotOf(situation.pitcher),
+    pitcherPlan,
+    pitcherSlots,
+    gameRows: extra.gameRows ?? {},
     batSide,
     fieldSide,
     sceneContext: { batterId: situation.batter, pitcherId: situation.pitcher, batSide },
@@ -277,10 +294,15 @@ export function throwsOf(setup: SituationSetup, pitcherId: string): 'L' | 'R' {
   return (Object.hasOwn(setup.hands, pitcherId) ? setup.hands[pitcherId].throws : undefined) ?? 'R';
 }
 
-/** 그 상태에서 던지는 투수: 상황과 같은 이닝·초말이면 상황 투수, 아니면 수비 팀 불펜 (engine playout과 같은 규칙) */
+/**
+ * 그 상태에서 던지는 투수. 상황 반이닝은 상황 투수가 끝까지 던지고(engine playout과 같은 규칙),
+ * 그 뒤 반이닝은 그 경기에서 실제로 던진 투수(ADR-033), 차례를 모르면 수비 팀 불펜이다.
+ */
 export function pitcherFor(setup: SituationSetup, state: GameState): LineupSlot {
   const { inning, half } = setup.situation.state;
   if (state.inning === inning && state.half === half) return setup.scenePitcher;
+  const id = pitcherAt(setup.pitcherPlan, state);
+  if (id !== null && Object.hasOwn(setup.pitcherSlots, id)) return setup.pitcherSlots[id];
   return state.half === 0 ? setup.home.bullpen : setup.away.bullpen;
 }
 

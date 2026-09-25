@@ -67,8 +67,10 @@
     {
       "step": 7,
       "name": "pa-playback",
-      "status": "pending",
-      "absorbs": "13-situation step 3"
+      "status": "completed",
+      "absorbs": "13-situation step 3",
+      "completed_at": "2026-09-26T02:35:00+0900",
+      "summary": "원안의 usePaPlayback·PitchAnimator는 만들지 않았다 — usePlayback과 PitchTracker가 이미 그 일을 하고 새 화면도 같은 플레이 화면을 쓴다. 진짜 구멍 둘만 메웠다. (1) 실제 투수 차례: types/domain.PitcherPlanEntry, engine/relief.ts의 pitcherAt(이닝·초말로 찾고 반이닝 안에서는 아웃 수로 가른다, 뒤 이닝이면 마지막 투수가 계속 던진다), game/pitchers.ts의 pitcherPlanOf·gameRowsOf, situation의 pitcherPlan·pitcherSlots, playout의 relief(함수가 아니라 값 — 워커 복제). (2) 그 경기 투구 표본: pitchRowsFor(data, setup, id, throws)가 gameRows ≥ 12면 그것, 모자라면 시즌 표본과 합치고, 그래도 모자라면 리그 표본. playout 카운트 모델 키를 scene|bullpen에서 투수 id로 바꿨다. 승률 DP(game.evaluate)의 \"이후 반이닝은 팀 불펜\" 가정은 일부러 그대로 뒀다 — 바꾸면 신뢰도 보정·근거 표가 함께 흔들린다. 별도 ADR 거리다."
     },
     {
       "step": 8,

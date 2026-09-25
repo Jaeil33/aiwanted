@@ -53,6 +53,7 @@ const PUBLIC_API = [
   'compileEffects',
   // playout
   'playout',
+  'pitcherAt',
   'pickHighlights',
   'expectedCounts',
 ];
