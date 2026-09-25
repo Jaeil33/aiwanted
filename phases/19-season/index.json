@@ -1,0 +1,82 @@
+{
+  "project": "TMI 야구",
+  "phase": "season",
+  "note": "2026 시즌 전체 탐색과 경기 이어가기(ADR-032~035). 13-situation·14-live-data·15-data-v2의 남은 step을 이 순서로 흡수한다. 매치업 찾기·직접 만들기·실시간 폴링·인기 TMI 집계는 범위 밖",
+  "steps": [
+    {
+      "step": 0,
+      "name": "app-data",
+      "status": "completed",
+      "absorbs": "15-data-v2 step 0·1",
+      "note": "전 선수 core.json과 <id>:H 키 규칙(ADR-035 추가분). byPitcher 비우기·scenes 중단은 기존 로비가 살아 있어야 해서 step 10으로 미룬다",
+      "completed_at": "2026-09-25T14:44:48+0900",
+      "summary": "core.json에 2026 시즌 기록이 있는 모든 선수 576명(123KB, 예산 200KB). snapshot.all_player_records·hitter_key 추가, 장면 참여자 필터 제거. 겸업 키 규칙 <id>=투수 / <id>:H=타자(실제 1건: 55121). 불펜을 10구단 전체로. 순수 모듈 src/domain/players.ts에 hitterOf·pitcherOf·anyPlayerOf를 두고 scene.ts·LobbyScreen·PlayScreen의 직접 조회를 교체. 장면 투수는 pitcherSlotOf로 따로 찾는다(타선 slotOf와 갈림). contract.HITTER_KEY_SUFFIX·CORE_SIZE_BUDGET_KB 공유. scenes.json·pitches.json은 그대로(step 10이 정리)"
+    },
+    {
+      "step": 1,
+      "name": "contracts",
+      "status": "pending",
+      "absorbs": "13-situation step 0",
+      "note": "Situation·LiveGame 계약. CustomForm·MatchupIndex·TallyKey는 뺀다"
+    },
+    {
+      "step": 2,
+      "name": "relay-parser",
+      "status": "pending",
+      "absorbs": "14-live-data step 0"
+    },
+    {
+      "step": 3,
+      "name": "api-functions",
+      "status": "pending",
+      "absorbs": "14-live-data step 1",
+      "note": "ADR-028에 맞춰 다시 쓴다. Build Output API 없음, api/*.ts 기본 함수 빌드"
+    },
+    {
+      "step": 4,
+      "name": "live-client",
+      "status": "pending",
+      "absorbs": "14-live-data step 2",
+      "note": "폴링 없음(ADR-032). 가시성·백오프는 뒤로"
+    },
+    {
+      "step": 5,
+      "name": "situation-setup",
+      "status": "pending",
+      "absorbs": "13-situation step 1",
+      "note": "customSituation·validateCustomForm·encode/decodeCustomForm은 뺀다"
+    },
+    {
+      "step": 6,
+      "name": "pa-session",
+      "status": "pending",
+      "absorbs": "13-situation step 2"
+    },
+    {
+      "step": 7,
+      "name": "pa-playback",
+      "status": "pending",
+      "absorbs": "13-situation step 3"
+    },
+    {
+      "step": 8,
+      "name": "carry-on",
+      "status": "pending",
+      "note": "신규(ADR-033). playout을 Situation에서 시작, 실제 투수 시퀀스, 시뮬·직접 전환"
+    },
+    {
+      "step": 9,
+      "name": "screens",
+      "status": "pending",
+      "absorbs": "16-broadcast-ui step 3·5·6",
+      "note": "신규(ADR-032). 홈 피드·팀 그리드·달력·타석 목록·타석 화면·결과 화면"
+    },
+    {
+      "step": 10,
+      "name": "cutover",
+      "status": "pending",
+      "absorbs": "16-broadcast-ui step 7",
+      "note": "기존 로비·scene 경로 제거. SceneRecord·scenes.json·useSceneSwings·src/game/scene.ts 삭제와 pitches.byPitcher 비우기(ADR-035 축소분)를 함께"
+    }
+  ]
+}
