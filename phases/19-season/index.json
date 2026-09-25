@@ -15,9 +15,11 @@
     {
       "step": 1,
       "name": "contracts",
-      "status": "pending",
+      "status": "completed",
       "absorbs": "13-situation step 0",
-      "note": "Situation·LiveGame 계약. CustomForm·MatchupIndex·TallyKey는 뺀다"
+      "note": "Situation·LiveGame 계약. CustomForm·MatchupIndex·TallyKey는 뺀다",
+      "completed_at": "2026-09-25T15:35:14+0900",
+      "summary": "src/types/live.ts 신규(GameStatus·TeamLine·GameSummary·PaRecord·LiveGame, .js 확장자 import). src/types/data.ts에 SituationKind·Situation 추가. 합성 픽스처 src/test/fixtures/live.ts(경기 요약 3종, 타석 8개 = 삼진·볼넷·2점 홈런·1루타·병살·대타 교체·반이닝 전환·주루사로 끊긴 타석, 진행 중 타석 1개, live·past 상황 2개)와 live.test.ts 15개. ARCHITECTURE 블록과 기계 대조로 타입 5개·Situation 필드 16개 일치 확인. CustomForm·MatchupIndex·TallyKey·teamLineups는 범위 밖"
     },
     {
       "step": 2,
@@ -62,7 +64,7 @@
       "step": 8,
       "name": "carry-on",
       "status": "pending",
-      "note": "신규(ADR-033). playout을 Situation에서 시작, 실제 투수 시퀀스, 시뮬·직접 전환"
+      "note": "신규(ADR-033). 2026-09-26 확인: 시뮬레이션 분기는 이미 있다 — usePlayback.finishGame()이 engine playout으로 경기를 끝내고 승부처 타석만 연출한다(usePlayback.ts:232). 남은 것은 (1) 직접 이어서 플레이, (2) 개입 직후 끝내기·시뮬·직접 선택 UI, (3) 후속 타석마다 TMI 다시 걸기, (4) 실제 투수 순서(지금은 팀 불펜 평균)"
     },
     {
       "step": 9,

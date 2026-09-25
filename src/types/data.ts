@@ -32,6 +32,35 @@ export type PitchRow = [
   number, number,
 ];
 
+/*
+ * 되돌려볼 수 있는 한 타석(ADR-016). 실시간·지난 경기·직접 만들기가 모두 이 모양으로 모여 같은 타석 화면으로 들어간다.
+ * 'custom'은 ARCHITECTURE의 계약이라 갈래만 남겨 두고 이번 범위에서는 만들지 않는다(ADR-032).
+ */
+export type SituationKind = 'live' | 'past' | 'custom';
+
+export interface Situation {
+  /** live·past: `${gameId}-${paNo}`, custom: `custom-${base64url(CustomForm JSON)}` */
+  id: string;
+  kind: SituationKind;
+  gameId: string | null;
+  paNo: number | null;
+  /** YYYY-MM-DD (custom은 만든 날) */
+  date: string;
+  stadium: string | null;
+  away: { code: TeamCode; name: string };
+  home: { code: TeamCode; name: string };
+  state: GameState;
+  /** live·past는 0-0 */
+  count: { balls: number; strikes: number };
+  batter: string;
+  pitcher: string;
+  lineups: { away: string[]; home: string[] };
+  actual: { result: string; event: EventIndex; runs: number; pitches: PitchRow[]; wpAfterHome: number | null } | null;
+  /** 0~1 */
+  naverWpBeforeHome: number | null;
+  context: { tempC: number | null; windMs: number | null; dayGame: boolean; dome: boolean };
+}
+
 export interface SceneTeam {
   code: TeamCode;
   name: string;
