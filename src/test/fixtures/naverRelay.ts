@@ -171,7 +171,7 @@ export function fixtureNaverSchedule(): Record<string, unknown>[] {
     cancel: false, suspended: false,
   };
   return [
-    { ...base, gameId: '20260915LGOB02026', gameDate: '2026-09-15', gameDateTime: '2026-09-15T18:30:00', statusCode: 'BEFORE', awayTeamScore: 0, homeTeamScore: 0, statusInfo: '' },
+    { ...base, gameId: '20260916LGOB02026', gameDate: '2026-09-16', gameDateTime: '2026-09-16T18:30:00', statusCode: 'BEFORE', awayTeamScore: 0, homeTeamScore: 0, statusInfo: '' },
     { ...base, gameId: '20260915LGOB02026', gameDate: '2026-09-15', gameDateTime: '2026-09-15T18:30:00', statusCode: 'STARTED', awayTeamScore: 1, homeTeamScore: 0, statusInfo: '3회초' },
     { ...base, gameId: '20260914LGOB02026', gameDate: '2026-09-14', gameDateTime: '2026-09-14T17:00:00', statusCode: 'RESULT', awayTeamScore: 4, homeTeamScore: 7, statusInfo: '경기 종료' },
     { ...base, gameId: '20260913LGOB02026', gameDate: '2026-09-13', gameDateTime: '2026-09-13T18:30:00', statusCode: 'BEFORE', cancel: true, awayTeamScore: 0, homeTeamScore: 0, statusInfo: '우천 취소' },

@@ -4,7 +4,17 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "functions": {
-    "api/interpret.ts": { "maxDuration": 20 },
-    "api/verdict.ts": { "maxDuration": 60 }
+    "api/interpret.ts": {
+      "maxDuration": 20
+    },
+    "api/verdict.ts": {
+      "maxDuration": 60
+    },
+    "api/games.ts": {
+      "maxDuration": 10
+    },
+    "api/game.ts": {
+      "maxDuration": 20
+    }
   }
 }

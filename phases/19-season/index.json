@@ -32,9 +32,11 @@
     {
       "step": 3,
       "name": "api-functions",
-      "status": "pending",
+      "status": "completed",
       "absorbs": "14-live-data step 1",
-      "note": "ADR-028에 맞춰 다시 쓴다. Build Output API 없음, api/*.ts 기본 함수 빌드"
+      "note": "ADR-028에 맞춰 다시 쓴다. Build Output API 없음, api/*.ts 기본 함수 빌드",
+      "completed_at": "2026-09-25T16:28:18+0900",
+      "summary": "api/_lib/naver.ts(fetchSchedule·fetchRelay, 8초 제한, Origin·Referer 없음, NaverError에 업스트림 상태), api/_lib/gameCache.ts(요청 합치기 + TTL, 시계 주입), api/_lib/liveHandlers.ts(handleGames·handleGame), api/games.ts·api/game.ts. 원안과 다른 점: Build Output API 안 씀(ADR-028), 일정이 날짜 하나가 아니라 기간(?from=&to=, 최대 45일)을 받음(ADR-032 월 달력). nodeEsm.test.ts가 games·game을 자동 발견해 별도 node 프로세스에서 native import로 로드 확인(ADR-028 안전망). vercel.json에 maxDuration games 10초·game 20초"
     },
     {
       "step": 4,
