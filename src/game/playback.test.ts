@@ -28,7 +28,7 @@ import { buildSceneSetup } from './scene';
 
 const setup = buildSceneSetup(fixtureAppData, 'fixture-walkoff');
 /** 9회말 2사 만루 4:4, h6(좌타) vs ap(우투) */
-const START = setup.scene.state;
+const START = setup.situation.state;
 const AP_ROWS = fixtureAppData.pitches.byPitcher.ap;
 /** 9회말이 끝난 뒤 10회초: a4(우타) vs 홈 불펜 */
 const TENTH_TOP = startNextHalf({ ...START, outs: 3, bases: 0 });
@@ -251,7 +251,7 @@ describe('stageSceneFor', () => {
 
   it('좌투 장면 투수면 throws L이고 스위치 타자는 우타석', () => {
     const lefty: SceneRecord = {
-      ...setup.scene,
+      ...fixtureAppData.scenes[0],
       id: 'fixture-lefty',
       batter: 'a5',
       pitcher: 'hp',

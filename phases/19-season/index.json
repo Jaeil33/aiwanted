@@ -50,9 +50,11 @@
     {
       "step": 5,
       "name": "situation-setup",
-      "status": "pending",
+      "status": "completed",
       "absorbs": "13-situation step 1",
-      "note": "customSituation·validateCustomForm·encode/decodeCustomForm은 뺀다"
+      "note": "customSituation·validateCustomForm·encode/decodeCustomForm은 뺀다",
+      "completed_at": "2026-09-26T02:20:00+0900",
+      "summary": "원안(scene.ts 옆에 situation.ts를 새로 만들기)을 뒤집었다: Situation을 바닥으로 놓고 SceneRecord를 그 위에 얹는다. src/game/situation.ts에 buildSituationSetup·situationFromPa·situationFromScene·situationTitle과 batterFor·pitcherFor·nameOf·throwsOf. scene.ts는 buildSceneSetup 하나만 남은 다리(step 10에서 삭제). 조립 규칙이 한 벌뿐이라 두 경로가 어긋날 수 없다. SceneSetup.scene → SituationSetup.situation, 표시용 값은 setup.title·setup.actualFinal로 옮겼다(leverage는 옮기지 않는다, ADR-014). 고친 것 둘: (1) core.players 겸업 키 <id>:H를 꼬리 없는 id로 합쳐 names·hands에 넣는다 — 지금까지 겸업 선수의 타격 손이 빠졌다. (2) 2026 기록이 없는 선수는 중계에서 모은 이름·손(extra)으로 채운다. core가 먼저다. situationTitle은 대타 꼬리표를 짐작하지 않는다(교체 기록이 있어야 안다, ADR-014) — 파이프라인이 붙인 장면 제목은 extra.title로 넘긴다. buildSceneSetup과 buildSituationSetup(situationFromScene(scene))이 같은 엔진 설정을 내는 동등성 테스트로 못 박았다."
     },
     {
       "step": 6,

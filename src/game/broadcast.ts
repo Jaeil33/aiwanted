@@ -2,7 +2,7 @@ import { formatPct } from '../domain/format';
 import type { Evidence, GameState, Half, Side, TmiEntry } from '../types/domain';
 import { gradeOf } from './headline';
 import { effectLabel } from './result';
-import { batterFor, nameOf, pitcherFor, type SceneSetup } from './scene';
+import { batterFor, nameOf, pitcherFor, type SituationSetup } from './situation';
 import { battingWin, type GaugeLike } from './selectors';
 
 /*
@@ -43,13 +43,13 @@ const batSideOf = (state: Pick<GameState, 'half'>): Side => (state.half === 0 ? 
 const other = (side: Side): Side => (side === 'away' ? 'home' : 'away');
 
 /** 탭 한 줄의 값: 경기는 장면 공격 팀 승리, 이닝은 이번 이닝 득점, 타석은 타자 출루 */
-export function tierValue(tier: Tier, setup: SceneSetup, gauge: GaugeLike): number {
+export function tierValue(tier: Tier, setup: SituationSetup, gauge: GaugeLike): number {
   if (tier === 'game') return battingWin(gauge, setup.batSide);
   return tier === 'inning' ? gauge.inningScore : gauge.batterWin;
 }
 
 /** 경기·이닝·타석 확률 판 한 장. 경기는 장면 공격 팀 기준으로 고정하고(무승부는 따로 보인다), 이닝·타석은 지금 상태 기준 */
-export function tierReadout(args: { tier: Tier; setup: SceneSetup; state: GameState; base: GaugeLike; tmi: GaugeLike }): TierReadout {
+export function tierReadout(args: { tier: Tier; setup: SituationSetup; state: GameState; base: GaugeLike; tmi: GaugeLike }): TierReadout {
   const { tier, setup, state, base, tmi } = args;
   const value = tierValue(tier, setup, tmi);
   const baseValue = tierValue(tier, setup, base);
@@ -61,10 +61,10 @@ export function tierReadout(args: { tier: Tier; setup: SceneSetup; state: GameSt
     const right = battingWin(tmi, fld);
     return {
       ...common,
-      label: `${setup.scene[bat].name} 승리확률`,
-      rightLabel: setup.scene[fld].name,
+      label: `${setup.situation[bat].name} 승리확률`,
+      rightLabel: setup.situation[fld].name,
       bar: { left: value, tie: tmi.tie, right, ghost: baseValue, leftColor: setup.teamColors[bat], rightColor: setup.teamColors[fld] },
-      sub: [`무승부 ${formatPct(tmi.tie)}`, `${setup.scene[fld].name} ${formatPct(right)}`],
+      sub: [`무승부 ${formatPct(tmi.tie)}`, `${setup.situation[fld].name} ${formatPct(right)}`],
     };
   }
 
@@ -73,7 +73,7 @@ export function tierReadout(args: { tier: Tier; setup: SceneSetup; state: GameSt
   if (tier === 'inning') {
     const runs = [base.expRuns, tmi.expRuns];
     const sub = runs.every((x) => typeof x === 'number' && Number.isFinite(x)) ? [`기대 득점 ${runs[0]!.toFixed(2)}→${runs[1]!.toFixed(2)}점`] : [];
-    return { ...common, label: `${setup.scene[bat].name} 이번 이닝 득점확률`, rightLabel: `${setup.scene[other(bat)].name} 무실점`, bar, sub };
+    return { ...common, label: `${setup.situation[bat].name} 이번 이닝 득점확률`, rightLabel: `${setup.situation[other(bat)].name} 무실점`, bar, sub };
   }
   return {
     ...common,
@@ -121,7 +121,7 @@ export interface SparkPoint {
 }
 
 /** 추이선 값: 경기는 판 전체, 이닝은 지금 반이닝, 타석은 지금 타석의 점만 */
-export function sparkSeries(points: readonly SparkPoint[], tier: Tier, setup: SceneSetup, now: { paIndex: number; inning: number; half: Half }): number[] {
+export function sparkSeries(points: readonly SparkPoint[], tier: Tier, setup: SituationSetup, now: { paIndex: number; inning: number; half: Half }): number[] {
   const kept = points.filter((p) => (tier === 'game' ? true : tier === 'inning' ? p.inning === now.inning && p.half === now.half : p.paIndex === now.paIndex));
   return kept.map((p) => tierValue(tier, setup, p.tmi));
 }

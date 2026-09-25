@@ -7,7 +7,7 @@ import { buildSceneSetup } from './scene';
 type Listener = (event: { data: unknown }) => void;
 
 const setup = buildSceneSetup(fixtureAppData, 'fixture-walkoff');
-const START = setup.scene.state;
+const START = setup.situation.state;
 const SPEC: GameSpec = { lg: setup.lg, away: setup.away, home: setup.home, countTable: setup.countTable, effects: [], mode: 'real' };
 
 /*

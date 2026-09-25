@@ -7,11 +7,11 @@ import { TmiSheet } from '../../components/TmiSheet';
 import { WpPanel } from '../../components/WpPanel';
 import { josa } from '../../domain/format';
 import { hitterOf, pitcherOf } from '../../domain/players';
-import { batterFor, canEditTmi, pitcherFor, type SceneSetup } from '../../game';
+import { batterFor, canEditTmi, pitcherFor, type SituationSetup } from '../../game';
 import { sparkSeries, tierReadout, tmiPill, type Tier } from '../../game/broadcast';
 import { gradeOf, statLine } from '../../game/headline';
 import { tmiShortLabel } from '../../game/result';
-import { nameOf } from '../../game/scene';
+import { nameOf } from '../../game/situation';
 import type { Side } from '../../types/domain';
 import { useGame } from '../GameProvider';
 import { formatRoute } from '../router';
@@ -40,10 +40,10 @@ export function PlayScreen() {
       </section>
     );
   }
-  return <PlayBoard key={setup.scene.id} setup={setup} />;
+  return <PlayBoard key={setup.situation.id} setup={setup} />;
 }
 
-function PlayBoard({ setup }: { setup: SceneSetup }) {
+function PlayBoard({ setup }: { setup: SituationSetup }) {
   const { session, actions, data } = useGame();
   const trackerRef = useRef<PitchTrackerHandle>(null);
   const evaluations = useSceneEvaluations();
@@ -56,9 +56,9 @@ function PlayBoard({ setup }: { setup: SceneSetup }) {
   /** 초대 판·"+ TMI 걸기"로 열면 입력칸에 바로 초점을 둔다 */
   const [sheetFocus, setSheetFocus] = useState(false);
 
-  const { scene, promptContext } = setup;
+  const { situation, promptContext } = setup;
   const live = session.live;
-  const state = live ? live.state : scene.state;
+  const state = live ? live.state : situation.state;
   const batSide: Side = state.half === 0 ? 'away' : 'home';
   const fieldSide: Side = batSide === 'away' ? 'home' : 'away';
 
@@ -78,9 +78,9 @@ function PlayBoard({ setup }: { setup: SceneSetup }) {
     [pitcherName, pitcherThrows, pitcherRecord, setup, fieldSide],
   );
   const zone = useMemo(() => {
-    const first = scene.actual.pitches[0];
+    const first = situation.actual?.pitches[0];
     return first ? { top: first[14], bottom: first[15] } : null;
-  }, [scene]);
+  }, [situation]);
   const names = useMemo(
     () => ({
       batter: promptContext.batter.name,
@@ -216,10 +216,10 @@ function PlayBoard({ setup }: { setup: SceneSetup }) {
 
   return (
     <div className={styles.screen}>
-      <h2 className={controls.srOnly}>{scene.title}</h2>
+      <h2 className={controls.srOnly}>{setup.title}</h2>
       <BroadcastBug
-        away={{ name: scene.away.name, color: setup.teamColors.away, score: state.away }}
-        home={{ name: scene.home.name, color: setup.teamColors.home, score: state.home }}
+        away={{ name: situation.away.name, color: setup.teamColors.away, score: state.away }}
+        home={{ name: situation.home.name, color: setup.teamColors.home, score: state.home }}
         inning={state.inning}
         half={state.half}
         outs={state.outs}

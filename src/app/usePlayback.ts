@@ -12,7 +12,7 @@ import {
   samplePitchCode,
   specKey,
   type GameSpec,
-  type SceneSetup,
+  type SituationSetup,
   type SessionState,
 } from '../game';
 import type { PitchPlayback, StageController } from '../stage';
@@ -63,8 +63,8 @@ type Outcome = 'ended' | 'continued' | 'stopped';
 /** 이번 판 식별: 장면을 다시 열거나 처음부터 하면 바뀐다 */
 const runKeyOf = (s: SessionState) => `${s.sceneId ?? ''}|${s.seed}`;
 
-const nameOf = (setup: SceneSetup, id: string) => (Object.hasOwn(setup.names, id) ? setup.names[id] : id);
-const matchupLine = (setup: SceneSetup, state: GameState) => `${batterFor(setup, state).name} vs ${nameOf(setup, pitcherFor(setup, state).id)}`;
+const nameOf = (setup: SituationSetup, id: string) => (Object.hasOwn(setup.names, id) ? setup.names[id] : id);
+const matchupLine = (setup: SituationSetup, state: GameState) => `${batterFor(setup, state).name} vs ${nameOf(setup, pitcherFor(setup, state).id)}`;
 const pitchLine = (row: PitchRow | null) => (row ? `${PITCH_TYPES[row[0]] ?? '기타'} ${Math.round(row[1])}km` : '');
 
 export function usePlayback(stageRef: RefObject<StageController | null>, opts: PlaybackOptions = {}): Playback {
@@ -107,12 +107,12 @@ export function usePlayback(stageRef: RefObject<StageController | null>, opts: P
       return seed;
     };
 
-    const specOf = (st: SceneSetup, s: SessionState, dropPa: boolean): GameSpec => {
+    const specOf = (st: SituationSetup, s: SessionState, dropPa: boolean): GameSpec => {
       const effects = compileSessionEffects(s.tmis, st, latest.current.data.evidence);
       return gameSpecFor(st, dropPa ? effects.filter((fx) => fx.scope !== 'pa') : effects, s.mode);
     };
 
-    const evaluationAt = async (st: SceneSetup, spec: GameSpec, state: GameState, first: boolean): Promise<Evaluation> => {
+    const evaluationAt = async (st: SituationSetup, spec: GameSpec, state: GameState, first: boolean): Promise<Evaluation> => {
       const key = `${specKey(spec)}\n${JSON.stringify(state)}\n${first}`;
       const cached = evalCache.current;
       if (cached && cached.key === key) return cached.ev;
@@ -141,7 +141,7 @@ export function usePlayback(stageRef: RefObject<StageController | null>, opts: P
       const s = getSession();
       const st = latest.current.setup;
       const live = s.live;
-      if (!st || !live || s.status !== 'ready' || s.interpreting || st.scene.id !== s.sceneId) return 'stopped';
+      if (!st || !live || s.status !== 'ready' || s.interpreting || st.situation.id !== s.sceneId) return 'stopped';
       const key = runKeyOf(s);
       const spec = specOf(st, s, false);
       const state = live.state;
@@ -239,7 +239,7 @@ export function usePlayback(stageRef: RefObject<StageController | null>, opts: P
       }
       const st = latest.current.setup;
       const live = s.live;
-      if (!st || !live || s.status !== 'ready' || st.scene.id !== s.sceneId) return;
+      if (!st || !live || s.status !== 'ready' || st.situation.id !== s.sceneId) return;
       const key = runKeyOf(s);
       const start = live.state;
       let result: PlayoutResult;

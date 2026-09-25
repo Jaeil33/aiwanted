@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { buildSceneSetup, pitcherFor } from '../game/scene';
+import { buildSceneSetup } from '../game/scene';
+import { pitcherFor } from '../game/situation';
 import { expectedSwing } from '../game/selectors';
 import type { SceneRecord } from '../types/data';
 import { useGame } from './GameProvider';
@@ -39,7 +40,7 @@ export function useSceneSwings(scenes: readonly SceneRecord[]): SceneSwings {
         let swing: number | null = null;
         try {
           const setup = buildSceneSetup(data, id);
-          const state = setup.scene.state;
+          const state = setup.situation.state;
           const ev = await engine.evaluate({ spec: gameSpecFor(setup, [], 'real'), state, pitcher: pitcherFor(setup, state), first: true });
           swing = expectedSwing(ev);
         } catch {

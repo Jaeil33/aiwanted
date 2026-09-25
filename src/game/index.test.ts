@@ -6,11 +6,18 @@ import indexSource from './index.ts?raw';
 
 /** game 공개 API 전체 목록 (값만. 타입은 아래 테스트가 컴파일 때 확인한다) */
 const PUBLIC_API = [
-  // scene
+  // scene (장면 경로는 step 10에서 사라진다)
   'buildSceneSetup',
+  // situation
   'batterStanceFor',
   'pitcherFor',
   'batterFor',
+  'buildSituationSetup',
+  'nameOf',
+  'situationFromPa',
+  'situationFromScene',
+  'situationTitle',
+  'throwsOf',
   // effects
   'measuredAvailable',
   'compileSessionEffects',
@@ -70,12 +77,12 @@ describe('game 공개 API', () => {
   });
 
   it('공개 타입으로 장면을 열고 확률판·칩·공유 값을 만든다', () => {
-    const setup: game.SceneSetup = game.buildSceneSetup(fixtureAppData, fixtureAppData.scenes[0].id);
+    const setup: game.SituationSetup = game.buildSceneSetup(fixtureAppData, fixtureAppData.scenes[0].id);
     const gauge: game.GaugeLike = { batterWin: 0.3, inningScore: 0.4, winHome: 0.5, tie: 0.05, winAway: 0.45 };
-    const tiers: game.TierView[] = game.selectTiers(setup, setup.scene.state, gauge, gauge);
+    const tiers: game.TierView[] = game.selectTiers(setup, setup.situation.state, gauge, gauge);
     expect(tiers).toHaveLength(3);
 
-    const action: game.SessionAction = { type: 'openScene', sceneId: setup.scene.id, startState: setup.scene.state, seed: 5 };
+    const action: game.SessionAction = { type: 'openScene', sceneId: setup.situation.id, startState: setup.situation.state, seed: 5 };
     const session: game.SessionState = game.sessionReducer(game.initialSession, action);
     const screen: game.Screen = session.screen;
     const live: game.LiveState | null = session.live;
@@ -89,7 +96,7 @@ describe('game 공개 API', () => {
     });
     expect(chips).toEqual([{ label: '계산 거부', tone: 'refused' }]);
 
-    const payload: game.SharePayload = { sceneId: setup.scene.id, texts: ['오늘 폭염'], mode: 'toon' };
+    const payload: game.SharePayload = { sceneId: setup.situation.id, texts: ['오늘 폭염'], mode: 'toon' };
     expect(game.decodeShare(game.encodeShare(payload))).toEqual(payload);
   });
 
@@ -104,7 +111,7 @@ describe('game 공개 API', () => {
       mode: 'real',
     };
     const client: game.EngineClient = game.createLocalEngineClient({ createGameImpl: () => ({ evaluate: () => FAKE_EVALUATION }) });
-    const req: game.EvaluateRequest = { spec, state: setup.scene.state, pitcher: game.pitcherFor(setup, setup.scene.state), first: true };
+    const req: game.EvaluateRequest = { spec, state: setup.situation.state, pitcher: game.pitcherFor(setup, setup.situation.state), first: true };
     const message: game.EngineRequestMessage = { id: 1, kind: 'evaluate', req };
     const response: game.EngineResponseMessage = await game.handleEngineMessage(client, message);
     expect(response).toEqual({ id: 1, ok: true, result: FAKE_EVALUATION });
@@ -112,7 +119,7 @@ describe('game 공개 API', () => {
 
     const worker: game.WorkerLike = { postMessage: () => undefined, addEventListener: () => undefined, terminate: () => undefined };
     const remote = game.createWorkerEngineClient(worker);
-    const playoutReq: game.PlayoutRequest = { spec, start: setup.scene.state, scenePitcher: setup.scenePitcher, seed: 1 };
+    const playoutReq: game.PlayoutRequest = { spec, start: setup.situation.state, scenePitcher: setup.scenePitcher, seed: 1 };
     const pending = remote.playout(playoutReq);
     remote.dispose();
     await expect(pending).rejects.toThrow(Error);
@@ -121,7 +128,7 @@ describe('game 공개 API', () => {
     const playback = game.playbackFor({
       setup,
       data: fixtureAppData,
-      state: setup.scene.state,
+      state: setup.situation.state,
       code: 'B',
       balls: 0,
       strikes: 0,

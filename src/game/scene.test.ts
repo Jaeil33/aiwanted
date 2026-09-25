@@ -3,7 +3,8 @@ import { fixtureContext } from '../ai/test-helpers';
 import { startNextHalf } from '../engine';
 import { fixtureAppData } from '../test/fixtures/appData';
 import type { AppData, PlayerRecord, SceneRecord } from '../types/data';
-import { batterFor, batterStanceFor, buildSceneSetup, pitcherFor } from './scene';
+import { buildSceneSetup } from './scene';
+import { batterFor, batterStanceFor, pitcherFor } from './situation';
 
 const ONE = [1, 1, 1, 1, 1, 1, 1];
 const SCENE = fixtureAppData.scenes[0];
@@ -13,7 +14,10 @@ const TENTH_TOP = startNextHalf({ ...SCENE.state, outs: 3, bases: 0 });
 
 describe('buildSceneSetup', () => {
   it('장면·리그 분포·카운트 표를 싣는다', () => {
-    expect(setup.scene).toBe(SCENE);
+    expect(setup.situation.id).toBe(SCENE.id);
+    expect(setup.situation.state).toEqual(SCENE.state);
+    expect(setup.title).toBe(SCENE.title);
+    expect(setup.actualFinal).toEqual({ away: SCENE.away.final, home: SCENE.home.final });
     expect(setup.lg).toEqual(fixtureAppData.core.league);
     expect(setup.countTable).toEqual(fixtureAppData.core.countTable);
   });

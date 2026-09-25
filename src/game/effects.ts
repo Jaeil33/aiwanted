@@ -2,7 +2,7 @@ import { MEASURED } from '../domain/measured';
 import { compileEffects } from '../engine';
 import type { EvidenceData } from '../types/data';
 import type { EffectApplies, EngineEffect, Mode, TmiEntry } from '../types/domain';
-import type { SceneSetup } from './scene';
+import type { SituationSetup } from './situation';
 
 /** 실측 변수를 해석에 쓸 수 있는가: evidence에 applicable 변수의 유한한 beta가 하나라도 있으면 true */
 export function measuredAvailable(evidence: EvidenceData | null): boolean {
@@ -14,7 +14,7 @@ export function measuredAvailable(evidence: EvidenceData | null): boolean {
  * 세션 TMI 목록을 엔진 효과로 바꾼다. 거부된 해석은 건너뛰고, 각 entry는 장면 기준(setup.sceneContext)으로
  * compileEffects해 순서대로 이어 붙인다. 효과 크기는 전부 엔진이 정한다.
  */
-export function compileSessionEffects(entries: readonly TmiEntry[], setup: SceneSetup, evidence: EvidenceData | null): EngineEffect[] {
+export function compileSessionEffects(entries: readonly TmiEntry[], setup: SituationSetup, evidence: EvidenceData | null): EngineEffect[] {
   const effects: EngineEffect[] = [];
   for (const entry of entries) {
     if (entry.interpretation.refused) continue;

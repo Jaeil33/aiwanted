@@ -13,7 +13,7 @@ import { createPlatformEngineClient, detectPlatform, localPlatform, seoulDate, t
 
 const SLOW = { timeout: 120_000 };
 const setup = buildSceneSetup(fixtureAppData, 'fixture-walkoff');
-const START = setup.scene.state;
+const START = setup.situation.state;
 const SPEC: GameSpec = { lg: setup.lg, away: setup.away, home: setup.home, countTable: setup.countTable, effects: [], mode: 'real' };
 const REQ: EvaluateRequest = { spec: SPEC, state: START, pitcher: setup.scenePitcher, first: true };
 

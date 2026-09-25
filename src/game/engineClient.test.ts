@@ -21,7 +21,7 @@ import { buildSceneSetup } from './scene';
 const SLOW = { timeout: 120_000 };
 
 const setup = buildSceneSetup(fixtureAppData, 'fixture-walkoff');
-const START: GameState = setup.scene.state;
+const START: GameState = setup.situation.state;
 
 const knobEntry = (id: string, part: TmiEntry['interpretation']['parts'][number]): TmiEntry => ({
   id,

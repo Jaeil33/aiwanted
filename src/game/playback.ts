@@ -3,7 +3,7 @@ import { EV, applyTransition, nextCount, sampleInPlay, sampleTransition, transit
 import type { PitchPlayback, StageScene } from '../stage/render/types';
 import type { AppData, PitchRow } from '../types/data';
 import type { EventIndex, GameOver, GameState, PitchCode, Side, Transition } from '../types/domain';
-import { batterFor, nameOf, pitcherFor, throwsOf, type SceneSetup } from './scene';
+import { batterFor, nameOf, pitcherFor, throwsOf, type SituationSetup } from './situation';
 import type { PlayLogEntry } from './session';
 
 /*
@@ -126,7 +126,7 @@ export function headline(event: EventIndex, transition: Transition, over: GameOv
 const batSideOf = (state: GameState): Side => (state.half === 0 ? 'away' : 'home');
 
 /** 스테이지에 세울 두 팀: 공격(팀 색·홈 여부·타자 타석 방향)과 수비(팀 색·홈 여부·투수 손, 없으면 R) */
-export function stageSceneFor(setup: SceneSetup, state: GameState): StageScene {
+export function stageSceneFor(setup: SituationSetup, state: GameState): StageScene {
   const batSide = batSideOf(state);
   const fieldSide: Side = batSide === 'away' ? 'home' : 'away';
   return {
@@ -140,7 +140,7 @@ export function stageSceneFor(setup: SceneSetup, state: GameState): StageScene {
  * 타석이 끝났으면 주자 이동·타석 뒤 주자·배너(홈런·끝내기·2점 이상이면 big)를 붙인다. play는 인플레이로 끝났을 때만.
  */
 export function playbackFor(args: {
-  setup: SceneSetup;
+  setup: SituationSetup;
   data: AppData;
   state: GameState;
   code: PitchCode;
@@ -175,7 +175,7 @@ export function playbackFor(args: {
 
 /** 끝난 타석 기록 한 줄: 이닝·초말은 타석 전(before), 점수는 타석 뒤(after) */
 export function logEntryFor(args: {
-  setup: SceneSetup;
+  setup: SituationSetup;
   index: number;
   before: GameState;
   after: GameState;

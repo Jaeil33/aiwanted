@@ -21,7 +21,7 @@ export function useTmiContributions(): Record<string, number | null> {
 
   const request = useMemo(() => {
     if (!setup) return null;
-    const state = setup.scene.state;
+    const state = setup.situation.state;
     const pitcher = pitcherFor(setup, state);
     const base: EvaluateRequest = { spec: gameSpecFor(setup, [], 'real'), state, pitcher, first: true };
     const items = tmis
@@ -30,7 +30,7 @@ export function useTmiContributions(): Record<string, number | null> {
         const req: EvaluateRequest = { spec: gameSpecFor(setup, compileSessionEffects([entry], setup, data.evidence), mode), state, pitcher, first: true };
         return { id: entry.id, req };
       });
-    const key = [setup.scene.id, specKey(base.spec), ...items.map((item) => `${item.id}:${specKey(item.req.spec)}`)].join('\n');
+    const key = [setup.situation.id, specKey(base.spec), ...items.map((item) => `${item.id}:${specKey(item.req.spec)}`)].join('\n');
     return { key, base, items, batSide: setup.batSide };
   }, [setup, tmis, mode, data.evidence]);
 

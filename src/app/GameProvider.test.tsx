@@ -95,7 +95,8 @@ describe('GameProvider', () => {
     const { session, setup } = game();
     expect(session).toMatchObject({ screen: 'play', sceneId: SCENE.id, seed: sceneSeed('2026-08-15', SCENE.id), mode: 'real', tmis: [] });
     expect(session.live?.state).toEqual(SCENE.state);
-    expect(setup?.scene).toBe(SCENE);
+    expect(setup?.situation.id).toBe(SCENE.id);
+    expect(setup?.situation.state).toEqual(SCENE.state);
     expect(setup?.promptContext.situation).toBe('9회말 2사 만루');
   });
 

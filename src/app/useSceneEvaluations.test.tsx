@@ -192,7 +192,7 @@ describe('useEvaluationPair', () => {
     const { result } = renderHook(
       () => {
         const game = useGame();
-        return { pair: useEvaluationPair(game.setup ? game.setup.scene.state : null, true, true), game };
+        return { pair: useEvaluationPair(game.setup ? game.setup.situation.state : null, true, true), game };
       },
       { wrapper: wrapperFor(fakePlatform()) },
     );

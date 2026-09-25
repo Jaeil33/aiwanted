@@ -3,7 +3,7 @@ import { KNOB_META, SUBJECT_LABEL } from '../domain/knobs';
 import { MEASURED } from '../domain/measured';
 import type { Evaluation } from '../engine';
 import type { EffectPart, GameState, Side, TmiEntry } from '../types/domain';
-import { batterFor, nameOf, pitcherFor, type SceneSetup } from './scene';
+import { batterFor, nameOf, pitcherFor, type SituationSetup } from './situation';
 
 /*
  * 화면용 파생 값. 확률 숫자는 엔진 결과(evaluate·gaugesAtCount)에서만 온다: 옮기거나 그 값끼리 빼고 더한다(CLAUDE.md CRITICAL).
@@ -54,11 +54,11 @@ export interface TierView {
 }
 
 /** 타석·이닝·경기 세 줄. 타자·투수·팀은 넘긴 상태(state) 기준 */
-export function selectTiers(setup: SceneSetup, state: GameState, base: GaugeLike, tmi: GaugeLike): TierView[] {
+export function selectTiers(setup: SituationSetup, state: GameState, base: GaugeLike, tmi: GaugeLike): TierView[] {
   const batSide: Side = state.half === 0 ? 'away' : 'home';
   const fieldSide: Side = batSide === 'away' ? 'home' : 'away';
-  const batTeam = setup.scene[batSide].name;
-  const fldTeam = setup.scene[fieldSide].name;
+  const batTeam = setup.situation[batSide].name;
+  const fldTeam = setup.situation[fieldSide].name;
   const batterName = batterFor(setup, state).name;
   const pitcherName = nameOf(setup, pitcherFor(setup, state).id);
 

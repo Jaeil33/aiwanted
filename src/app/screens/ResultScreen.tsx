@@ -4,7 +4,7 @@ import { EVIDENCE_LABEL, formatDeltaPp, formatPct } from '../../domain/format';
 import type { Evaluation } from '../../engine';
 import { actualResultText, gradeOf } from '../../game/headline';
 import { deciderLine, effectLabel, splitThousand, tmiShortLabel } from '../../game/result';
-import { nameOf, type SceneSetup } from '../../game/scene';
+import { nameOf, type SituationSetup } from '../../game/situation';
 import { butterflyPp } from '../../game/selectors';
 import type { SessionState } from '../../game/session';
 import type { Side } from '../../types/domain';
@@ -32,21 +32,21 @@ export function ResultScreen() {
       </section>
     );
   }
-  return <ResultBoard key={setup.scene.id} setup={setup} final={session.final} />;
+  return <ResultBoard key={setup.situation.id} setup={setup} final={session.final} />;
 }
 
 const winOf = (ev: Evaluation, side: Side) => (side === 'home' ? ev.winHome : ev.winAway);
 
-function ResultBoard({ setup, final }: { setup: SceneSetup; final: Final }) {
+function ResultBoard({ setup, final }: { setup: SituationSetup; final: Final }) {
   const { session, actions, platform } = useGame();
   const [, setRoute] = useHashRoute();
   // 평행우주·나비효과는 장면 시작 상태의 평가: TMI 없음(현실) 대 세션 TMI·모드
-  const pair = useEvaluationPair(setup.scene.state, true, true);
+  const pair = useEvaluationPair(setup.situation.state, true, true);
   const [opened, setOpened] = useState(false);
   const [shareNote, setShareNote] = useState('');
   const dotsTitleId = useId();
 
-  const { scene, batSide, fieldSide } = setup;
+  const { situation, batSide, fieldSide } = setup;
   const { mode } = session;
   const effective = session.tmis.filter((entry) => !entry.interpretation.refused);
   const hasTmi = effective.length > 0;
@@ -54,8 +54,8 @@ function ResultBoard({ setup, final }: { setup: SceneSetup; final: Final }) {
 
   const winner = final.winner;
   const winColor = winner === 'tie' ? TIE_COLOR : setup.teamColors[winner];
-  const heading = winner === 'tie' ? '무승부' : `${scene[winner].name} 승리`;
-  const decider = deciderLine({ title: scene.title, start: scene.state, log: session.log, final, teams: { away: scene.away.name, home: scene.home.name } });
+  const heading = winner === 'tie' ? '무승부' : `${situation[winner].name} 승리`;
+  const decider = deciderLine({ title: setup.title, start: situation.state, log: session.log, final, teams: { away: situation.away.name, home: situation.home.name } });
 
   const legend =
     pair.base && pair.tmi
@@ -65,9 +65,9 @@ function ResultBoard({ setup, final }: { setup: SceneSetup; final: Final }) {
           const before = split(pair.base);
           const probs = [winOf(pair.tmi, batSide), pair.tmi.tie, winOf(pair.tmi, fieldSide)];
           return [
-            { label: `${scene[batSide].name} 승`, color: setup.teamColors[batSide] },
+            { label: `${situation[batSide].name} 승`, color: setup.teamColors[batSide] },
             { label: '무승부', color: TIE_COLOR },
-            { label: `${scene[fieldSide].name} 승`, color: setup.teamColors[fieldSide] },
+            { label: `${situation[fieldSide].name} 승`, color: setup.teamColors[fieldSide] },
           ].map((g, i) => ({ ...g, n: now[i], base: before[i], p: probs[i] }));
         })()
       : null;
@@ -80,35 +80,41 @@ function ResultBoard({ setup, final }: { setup: SceneSetup; final: Final }) {
   const names = [setup.promptContext.batter.name, setup.promptContext.pitcher.name, '투수', '타자', '포수', '감독'];
   const firstPart = first?.interpretation.parts[0];
 
-  const truthLine = `실제: ${nameOf(setup, scene.batter)} ${actualResultText(scene.actual.result)}${scene.actual.runs ? `, ${scene.actual.runs}점` : ''}`;
+  // 실제로는 이렇게 끝났다. 되돌려볼 수 없는 타석(주루사로 끊긴 타석 등)에는 실제 결과가 없다
+  const actual = situation.actual;
+  const truthLine = actual
+    ? `실제: ${nameOf(setup, situation.batter)} ${actualResultText(actual.result)}${actual.runs ? `, ${actual.runs}점` : ''}`
+    : '실제 결과가 남지 않은 타석이에요.';
   const naver =
-    scene.naverWpBeforeHome !== null && scene.actual.wpAfterHome !== null
-      ? ` · 네이버 ${scene.home.name} 승리확률 ${formatPct(scene.naverWpBeforeHome)} → ${formatPct(scene.actual.wpAfterHome)}`
+    situation.naverWpBeforeHome !== null && actual && actual.wpAfterHome !== null
+      ? ` · 네이버 ${situation.home.name} 승리확률 ${formatPct(situation.naverWpBeforeHome)} → ${formatPct(actual.wpAfterHome)}`
       : '';
-  const finalLine = `최종 ${scene.away.name} ${scene.away.final} : ${scene.home.final} ${scene.home.name}${naver}`;
+  const finalLine = setup.actualFinal
+    ? `최종 ${situation.away.name} ${setup.actualFinal.away} : ${setup.actualFinal.home} ${situation.home.name}${naver}`
+    : `${situation.away.name} 대 ${situation.home.name}${naver}`;
 
   const replay = () => {
     setShareNote('');
     actions.resetPlay();
-    setRoute({ screen: 'play', sceneId: scene.id, share: null });
+    setRoute({ screen: 'play', sceneId: situation.id, share: null });
   };
   const share = async () => {
     const texts = effective.map((entry) => entry.text);
-    const hash = formatRoute({ screen: 'play', sceneId: scene.id, share: texts.length > 0 ? { sceneId: scene.id, texts, mode } : null });
+    const hash = formatRoute({ screen: 'play', sceneId: situation.id, share: texts.length > 0 ? { sceneId: situation.id, texts, mode } : null });
     const url = `${window.location.origin}${window.location.pathname}${hash}`;
     if (!platform.shareLink) {
       setShareNote('이 화면에서는 공유할 수 없어요. 주소창의 링크를 복사해 주세요.');
       return;
     }
-    const outcome = await platform.shareLink(url, `TMI 야구 — ${scene.title}`);
+    const outcome = await platform.shareLink(url, `TMI 야구 — ${setup.title}`);
     setShareNote(
       outcome === 'shared' ? '공유했어요.' : outcome === 'copied' ? '링크를 복사했어요.' : outcome === 'cancelled' ? '' : '공유하지 못했어요. 주소창의 링크를 복사해 주세요.',
     );
   };
 
   const teams = [
-    { side: 'away', name: scene.away.name, score: final.state.away },
-    { side: 'home', name: scene.home.name, score: final.state.home },
+    { side: 'away', name: situation.away.name, score: final.state.away },
+    { side: 'home', name: situation.home.name, score: final.state.home },
   ] as const;
 
   return (
@@ -212,7 +218,7 @@ function ResultBoard({ setup, final }: { setup: SceneSetup; final: Final }) {
               …
             </b>
           ) : (
-            <b className={styles.bfNum} data-trend={trend ?? 'flat'} aria-label={`${scene[batSide].name} 승리확률 변화 ${ppText}`}>
+            <b className={styles.bfNum} data-trend={trend ?? 'flat'} aria-label={`${situation[batSide].name} 승리확률 변화 ${ppText}`}>
               {ppText.replace('%p', '')}
               <small>%p</small>
             </b>

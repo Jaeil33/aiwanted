@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { gaugesAtCount, type Evaluation } from '../engine';
-import { compileSessionEffects, pitcherFor, specKey, type EvaluateRequest, type GameSpec, type GaugeLike, type SceneSetup } from '../game';
+import { compileSessionEffects, pitcherFor, specKey, type EvaluateRequest, type GameSpec, type GaugeLike, type SituationSetup } from '../game';
 import type { EngineEffect, GameState, Mode } from '../types/domain';
 import { useGame } from './GameProvider';
 
@@ -9,7 +9,7 @@ import { useGame } from './GameProvider';
  */
 
 /** 장면의 리그 분포·두 팀·카운트 표와 효과·모드로 만든 경기 spec */
-export function gameSpecFor(setup: SceneSetup, effects: EngineEffect[], mode: Mode): GameSpec {
+export function gameSpecFor(setup: SituationSetup, effects: EngineEffect[], mode: Mode): GameSpec {
   return { lg: setup.lg, away: setup.away, home: setup.home, countTable: setup.countTable, effects, mode };
 }
 
@@ -61,7 +61,7 @@ export function useEvaluationPair(state: GameState | null, first: boolean, activ
     const pitcher = pitcherFor(setup, target);
     return {
       key: [baseKey, tmiKey, stateKey, String(first)].join('\n'),
-      sceneId: setup.scene.id,
+      sceneId: setup.situation.id,
       base: { spec: baseSpec, state: target, pitcher, first },
       tmi: baseKey === tmiKey ? null : { spec: tmiSpec, state: target, pitcher, first },
     };
@@ -92,7 +92,7 @@ export function useEvaluationPair(state: GameState | null, first: boolean, activ
     };
   }, [request, engine]);
 
-  const sceneId = setup ? setup.scene.id : null;
+  const sceneId = setup ? setup.situation.id : null;
   const current = settled !== null && settled.sceneId === sceneId ? settled : null;
   return {
     base: current ? current.base : null,

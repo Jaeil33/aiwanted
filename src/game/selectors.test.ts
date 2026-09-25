@@ -6,7 +6,7 @@ import { buildSceneSetup } from './scene';
 import { battingWin, butterflyPp, entryChips, expectedSwing, selectTiers, type GaugeLike } from './selectors';
 
 const setup = buildSceneSetup(fixtureAppData, 'fixture-walkoff');
-const SCENE_STATE = setup.scene.state;
+const SCENE_STATE = setup.situation.state;
 /** 9회말이 3아웃으로 끝난 뒤 10회초: 원정 a4 타석, 홈 불펜 투구 */
 const TENTH_TOP = startNextHalf({ ...SCENE_STATE, outs: 3, bases: 0 });
 
