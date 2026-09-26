@@ -1,0 +1,123 @@
+/*
+ * 살아 있는 관중석. 움직이는 속성은 opacity와 transform뿐이라 컴포지터가 처리한다 — JS 루프 없음.
+ * screen 합성이라 빛을 더하기만 한다: 캔버스 위에 있어도 공을 가리지 않는다.
+ */
+.life {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+
+.life i {
+  position: absolute;
+  display: block;
+}
+
+/* 관중 술렁임: 불규칙해 보이도록 크기가 다른 점무늬 세 겹을 한 장에 깐다 */
+.crowd {
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 20%;
+  background-image: radial-gradient(circle at 1px 1px, var(--crowd) 0.8px, transparent 1.1px),
+    radial-gradient(circle at 2px 3px, var(--crowd) 0.7px, transparent 1px),
+    radial-gradient(circle at 4px 1px, var(--crowd) 0.6px, transparent 0.9px);
+  background-size: 7px 5px, 11px 9px, 17px 7px;
+  /* 관중석 아래로 갈수록 사라진다: 펜스와 잔디에는 안 묻는다 */
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.55) 0%, #000 45%, transparent 100%);
+  animation: crowd-breathe 5.4s ease-in-out infinite alternate;
+}
+
+/* 두 장이 반대 위상으로 밝아졌다 어두워지면 관중이 술렁이는 것처럼 보인다 */
+.crowd[data-phase='b'] {
+  background-position: 3px 2px, 6px 4px, 9px 3px;
+  animation-name: crowd-breathe-off;
+}
+
+@keyframes crowd-breathe {
+  from {
+    opacity: 0.35;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes crowd-breathe-off {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.3;
+  }
+}
+
+/* 조명탑 번짐이 아주 느리게 숨 쉰다 */
+.glow {
+  top: -12%;
+  width: 62%;
+  height: 78%;
+  background: radial-gradient(closest-side, var(--bloom) 0%, var(--bloom-0) 100%);
+  animation: bloom 7.5s ease-in-out infinite alternate;
+}
+
+.glow[data-side='left'] {
+  left: -18%;
+}
+
+.glow[data-side='right'] {
+  right: -18%;
+  animation-delay: -3.2s;
+}
+
+@keyframes bloom {
+  from {
+    opacity: 0.55;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* 관중석 카메라 플래시: 오래 기다렸다 한순간 터진다 */
+.flash {
+  border-radius: 50%;
+  background: var(--light);
+  box-shadow: 0 0 6px 2px var(--light);
+  opacity: 0;
+  animation: flash-pop 9.6s linear infinite;
+}
+
+@keyframes flash-pop {
+  0%,
+  100% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  1.5% {
+    opacity: 0.95;
+    transform: scale(1);
+  }
+  5% {
+    opacity: 0;
+    transform: scale(1.1);
+  }
+}
+
+/* 동작 줄이기를 켠 사람에게는 정지 화면 그대로 둔다 */
+@media (prefers-reduced-motion: reduce) {
+  .crowd,
+  .glow,
+  .flash {
+    animation: none;
+  }
+
+  .flash {
+    display: none;
+  }
+
+  .crowd {
+    opacity: 0.7;
+  }
+}

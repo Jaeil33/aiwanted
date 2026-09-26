@@ -5,6 +5,7 @@ import type { PitchPlayback, StageController, StageInspect } from '../stage';
 import { CALL_COLORS, PITCH_COLORS, createTracker, type Tracker } from '../stage/tracker';
 import type { SkyKind } from '../stage/math/sky';
 import { useReducedMotion } from '../stage/useReducedMotion';
+import { StadiumLife } from './StadiumLife';
 import type { PitchRow } from '../types/data';
 import type { Bases, PitchCode } from '../types/domain';
 import styles from './PitchTracker.module.css';
@@ -226,6 +227,7 @@ export const PitchTracker = forwardRef<PitchTrackerHandle, PitchTrackerProps>(fu
   return (
     <div className={[styles.tracker, className].filter(Boolean).join(' ')}>
       <canvas ref={canvasRef} className={styles.canvas} aria-hidden="true" />
+      <StadiumLife sky={sky} />
       {info && (
         <div className={styles.info} style={{ '--c': PITCH_COLORS[info.type] ?? PITCH_COLORS[8] } as CSSProperties}>
           <span className={styles.infoType}>

@@ -4,6 +4,8 @@
   flex: none;
   height: clamp(320px, 50svh, 440px);
   overflow: hidden;
+  /* StadiumLife가 screen으로 겹친다: 합성을 이 상자 안에 가둔다 */
+  isolation: isolate;
   background: #060a0e;
 }
 
