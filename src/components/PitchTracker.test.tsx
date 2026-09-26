@@ -13,7 +13,7 @@ const PITCHER: PlayerCaption = { role: '투수', name: '박투수', hand: '우�
 
 function renderTracker() {
   const ref = createRef<PitchTrackerHandle>();
-  render(<PitchTracker ref={ref} bases={7} zone={null} batter={BATTER} pitcher={PITCHER} />);
+  render(<PitchTracker ref={ref} bases={7} zone={null} sky="night" homeColor="#5C8DF6" batter={BATTER} pitcher={PITCHER} />);
   return () => {
     if (!ref.current) throw new Error('트래커 핸들이 없어요');
     return ref.current;

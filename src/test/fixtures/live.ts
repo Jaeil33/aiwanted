@@ -148,7 +148,7 @@ export function fixtureSituations(): Situation[] {
     away: { code: 'LG', name: 'LG' },
     home: { code: 'OB', name: '두산' },
   } as const;
-  const context = { tempC: 24.5, windMs: 2.1, dayGame: false, dome: false };
+  const context = { tempC: 24.5, windMs: 2.1, dayGame: false, dome: false, startTime: '18:30' };
 
   return [
     {

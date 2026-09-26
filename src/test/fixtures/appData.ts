@@ -124,7 +124,7 @@ export const fixtureSituation: Situation = {
     wpAfterHome: 1,
   },
   naverWpBeforeHome: 0.62,
-  context: { tempC: 27.5, windMs: 2.1, dayGame: false, dome: false },
+  context: { tempC: 27.5, windMs: 2.1, dayGame: false, dome: false, startTime: '18:30' },
 };
 
 /** 그 경기가 실제로 끝난 점수 */

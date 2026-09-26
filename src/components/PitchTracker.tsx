@@ -3,6 +3,7 @@ import { PITCH_CODE_LABEL, PITCH_CODES, PITCH_TYPES } from '../domain/events';
 import { DEFAULT_PITCH_ROW } from '../stage/math/pitch';
 import type { PitchPlayback, StageController, StageInspect } from '../stage';
 import { CALL_COLORS, PITCH_COLORS, createTracker, type Tracker } from '../stage/tracker';
+import type { SkyKind } from '../stage/math/sky';
 import { useReducedMotion } from '../stage/useReducedMotion';
 import type { PitchRow } from '../types/data';
 import type { Bases, PitchCode } from '../types/domain';
@@ -21,6 +22,10 @@ export interface PlayerCaption {
 export interface PitchTrackerProps {
   bases: Bases;
   zone: { top: number; bottom: number } | null;
+  /** 하늘(경기 시작 시각·돔으로 고른다) */
+  sky: SkyKind;
+  /** 홈팀 색. 관중석·펜스에 옅게 섞인다 */
+  homeColor: string;
   batter: PlayerCaption;
   pitcher: PlayerCaption;
   /** 화면이 높이를 정할 때(시안처럼 남은 높이를 채우기) */
@@ -47,7 +52,7 @@ const CALL_MS = 1600;
 const REPLAY_GAP_MS = 380;
 
 /** 포수 뒤 트래커(캔버스) + 구종·구속 판, 콜, 타자·투수 자막(DOM). 문서가 숨겨지면 연출을 바로 끝낸다(ADR-018) */
-export const PitchTracker = forwardRef<PitchTrackerHandle, PitchTrackerProps>(function PitchTracker({ bases, zone, batter, pitcher, className }, ref) {
+export const PitchTracker = forwardRef<PitchTrackerHandle, PitchTrackerProps>(function PitchTracker({ bases, zone, sky, homeColor, batter, pitcher, className }, ref) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const trackerRef = useRef<Tracker | null>(null);
   const reduced = useReducedMotion();
@@ -121,6 +126,10 @@ export const PitchTracker = forwardRef<PitchTrackerHandle, PitchTrackerProps>(fu
   useEffect(() => {
     getTracker()?.setBases(bases);
   }, [bases, getTracker]);
+
+  useEffect(() => {
+    getTracker()?.setSky(sky, homeColor);
+  }, [sky, homeColor, getTracker]);
 
   const zoneTop = zone?.top ?? null;
   const zoneBottom = zone?.bottom ?? null;

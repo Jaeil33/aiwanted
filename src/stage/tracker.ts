@@ -1,12 +1,20 @@
 import type { PitchRow } from '../types/data';
 import type { Bases, PitchCode } from '../types/domain';
 import { TRACK_Y0, pitchAt, timeToY } from './math/pitch';
+import { mixHex, rgbaOf, skyPalette, type SkyKind, type SkyPalette } from './math/sky';
 
 /*
  * 포수 뒤 시점 투구 트래커(ADR-018, 시안 docs/design/broadcast/tracker.mjs 이식).
  * 캔버스는 경기장·존·궤적·번호 원만 그린다. 콜·결과 글자는 DOM이 맡는다. 시계·프레임·오프스크린 캔버스는 deps로 주입한다.
  * 카메라는 시안(30ft 뒤·4.6ft 망원)과 달리 포수 눈높이다. 시안 카메라는 공이 존보다 존 높이만큼 위, 관중석 쪽에서 떨어져 보였다.
+ *
+ * 배경 색은 `math/sky.ts`의 네 통(낮·해질녘·밤·돔)에서 오고, 홈팀 색을 관중석·펜스에 옅게 섞는다(21-pitch-stage step 2).
  */
+
+/** 홈팀 색을 관중석에 섞는 비율. 알아채기 전에 느껴지는 정도 */
+const HOME_TINT = 0.16;
+/** 외야 펜스는 더 진하게 물든다 */
+const FENCE_TINT = 0.3;
 
 /** 존 판정 면: 홈플레이트 앞면(ft) */
 export const PLATE_FRONT_Y = 1.417;
@@ -87,6 +95,8 @@ export interface Tracker {
   resize(cssWidth: number, cssHeight: number, dpr?: number): void;
   setBases(bases: Bases): void;
   setZone(top: number, bottom: number): void;
+  /** 하늘과 홈팀 색. 배경을 다시 굽는다 */
+  setSky(kind: SkyKind, home: string): void;
   /** 연출 없이 번호 원을 더한다(실제 투구 미리 찍기) */
   mark(row: PitchRow, n: number, code: PitchCode): void;
   /** 궤적을 날리고 끝나면 번호 원을 남긴다. 던지는 중에 부르면 앞 공은 바로 끝낸다 */
@@ -129,6 +139,8 @@ export function createTracker(canvas: HTMLCanvasElement, deps: TrackerDeps): Tra
   let view: TrackerFrame = { f: 1, cx: 0, cy: 0 };
   let backdrop: HTMLCanvasElement | null = null;
   let bases: Bases = 0;
+  let sky: SkyPalette = skyPalette('night');
+  let homeColor = '#ffffff';
   let zone = { top: 3.4, bottom: 1.6 };
   const markers: Marker[] = [];
   let trail: Trail | null = null;
@@ -177,10 +189,12 @@ export function createTracker(canvas: HTMLCanvasElement, deps: TrackerDeps): Tra
     const wallTop = Math.max(14, project(0, 400, 11)?.y ?? 14);
     const wallBottom = Math.max(wallTop + 6, project(0, 400, 0)?.y ?? wallTop + 6);
 
-    // 관중석: 어두운 층과 흐린 관중 질감(임시 캔버스에 점을 찍고 한 번만 흐리게 옮긴다)
+    // 관중석: 하늘 → 관중석 위 → 관중석 아래(홈팀 색을 옅게). 그 위에 흐린 관중 질감
+    const stands = mixHex(sky.standsBottom, homeColor, HOME_TINT);
     let grd = c.createLinearGradient(0, 0, 0, wallTop);
-    grd.addColorStop(0, '#020305');
-    grd.addColorStop(1, '#0c1218');
+    grd.addColorStop(0, sky.skyTop);
+    grd.addColorStop(0.42, sky.standsTop);
+    grd.addColorStop(1, stands);
     c.fillStyle = grd;
     c.fillRect(0, 0, W, wallTop);
     const crowd = deps.createCanvas(Math.max(1, Math.round(W)), Math.max(1, Math.round(wallTop)));
@@ -193,8 +207,8 @@ export function createTracker(canvas: HTMLCanvasElement, deps: TrackerDeps): Tra
       for (let i = 0; i < 1400; i++) {
         const y = rand() * wallTop;
         const depth = y / wallTop;
-        const tone = rand() < 0.5 ? '210,215,222' : rand() < 0.5 ? '120,140,165' : '200,160,120';
-        cc.fillStyle = `rgba(${tone},${(0.03 + depth * 0.1).toFixed(3)})`;
+        const tone = sky.crowd[Math.min(sky.crowd.length - 1, Math.floor(rand() * sky.crowd.length))];
+        cc.fillStyle = `rgba(${tone},${(sky.crowdAlpha * (0.25 + depth * 0.75)).toFixed(3)})`;
         cc.fillRect(rand() * W, y, 1.4 + depth * 1.2, 1.4 + depth * 1.2);
       }
       c.filter = 'blur(0.6px)';
@@ -208,28 +222,31 @@ export function createTracker(canvas: HTMLCanvasElement, deps: TrackerDeps): Tra
     const eyeTopLeft = project(-BACKSCREEN.halfWidth, BACKSCREEN.y, BACKSCREEN.top);
     const eyeBottomRight = project(BACKSCREEN.halfWidth, BACKSCREEN.y, 0);
     if (eyeTopLeft && eyeBottomRight) {
-      c.fillStyle = '#030806';
+      c.fillStyle = mixHex('#030806', sky.fence, 0.55);
       c.fillRect(eyeTopLeft.x, eyeTopLeft.y, eyeBottomRight.x - eyeTopLeft.x, eyeBottomRight.y - eyeTopLeft.y);
     }
-    for (const lx of [W * 0.06, W * 0.94]) {
-      const rg = c.createRadialGradient(lx, -10, 0, lx, -10, W * 0.75);
-      rg.addColorStop(0, 'rgba(255,241,214,0.18)');
-      rg.addColorStop(1, 'rgba(255,241,214,0)');
-      c.fillStyle = rg;
-      c.fillRect(0, 0, W, H);
+    // 조명탑 번짐. 낮에는 glow가 0이라 아예 안 그린다
+    if (sky.glow > 0) {
+      for (const lx of [W * 0.06, W * 0.94]) {
+        const rg = c.createRadialGradient(lx, -10, 0, lx, -10, W * 0.75);
+        rg.addColorStop(0, rgbaOf(sky.light, 0.18 * sky.glow));
+        rg.addColorStop(1, rgbaOf(sky.light, 0));
+        c.fillStyle = rg;
+        c.fillRect(0, 0, W, H);
+      }
     }
 
-    // 외야 펜스와 홈런 라인
-    c.fillStyle = '#0a241d';
+    // 외야 펜스와 홈런 라인. 펜스에도 홈팀 색을 섞는다
+    c.fillStyle = mixHex(sky.fence, homeColor, FENCE_TINT);
     c.fillRect(0, wallTop, W, wallBottom - wallTop);
     c.fillStyle = 'rgba(255,210,63,0.6)';
     c.fillRect(0, wallTop, W, 1);
 
     // 잔디와 깊이 방향 줄무늬
     grd = c.createLinearGradient(0, wallBottom, 0, H);
-    grd.addColorStop(0, '#0d3322');
-    grd.addColorStop(0.45, '#15512f');
-    grd.addColorStop(1, '#1c6a3e');
+    grd.addColorStop(0, sky.grassTop);
+    grd.addColorStop(0.45, sky.grassMid);
+    grd.addColorStop(1, sky.grassBottom);
     c.fillStyle = grd;
     c.fillRect(0, wallBottom, W, H - wallBottom);
     for (let d = 24, k = 0; d < 400; d += 22, k++) {
@@ -242,7 +259,7 @@ export function createTracker(canvas: HTMLCanvasElement, deps: TrackerDeps): Tra
     }
 
     // 내야 흙 호·베이스 길
-    const dirt = '#6a4a31';
+    const dirt = sky.dirt;
     poly(c, groundPts([...arc(0, 60.5, 95, -1.25, 1.25), ...arc(0, 60.5, 79, 1.25, -1.25)]), dirt);
     for (const sx of [-1, 1]) {
       poly(c, groundPts([[sx * 1.5, 2], [sx * 64.5, 62], [sx * 62, 65], [sx * -0.5, 4]]), dirt);
@@ -251,13 +268,14 @@ export function createTracker(canvas: HTMLCanvasElement, deps: TrackerDeps): Tra
     const moundCenter = project(0, 60.5, 0);
     if (moundCenter) {
       const mound = c.createRadialGradient(view.cx, moundCenter.y, 0, view.cx, moundCenter.y, moundCenter.s * 2.7);
-      mound.addColorStop(0, '#8a6143');
-      mound.addColorStop(1, '#6a4a31');
+      mound.addColorStop(0, sky.moundTop);
+      mound.addColorStop(1, sky.dirt);
       poly(c, groundPts(arc(0, 60.5, 9)), mound);
     }
-    poly(c, [project(-1, 60.5, 0.83), project(1, 60.5, 0.83), project(1, 61, 0.83), project(-1, 61, 0.83)], 'rgba(245,245,240,0.9)');
+    const chalk = `rgba(245,245,240,${sky.chalk})`;
+    poly(c, [project(-1, 60.5, 0.83), project(1, 60.5, 0.83), project(1, 61, 0.83), project(-1, 61, 0.83)], chalk);
     // 홈 흙 원
-    poly(c, groundPts(arc(0, 0, 13).filter(([, y]) => y > CAM.y + 0.6)), '#6f4d33');
+    poly(c, groundPts(arc(0, 0, 13).filter(([, y]) => y > CAM.y + 0.6)), mixHex(sky.dirt, '#ffffff', 0.04));
 
     // 파울 라인·베이스
     c.lineCap = 'round';
@@ -265,7 +283,7 @@ export function createTracker(canvas: HTMLCanvasElement, deps: TrackerDeps): Tra
       const a = project(sx * 0.9, 0.9, 0);
       const b = project(sx * 240, 240, 0);
       if (!a || !b) continue;
-      c.strokeStyle = 'rgba(245,245,240,0.75)';
+      c.strokeStyle = `rgba(245,245,240,${(sky.chalk * 0.85).toFixed(2)})`;
       c.lineWidth = 1.6;
       c.beginPath();
       c.moveTo(a.x, a.y);
@@ -273,19 +291,19 @@ export function createTracker(canvas: HTMLCanvasElement, deps: TrackerDeps): Tra
       c.stroke();
     }
     for (const [bx, by] of [[63.6, 63.6], [0, 127.3], [-63.6, 63.6]] as const) {
-      poly(c, groundPts([[bx, by - 1], [bx + 1, by], [bx, by + 1], [bx - 1, by]]), 'rgba(245,245,240,0.9)');
+      poly(c, groundPts([[bx, by - 1], [bx + 1, by], [bx, by + 1], [bx - 1, by]]), chalk);
     }
 
     // 타석 박스·홈플레이트
     for (const sx of [-1, 1]) {
-      poly(c, groundPts([[sx * 1.25, -2.4], [sx * 5.25, -2.4], [sx * 5.25, 3.6], [sx * 1.25, 3.6]]), null, 'rgba(245,245,240,0.5)', 1.4);
+      poly(c, groundPts([[sx * 1.25, -2.4], [sx * 5.25, -2.4], [sx * 5.25, 3.6], [sx * 1.25, 3.6]]), null, `rgba(245,245,240,${(sky.chalk * 0.6).toFixed(2)})`, 1.4);
     }
     poly(c, groundPts([[-HALF_PLATE, PLATE_FRONT_Y], [HALF_PLATE, PLATE_FRONT_Y], [HALF_PLATE, 0.708], [0, 0], [-HALF_PLATE, 0.708]]), '#efeee8');
 
     // 비네트
     const vg = c.createRadialGradient(W / 2, H * 0.42, H * 0.25, W / 2, H * 0.5, H * 0.9);
     vg.addColorStop(0, 'rgba(0,0,0,0)');
-    vg.addColorStop(1, 'rgba(0,0,0,0.55)');
+    vg.addColorStop(1, `rgba(0,0,0,${sky.vignette})`);
     c.fillStyle = vg;
     c.fillRect(0, 0, W, H);
     return off;
@@ -410,6 +428,13 @@ export function createTracker(canvas: HTMLCanvasElement, deps: TrackerDeps): Tra
   }
 
   return {
+    setSky(kind, home) {
+      if (sky.kind === kind && homeColor === home) return;
+      sky = skyPalette(kind);
+      homeColor = home;
+      backdrop = g && W > 0 ? paintBackdrop() : null;
+      draw();
+    },
     resize(cssWidth, cssHeight, ratio = 1) {
       dpr = Math.min(Math.max(ratio, 1), 2);
       W = cssWidth;

@@ -122,7 +122,7 @@ export function situationFromPa(game: LiveGame, no: number, kind: SituationKind)
         ? { result: pa.result, event: pa.event, runs: pa.runs, pitches: pa.pitches, wpAfterHome: pa.wpAfterHome }
         : null,
     naverWpBeforeHome: pa.wpBeforeHome,
-    context: { tempC: null, windMs: null, dayGame: s.time < DAY_GAME_BEFORE, dome: s.stadium === DOME_STADIUM },
+    context: { tempC: null, windMs: null, dayGame: s.time < DAY_GAME_BEFORE, dome: s.stadium === DOME_STADIUM, startTime: s.time || null },
   };
 }
 
@@ -213,7 +213,13 @@ export function buildSituationSetup(core: CoreData, situation: Situation, extra:
     battingLineup: rosterOf(batSide),
     fieldingLineup: rosterOf(fieldSide),
     otherPlayers,
-    weather: { ...situation.context },
+    // 하늘용 startTime은 빼고 넘긴다: AI가 아는 날씨는 기온·바람·낮 경기·돔 넷뿐이다
+    weather: {
+      tempC: situation.context.tempC,
+      windMs: situation.context.windMs,
+      dayGame: situation.context.dayGame,
+      dome: situation.context.dome,
+    },
   };
   const colorOf = (side: Side) => {
     const code = situation[side].code;

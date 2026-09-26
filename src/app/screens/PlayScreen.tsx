@@ -9,6 +9,7 @@ import { josa } from '../../domain/format';
 import { hitterOf, pitcherOf } from '../../domain/players';
 import { batterFor, canEditMode, canEditTmi, canStopHere, pitcherFor, type SituationSetup } from '../../game';
 import { sparkSeries, tierReadout, tmiPill, type Tier } from '../../game/broadcast';
+import { skyKindOf } from '../../stage/math/sky';
 import { gradeOf, statLine } from '../../game/headline';
 import { tmiShortLabel } from '../../game/result';
 import { nameOf } from '../../game/situation';
@@ -236,7 +237,16 @@ function PlayBoard({ setup }: { setup: SituationSetup }) {
         strikes={live ? live.strikes : 0}
         backHref={formatRoute({ screen: 'home' })}
       />
-      <PitchTracker ref={trackerRef} className={styles.tracker} bases={state.bases} zone={zone} batter={batterCaption} pitcher={pitcherCaption} />
+      <PitchTracker
+        ref={trackerRef}
+        className={styles.tracker}
+        bases={state.bases}
+        zone={zone}
+        sky={skyKindOf(situation.context.startTime, situation.context.dome)}
+        homeColor={setup.teamColors.home}
+        batter={batterCaption}
+        pitcher={pitcherCaption}
+      />
       {/* 아직 TMI가 없으면 초대 판을 타자·투수 바로 아래에 둔다. 확률 판 아래(시안 자리)면 트래커에 밀려 눈에 안 들어온다(ADR-026) */}
       {invite && <TmiRail pills={pills} onOpen={() => openSheet(false)} action={railAction} invite={invite} />}
       <WpPanel

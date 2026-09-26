@@ -46,7 +46,7 @@ describe('fixtureAppData', () => {
     expect(scene.pitcher).toBe('ap');
     expect(scene.lineups.home[scene.state.slotHome]).toBe('h6');
     expect(scene.actual).toMatchObject({ event: 2, runs: 4, wpAfterHome: 1 });
-    expect(scene.context).toEqual({ tempC: 27.5, windMs: 2.1, dayGame: false, dome: false });
+    expect(scene.context).toEqual({ tempC: 27.5, windMs: 2.1, dayGame: false, dome: false, startTime: '18:30' });
   });
 
   it('장면의 라인업·타자·투수 id가 players에 있다', () => {

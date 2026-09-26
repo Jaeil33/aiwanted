@@ -58,7 +58,8 @@ export interface Situation {
   actual: { result: string; event: EventIndex; runs: number; pitches: PitchRow[]; wpAfterHome: number | null } | null;
   /** 0~1 */
   naverWpBeforeHome: number | null;
-  context: { tempC: number | null; windMs: number | null; dayGame: boolean; dome: boolean };
+  /** startTime은 경기 시작 시각("18:30")이다. 하늘을 고르는 데만 쓴다 — AI에 넘기는 weather에는 안 들어간다 */
+  context: { tempC: number | null; windMs: number | null; dayGame: boolean; dome: boolean; startTime: string | null };
 }
 
 export interface CoreData {

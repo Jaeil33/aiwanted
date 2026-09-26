@@ -142,6 +142,39 @@ describe('createTracker', () => {
     expect(calls).toContain('strokeRect');
   });
 
+  it('setSky는 하늘이나 홈팀 색이 바뀔 때만 배경을 다시 굽는다', () => {
+    // 21-pitch-stage step 2: 배경 굽기는 비싸다(관중 점 1,400개). 같은 값이면 다시 굽지 않는다
+    const { canvas } = fakeCanvas();
+    let baked = 0;
+    const { deps } = fakeDeps({
+      createCanvas: () => {
+        baked += 1;
+        return fakeCanvas().canvas;
+      },
+    });
+    const tracker = createTracker(canvas, deps);
+    tracker.resize(390, 274, 1);
+    const afterResize = baked;
+    expect(afterResize).toBeGreaterThan(0);
+
+    tracker.setSky('night', '#ffffff');
+    expect(baked).toBe(afterResize);
+
+    tracker.setSky('dusk', '#ffffff');
+    expect(baked).toBeGreaterThan(afterResize);
+    const afterDusk = baked;
+
+    tracker.setSky('dusk', '#E0457B');
+    expect(baked).toBeGreaterThan(afterDusk);
+  });
+
+  it('크기를 정하기 전에 setSky를 불러도 터지지 않는다', () => {
+    const { canvas } = fakeCanvas();
+    const { deps } = fakeDeps();
+    const tracker = createTracker(canvas, deps);
+    expect(() => tracker.setSky('day', '#F0474B')).not.toThrow();
+  });
+
   it('throwPitch는 궤적 시간(보통 1배)이 지나면 끝나고 번호 원을 하나 남긴다', async () => {
     const { canvas } = fakeCanvas();
     const { deps, flush } = fakeDeps();
