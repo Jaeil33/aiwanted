@@ -239,8 +239,12 @@ export const PitchTracker = forwardRef<PitchTrackerHandle, PitchTrackerProps>(fu
       <div className={styles.lower}>
         {[batter, pitcher].map((cap, index) => (
           <div key={cap.role} className={styles.cap} data-side={index === 0 ? 'left' : 'right'} style={{ '--c': cap.color } as CSSProperties}>
-            <small>{`${cap.role} · ${cap.hand}`}</small>
-            <b>{cap.name}</b>
+            {/* 역할은 자리와 색으로 보이지만, 읽어 주려면 글자가 있어야 한다 */}
+            <i className={styles.srOnly}>{cap.role}</i>
+            <b>
+              {cap.name}
+              <small>{cap.hand}</small>
+            </b>
             <span>{cap.stats}</span>
           </div>
         ))}

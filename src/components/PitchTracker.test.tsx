@@ -21,15 +21,20 @@ function renderTracker() {
 }
 
 describe('PitchTracker', () => {
-  it('자막에 타자·투수 이름·역할과 손·시즌 기록, VS를 그린다', () => {
+  it('자막은 두 줄이다: 이름과 손 한 줄, 시즌 기록 한 줄', () => {
+    // 21-pitch-stage step 1: 세 줄 120px을 두 줄 64px로 줄여 경기장을 1.44배로 넓혔다
     renderTracker();
     expect(screen.getByText('김타자')).toBeInTheDocument();
-    expect(screen.getByText('타자 · 좌타')).toBeInTheDocument();
+    expect(screen.getByText('좌타')).toBeInTheDocument();
     expect(screen.getByText('타율 .342 · OPS .884')).toBeInTheDocument();
     expect(screen.getByText('박투수')).toBeInTheDocument();
-    expect(screen.getByText('투수 · 우투')).toBeInTheDocument();
+    expect(screen.getByText('우투')).toBeInTheDocument();
     expect(screen.getByText('ERA 2.65 · WHIP 1.53')).toBeInTheDocument();
     expect(screen.getByText('VS')).toBeInTheDocument();
+    // 역할(타자·투수)은 자리와 색으로 보이지만 읽어 주기 위해 글자로도 남긴다
+    expect(screen.getByText('타자')).toBeInTheDocument();
+    expect(screen.getByText('투수')).toBeInTheDocument();
+    expect(screen.queryByText('타자 · 좌타')).toBeNull();
   });
 
   it('playPitch는 구종·구속 판과 콜을 보여주고 번호 원을 남긴다', async () => {

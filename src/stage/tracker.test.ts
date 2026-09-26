@@ -86,6 +86,14 @@ describe('frameTracker', () => {
     }
   });
 
+  it('자막 예약이 64px이라 휴대폰 높이에서도 1ft가 60px을 넘는다', () => {
+    // 21-pitch-stage step 1: 예약이 120px일 때는 45px/ft였다. 그때 공 반지름이 5.4px이었다
+    expect(CAPTION_PX).toBe(64);
+    const frame = frameTracker(390, 274, ZONE.bottom);
+    const plate = projectOnFrame(frame, 0, PLATE_FRONT_Y, ZONE.bottom);
+    expect(plate?.s ?? 0).toBeGreaterThan(60);
+  });
+
   it('높이가 넉넉하면 시안처럼 홈플레이트 폭이 캔버스 폭의 27%다', () => {
     const frame = frameTracker(390, 440, ZONE.bottom);
     const left = projectOnFrame(frame, -0.708, PLATE_FRONT_Y, 0);
