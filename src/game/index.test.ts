@@ -66,7 +66,6 @@ const PUBLIC_API = [
   'pickPitchRow',
   'pitchRowsFor',
   'headline',
-  'stageSceneFor',
   'playbackFor',
   'logEntryFor',
 ];
@@ -157,6 +156,6 @@ describe('game 공개 API', () => {
       fast: false,
       r: () => 0,
     });
-    expect(playback).toMatchObject({ code: 'B', number: 1, bats: 'L', play: null });
+    expect(playback).toMatchObject({ code: 'B', number: 1 });
   });
 });

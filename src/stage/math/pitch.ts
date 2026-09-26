@@ -1,8 +1,10 @@
 import type { PitchRow } from '../../types/data';
-import { PLATE_Y } from './camera';
 
 /** 투구 추적은 매 공 홈플레이트에서 55ft 떨어진 곳에서 시작한다 */
 export const TRACK_Y0 = 55;
+
+/** 추적 시스템이 홈플레이트 통과로 보는 y(ft): 플레이트 끝보다 8.5인치 앞 */
+const PLATE_Y = 0.7083;
 
 export interface Vec3 {
   x: number;

@@ -19,9 +19,7 @@ const noSleep = async () => undefined;
 function fakeStage(opts: { hold?: boolean } = {}) {
   const waiting: Array<() => void> = [];
   const stage = {
-    setScene: vi.fn(),
     setBases: vi.fn(),
-    setBoard: vi.fn(),
     playPitch: vi.fn((p: PitchPlayback) => {
       p.onRelease?.();
       return opts.hold ? new Promise<void>((resolve) => waiting.push(resolve)) : Promise.resolve();
@@ -123,10 +121,8 @@ describe('usePlayback', () => {
     const session = result.current.game.session;
     expect(stage.playPitch).toHaveBeenCalledTimes(1);
     const playback = stage.playPitch.mock.calls[0][0];
-    expect(playback).toMatchObject({ number: 1, bats: 'L', fast: false });
+    expect(playback).toMatchObject({ number: 1, fast: false });
     expect(stage.clearMarkers).toHaveBeenCalledTimes(1);
-    expect(stage.setBoard).toHaveBeenCalledWith(['홈타자6 vs 원정투수', '']);
-    expect(stage.setBoard).toHaveBeenCalledWith(['홈타자6 vs 원정투수', expect.stringMatching(/^\S+ \d+km$/)]);
     expect(session.status).not.toBe('animating');
     if (session.log.length === 0) {
       expect(session.live?.pitches).toEqual([{ balls: 0, strikes: 0, code: playback.code }]);

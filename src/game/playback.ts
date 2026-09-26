@@ -1,8 +1,8 @@
 import { PITCH_CODES } from '../domain/events';
-import { EV, applyTransition, nextCount, sampleInPlay, sampleTransition, transitions, type Evaluation } from '../engine';
-import type { PitchPlayback, StageScene } from '../stage/render/types';
+import { EV, nextCount, sampleInPlay, sampleTransition, transitions, type Evaluation } from '../engine';
+import type { PitchPlayback } from '../stage/types';
 import type { AppData, PitchRow } from '../types/data';
-import type { EventIndex, GameOver, GameState, PitchCode, Side, Transition } from '../types/domain';
+import type { EventIndex, GameOver, GameState, PitchCode, Transition } from '../types/domain';
 import { batterFor, nameOf, pitcherFor, throwsOf, type SituationSetup } from './situation';
 import type { PlayLogEntry } from './session';
 
@@ -136,21 +136,10 @@ export function headline(event: EventIndex, transition: Transition, over: GameOv
   return '직선타 아웃';
 }
 
-const batSideOf = (state: GameState): Side => (state.half === 0 ? 'away' : 'home');
-
-/** 스테이지에 세울 두 팀: 공격(팀 색·홈 여부·타자 타석 방향)과 수비(팀 색·홈 여부·투수 손, 없으면 R) */
-export function stageSceneFor(setup: SituationSetup, state: GameState): StageScene {
-  const batSide = batSideOf(state);
-  const fieldSide: Side = batSide === 'away' ? 'home' : 'away';
-  return {
-    bat: { color: setup.teamColors[batSide], home: batSide === 'home', bats: batterFor(setup, state).stance },
-    fld: { color: setup.teamColors[fieldSide], home: fieldSide === 'home', throws: throwsOf(setup, pitcherFor(setup, state).id) },
-  };
-}
-
 /**
- * 공 하나의 연출 명령. 투구 행은 그 상태 투수의 표본에서 pickPitchRow(r)로 고르고, bats는 stageSceneFor와 같은 타석 방향이다.
- * 타석이 끝났으면 주자 이동·타석 뒤 주자·배너(홈런·끝내기·2점 이상이면 big)를 붙인다. play는 인플레이로 끝났을 때만.
+ * 공 하나의 연출 명령. 투구 행은 그 상태 투수의 표본에서 pickPitchRow(r)로 고른다.
+ * 타석이 끝났으면 배너(홈런·끝내기·2점 이상이면 big)를 붙인다.
+ * 타자 타석 방향·인플레이 타구·주자 이동은 담지 않는다 — 그것을 읽던 렌더러를 지웠다(21-pitch-stage step 0).
  */
 export function playbackFor(args: {
   setup: SituationSetup;
@@ -174,13 +163,9 @@ export function playbackFor(args: {
     code,
     number,
     fast,
-    bats,
-    play: ended && code === 'X' ? ended.transition.play : null,
   };
   if (ended) {
     const big = ended.event === EV.HR || (over?.kind === 'game' && over.walkoff) || ended.transition.runs >= 2;
-    playback.moves = ended.transition.moves;
-    playback.basesAfter = applyTransition(state, ended.transition).state.bases;
     playback.banner = { text: headline(ended.event, ended.transition, over), tone: big ? 'big' : 'normal' };
   }
   return playback;

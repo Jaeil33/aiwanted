@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import type { PitchRow } from '../../types/data';
-import { MITT_Y, PLATE_Y } from './camera';
+
 import { DEFAULT_PITCH_ROW, TRACK_Y0, pitchAt, plateTime, timeToY } from './pitch';
+
+/** 옛 camera.ts가 들고 있던 두 값. 계산을 못 박기 위해 테스트가 직접 든다 */
+const PLATE_Y = 0.7083;
+const MITT_Y = -1.6;
 
 // 합성 투구(실제 기록 아님): [type, speed, code, balls, strikes, stance, x0, z0, vx0, vy0, vz0, ax, ay, az, topSz, bottomSz]
 const SYN: PitchRow = [3, 134, 1, 1, 0, 1, -1.48, 5.77, 4.2, -121.5, -3.9, 2.4, 25.1, -30.2, 3.42, 1.61];

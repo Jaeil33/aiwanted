@@ -46,6 +46,5 @@ export {
   playbackFor,
   resolvePitch,
   samplePitchCode,
-  stageSceneFor,
 } from './playback';
 export type { PaEnd } from './playback';

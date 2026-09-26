@@ -1,5 +1,4 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type RefObject } from 'react';
-import { PITCH_TYPES } from '../domain/events';
 import { applyTransition, createRng, nextCount, pickHighlights, startNextHalf, type Evaluation, type PlayoutResult } from '../engine';
 import {
   batterFor,
@@ -15,15 +14,14 @@ import {
   type SituationSetup,
   type SessionState,
 } from '../game';
-import type { PitchPlayback, StageController } from '../stage';
-import type { PitchRow } from '../types/data';
+import type { StageController } from '../stage';
 import type { GameState } from '../types/domain';
 import { useGame } from './GameProvider';
 import { gameSpecFor } from './useSceneEvaluations';
 
 /*
  * 다시 치르기(한 구·타석 끝까지·경기 끝까지). 공 결과는 엔진 평가와 session seed에서 만든 난수로만 뽑고(ADR-002),
- * 경기장 연출(playPitch)을 기다린 뒤 세션 액션을 보낸다. 전광판(setBoard)은 이 훅만 명령형으로 바꾼다.
+ * 경기장 연출(playPitch)을 기다린 뒤 세션 액션을 보낸다.
  */
 
 export interface PlaybackOptions {
@@ -63,10 +61,6 @@ type Outcome = 'ended' | 'continued' | 'stopped';
 /** 이번 판 식별: 장면을 다시 열거나 처음부터 하면 바뀐다 */
 const runKeyOf = (s: SessionState) => `${s.situation?.id ?? ''}|${s.seed}`;
 
-const nameOf = (setup: SituationSetup, id: string) => (Object.hasOwn(setup.names, id) ? setup.names[id] : id);
-const matchupLine = (setup: SituationSetup, state: GameState) => `${batterFor(setup, state).name} vs ${nameOf(setup, pitcherFor(setup, state).id)}`;
-const pitchLine = (row: PitchRow | null) => (row ? `${PITCH_TYPES[row[0]] ?? '기타'} ${Math.round(row[1])}km` : '');
-
 export function usePlayback(stageRef: RefObject<StageController | null>, opts: PlaybackOptions = {}): Playback {
   const { setup, session, engine, data, dispatch, getSession } = useGame();
   const [busy, setBusy] = useState(false);
@@ -93,7 +87,6 @@ export function usePlayback(stageRef: RefObject<StageController | null>, opts: P
   useEffect(() => {
     const stage = stageRef.current;
     if (!stage || !setup || !liveState || busyRef.current) return;
-    stage.setBoard([matchupLine(setup, liveState), '']);
   }, [stageRef, setup, liveState]);
 
   const runners = useMemo(() => {
@@ -125,13 +118,10 @@ export function usePlayback(stageRef: RefObject<StageController | null>, opts: P
       setTrailState((prev) => ({ key, points: { ...(prev.key === key ? prev.points : {}), [index]: point } }));
     };
 
-    /** 새 타석 첫 공이면 지난 존 표시를 지우고, 전광판 첫 줄을 쓰고, 공을 놓는 순간 둘째 줄(구종·구속)을 쓴다 */
-    const prepareStage = (line1: string, playback: PitchPlayback, firstOfPa: boolean): StageController | null => {
+/** 새 타석 첫 공이면 지난 존 표시를 지운다 */
+    const takeStage = (firstOfPa: boolean): StageController | null => {
       const stage = stageRef.current;
-      if (!stage) return null;
-      if (firstOfPa) stage.clearMarkers();
-      stage.setBoard([line1, '']);
-      playback.onRelease = () => stageRef.current?.setBoard([line1, pitchLine(playback.row)]);
+      if (stage && firstOfPa) stage.clearMarkers();
       return stage;
     };
 
@@ -188,7 +178,7 @@ export function usePlayback(stageRef: RefObject<StageController | null>, opts: P
         );
       }
 
-      const stage = prepareStage(matchupLine(st, state), playback, live.pitches.length === 0);
+      const stage = takeStage(live.pitches.length === 0);
       dispatch({ type: 'animationStart' });
       if (stage) await stage.playPitch(playback);
       const wp = await wpPromise;
@@ -268,7 +258,6 @@ export function usePlayback(stageRef: RefObject<StageController | null>, opts: P
         const nextBefore = k + 1 < pas.length ? pas[k + 1].before : pa.over?.kind === 'half' ? startNextHalf(pa.after) : pa.after;
 
         if (highlight && pa.pitches.length > 0) {
-          const line1 = `${nameOf(st, pa.batterId)} vs ${nameOf(st, pa.pitcherId)}`;
           for (let i = 0; i < pa.pitches.length; i++) {
             const pitch = pa.pitches[i];
             const last = i === pa.pitches.length - 1;
@@ -285,7 +274,7 @@ export function usePlayback(stageRef: RefObject<StageController | null>, opts: P
               fast: !last,
               r: createRng(nextSeed(s)),
             });
-            const stage = prepareStage(line1, playback, i === 0);
+            const stage = takeStage(i === 0);
             dispatch({ type: 'animationStart' });
             if (stage) await stage.playPitch(playback);
             if (runKeyOf(getSession()) !== key) return;

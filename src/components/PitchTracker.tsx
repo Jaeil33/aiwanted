@@ -1,7 +1,7 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState, type CSSProperties } from 'react';
 import { PITCH_CODE_LABEL, PITCH_CODES, PITCH_TYPES } from '../domain/events';
 import { DEFAULT_PITCH_ROW } from '../stage/math/pitch';
-import type { PitchPlayback, StageController, StageInspect } from '../stage/render/types';
+import type { PitchPlayback, StageController, StageInspect } from '../stage';
 import { CALL_COLORS, PITCH_COLORS, createTracker, type Tracker } from '../stage/tracker';
 import { useReducedMotion } from '../stage/useReducedMotion';
 import type { PitchRow } from '../types/data';
@@ -174,13 +174,11 @@ export const PitchTracker = forwardRef<PitchTrackerHandle, PitchTrackerProps>(fu
 
     const inspect = (): StageInspect => {
       const state = trackerRef.current?.inspect() ?? { busy: false, markers: 0 };
-      return { busy: state.busy, bases, board: ['', ''], banner: null, markers: state.markers, scene: null };
+      return { busy: state.busy, bases, markers: state.markers };
     };
 
     return {
-      setScene: () => undefined,
       setBases: (next) => getTracker()?.setBases(next),
-      setBoard: () => undefined,
       playPitch,
       showBanner: async (banner) => showCall(banner.text, '#FFD23F', 'big'),
       clearMarkers,
@@ -196,7 +194,7 @@ export const PitchTracker = forwardRef<PitchTrackerHandle, PitchTrackerProps>(fu
         for (let i = 0; i < rows.length; i++) {
           if (replaySeq.current !== seq) return;
           const row = rows[i];
-          await playPitch({ row, code: codeOfRow(row), number: i + 1, fast: i < rows.length - 1, bats: row[5] === 0 ? 'L' : 'R' });
+          await playPitch({ row, code: codeOfRow(row), number: i + 1, fast: i < rows.length - 1 });
           if (i < rows.length - 1 && drawable() && !reducedRef.current) await wait(REPLAY_GAP_MS);
         }
       },

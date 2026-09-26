@@ -10,8 +10,8 @@ import {
   transitions,
   type Evaluation,
 } from '../engine';
-import { AP_ROWS, fixtureAppData, fixtureSetup, fixtureSituation } from '../test/fixtures/appData';
-import type { PitchRow, Situation } from '../types/data';
+import { AP_ROWS, fixtureAppData, fixtureSetup } from '../test/fixtures/appData';
+import type { PitchRow } from '../types/data';
 import type { EventIndex, GameState, PitchCode, Transition } from '../types/domain';
 import {
   countBucket,
@@ -23,9 +23,7 @@ import {
   playbackFor,
   resolvePitch,
   samplePitchCode,
-  stageSceneFor,
 } from './playback';
-import { buildSituationSetup } from './situation';
 
 const setup = fixtureSetup();
 /** 9회말 2사 만루 4:4, h6(좌타) vs ap(우투) */
@@ -250,34 +248,6 @@ describe('headline', () => {
   });
 });
 
-describe('stageSceneFor', () => {
-  it('공격 팀 색·홈 여부·타자 타석 방향과 수비 팀 색·홈 여부·투수 손', () => {
-    expect(stageSceneFor(setup, START)).toEqual({
-      bat: { color: '#5C8DF6', home: true, bats: 'L' },
-      fld: { color: '#F0474B', home: false, throws: 'R' },
-    });
-    expect(stageSceneFor(setup, TENTH_TOP)).toEqual({
-      bat: { color: '#F0474B', home: false, bats: 'R' },
-      fld: { color: '#5C8DF6', home: true, throws: 'R' },
-    });
-  });
-
-  it('좌투 장면 투수면 throws L이고 스위치 타자는 우타석', () => {
-    const lefty: Situation = {
-      ...fixtureSituation,
-      id: 'fixture-lefty',
-      batter: 'a5',
-      pitcher: 'hp',
-      state: { ...START, half: 0, slotAway: 4 },
-    };
-    const s = buildSituationSetup(fixtureAppData.core, lefty);
-    expect(stageSceneFor(s, lefty.state)).toEqual({
-      bat: { color: '#F0474B', home: false, bats: 'R' },
-      fld: { color: '#5C8DF6', home: true, throws: 'L' },
-    });
-  });
-});
-
 describe('playbackFor', () => {
   type Args = Parameters<typeof playbackFor>[0];
   const args = (over: Partial<Args>): Args => ({
@@ -295,46 +265,42 @@ describe('playbackFor', () => {
     ...over,
   });
 
-  it('타석이 이어지는 공: 투구 행·결과·번호·속도·타석 방향만 담고 결과 연출은 없다', () => {
+  it('타석이 이어지는 공: 투구 행·결과·번호·속도만 담고 결과 연출은 없다', () => {
     const r = scripted([0]);
     const pb = playbackFor(args({ code: 'B', balls: 1, strikes: 1, number: 3, fast: true, r }));
     // 번들에 투수별 표본이 없으므로 우투 리그 풀에서 고른다(ADR-035)
     const pool = fixtureAppData.pitches.pools.R;
-    expect(pb).toEqual({ row: pickPitchRow(pool, 'B', 1, 1, 'L', () => 0), code: 'B', number: 3, fast: true, bats: 'L', play: null });
+    expect(pb).toEqual({ row: pickPitchRow(pool, 'B', 1, 1, 'L', () => 0), code: 'B', number: 3, fast: true });
     expect(pb.row).not.toBeNull();
     expect(r.used()).toBe(1);
   });
 
-  it('끝내기 만루 홈런: 타구 play·주자 이동·타석 뒤 주자·큰 배너', () => {
-    const { ended, over, after } = branch(START, EV.HR);
+  it('끝내기 만루 홈런: 큰 배너', () => {
+    // 21-pitch-stage step 0: 타구 play·주자 이동·타석 뒤 주자는 담지 않는다(읽던 렌더러를 지웠다)
+    const { ended, over } = branch(START, EV.HR);
     const pb = playbackFor(args({ code: 'X', balls: 1, strikes: 1, number: 3, ended, over }));
-    expect(pb).toMatchObject({
+    expect(pb).toEqual({
+      row: pickPitchRow(fixtureAppData.pitches.pools.R, 'X', 1, 1, 'L', () => 0),
       code: 'X',
       number: 3,
-      bats: 'L',
-      play: 'HR',
-      moves: ended.transition.moves,
-      basesAfter: after.bases,
+      fast: false,
       banner: { text: '끝내기 만루 홈런!', tone: 'big' },
     });
     expect(pb.row).toBe(pickPitchRow(fixtureAppData.pitches.pools.R, 'X', 1, 1, 'L', () => 0));
   });
 
-  it('삼진·볼넷은 play가 null이고, 톤은 끝내기일 때 big', () => {
+  it('배너 톤은 끝내기일 때 big', () => {
     const k = branch(START, EV.K);
     expect(k.over).toEqual({ kind: 'half' });
-    expect(playbackFor(args({ code: 'S', balls: 0, strikes: 2, ended: k.ended, over: k.over }))).toMatchObject({
-      play: null,
-      moves: k.ended.transition.moves,
-      basesAfter: 0,
-      banner: { text: '삼진', tone: 'normal' },
+    expect(playbackFor(args({ code: 'S', balls: 0, strikes: 2, ended: k.ended, over: k.over })).banner).toEqual({
+      text: '삼진',
+      tone: 'normal',
     });
 
     const walk = branch(START, EV.BB);
-    expect(playbackFor(args({ code: 'B', balls: 3, strikes: 0, ended: walk.ended, over: walk.over }))).toMatchObject({
-      play: null,
-      basesAfter: 7,
-      banner: { text: '끝내기 밀어내기 볼넷!', tone: 'big' },
+    expect(playbackFor(args({ code: 'B', balls: 3, strikes: 0, ended: walk.ended, over: walk.over })).banner).toEqual({
+      text: '끝내기 밀어내기 볼넷!',
+      tone: 'big',
     });
   });
 
@@ -342,7 +308,7 @@ describe('playbackFor', () => {
     const state: GameState = { inning: 5, half: 0, outs: 0, bases: 0b110, away: 1, home: 1, slotAway: 4, slotHome: 0 };
     const double = branch(state, EV.D2);
     const doublePb = playbackFor(args({ state, code: 'X', ended: double.ended, over: double.over, r: () => 0.5 }));
-    expect(doublePb).toMatchObject({ play: '2B', bats: 'L', banner: { text: '2타점 2루타', tone: 'big' } });
+    expect(doublePb).toMatchObject({ code: 'X', banner: { text: '2타점 2루타', tone: 'big' } });
     expect(fixtureAppData.pitches.pools.R).toContain(doublePb.row);
 
     const singleState: GameState = { ...state, bases: 0b100 };
@@ -351,12 +317,6 @@ describe('playbackFor', () => {
       text: '1타점 적시타',
       tone: 'normal',
     });
-  });
-
-  it('bats는 stageSceneFor의 타자 타석 방향과 같다 (스위치 타자 포함)', () => {
-    for (const state of [START, TENTH_TOP, { ...TENTH_TOP, slotAway: 4 }, { ...START, slotHome: 6 }]) {
-      expect(playbackFor(args({ state })).bats).toBe(stageSceneFor(setup, state).bat.bats);
-    }
   });
 });
 

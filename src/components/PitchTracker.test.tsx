@@ -35,7 +35,7 @@ describe('PitchTracker', () => {
   it('playPitch는 구종·구속 판과 콜을 보여주고 번호 원을 남긴다', async () => {
     const handle = renderTracker();
     await act(async () => {
-      await handle().playPitch({ row: ROW, code: 'S', number: 1, bats: 'L', fast: true });
+      await handle().playPitch({ row: ROW, code: 'S', number: 1, fast: true });
     });
     expect(screen.getByText('1구 직구')).toBeInTheDocument();
     expect(screen.getByText('147')).toBeInTheDocument();
@@ -46,7 +46,7 @@ describe('PitchTracker', () => {
   it('배너가 있으면 콜 자리에 결과 헤드라인을 쓴다', async () => {
     const handle = renderTracker();
     await act(async () => {
-      await handle().playPitch({ row: ROW, code: 'X', number: 2, bats: 'L', banner: { text: '2타점 적시타', tone: 'big' } });
+      await handle().playPitch({ row: ROW, code: 'X', number: 2, banner: { text: '2타점 적시타', tone: 'big' } });
     });
     expect(screen.getByRole('status')).toHaveTextContent('2타점 적시타');
   });
@@ -54,7 +54,7 @@ describe('PitchTracker', () => {
   it('clearMarkers는 판·콜·번호 원을 지운다', async () => {
     const handle = renderTracker();
     await act(async () => {
-      await handle().playPitch({ row: ROW, code: 'B', number: 1, bats: 'L' });
+      await handle().playPitch({ row: ROW, code: 'B', number: 1 });
     });
     act(() => handle().clearMarkers());
     expect(screen.queryByText('1구 직구')).toBeNull();
@@ -79,7 +79,7 @@ describe('PitchTracker', () => {
     expect(screen.queryByText(/구 직구/)).toBeNull();
     act(() => handle().setSkipping(true));
     await act(async () => {
-      await handle().playPitch({ row: ROW, code: 'S', number: 1, bats: 'L' });
+      await handle().playPitch({ row: ROW, code: 'S', number: 1 });
     });
     expect(handle().inspect().markers).toBe(3);
     expect(screen.getByRole('status')).toHaveTextContent('');
