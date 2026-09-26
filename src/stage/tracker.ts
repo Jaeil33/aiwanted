@@ -1,6 +1,6 @@
 import type { PitchRow } from '../types/data';
 import type { Bases, PitchCode } from '../types/domain';
-import { TRACK_Y0, ballRadiusPx, pitchAt, seamAngle, timeToY } from './math/pitch';
+import { TRACK_Y0, ballRadiusPx, pitchAt, seamAngle, timeToY, zoneCellAt, zoneReactionOf } from './math/pitch';
 import { mixHex, rgbaOf, skyPalette, type SkyKind, type SkyPalette } from './math/sky';
 
 /*
@@ -11,6 +11,11 @@ import { mixHex, rgbaOf, skyPalette, type SkyKind, type SkyPalette } from './mat
  * 배경 색은 `math/sky.ts`의 네 통(낮·해질녘·밤·돔)에서 오고, 홈팀 색을 관중석·펜스에 옅게 섞는다(21-pitch-stage step 2).
  */
 
+/** 켜진 존 칸의 진하기 */
+const ZONE_CELL_ALPHA = 0.26;
+const ZONE_EDGE = 'rgba(255,255,255,0.9)';
+/** 볼이면 테두리가 식는다 */
+const ZONE_EDGE_COOL = 'rgba(255,255,255,0.32)';
 /** 이 반지름(px) 아래에서는 실밥을 안 그린다 */
 const SEAM_MIN_R = 4;
 const SEAM_COLOR = '#c8342f';
@@ -120,6 +125,7 @@ interface Marker {
   x: number;
   z: number;
   n: number;
+  code: PitchCode;
   color: string;
 }
 
@@ -329,14 +335,38 @@ export function createTracker(canvas: HTMLCanvasElement, deps: TrackerDeps): Tra
     }
   }
 
+  /*
+   * 스트라이크 존과 **마지막 공에 대한 반응**(21-pitch-stage step 5).
+   *
+   * 스트라이크·헛스윙·파울이면 공이 지난 칸이 그 콜 색으로 켜지고 테두리가 밝아진다.
+   * 볼이면 테두리가 식는다(어두워진다). 인플레이면 아무 반응도 하지 않는다(/grill-me Q24 a).
+   * 시간을 늘리지 않기로 했으므로(Q11 a) 깜빡이지 않고 **다음 공까지 그대로 켜져 있다** —
+   * 그 편이 "방금 그 공이 여기 꽂혔다"를 더 오래 말해 준다.
+   */
   function drawZone(c: Ctx) {
     const tl = project(-HALF_PLATE, PLATE_FRONT_Y, zone.top);
     const br = project(HALF_PLATE, PLATE_FRONT_Y, zone.bottom);
     if (!tl || !br) return;
     const w = br.x - tl.x;
     const h = br.y - tl.y;
+    const last = markers.length > 0 ? markers[markers.length - 1] : null;
+    const reaction = last === null ? 'none' : zoneReactionOf(last.code);
+
     c.fillStyle = 'rgba(255,255,255,0.045)';
     c.fillRect(tl.x, tl.y, w, h);
+
+    // 스트라이크면 공이 지난 칸을 그 콜 색으로 켠다. 존 밖에서 헛스윙한 공은 칸이 없다
+    if (reaction === 'strike' && last !== null) {
+      const cell = zoneCellAt(last.x, last.z, zone, HALF_PLATE);
+      if (cell) {
+        c.save();
+        c.globalAlpha = ZONE_CELL_ALPHA;
+        c.fillStyle = last.color;
+        c.fillRect(tl.x + (w * cell.col) / 3, tl.y + (h * cell.row) / 3, w / 3, h / 3);
+        c.restore();
+      }
+    }
+
     c.strokeStyle = 'rgba(255,255,255,0.16)';
     c.lineWidth = 1;
     c.beginPath();
@@ -347,8 +377,9 @@ export function createTracker(canvas: HTMLCanvasElement, deps: TrackerDeps): Tra
       c.lineTo(br.x, tl.y + (h * k) / 3);
     }
     c.stroke();
-    c.strokeStyle = 'rgba(255,255,255,0.9)';
-    c.lineWidth = 1.5;
+
+    c.strokeStyle = reaction === 'strike' ? (last?.color ?? ZONE_EDGE) : reaction === 'ball' ? ZONE_EDGE_COOL : ZONE_EDGE;
+    c.lineWidth = reaction === 'strike' ? 2.2 : 1.5;
     c.strokeRect(tl.x, tl.y, w, h);
   }
 
@@ -466,7 +497,7 @@ export function createTracker(canvas: HTMLCanvasElement, deps: TrackerDeps): Tra
 
   function addMarker(row: PitchRow, n: number, code: PitchCode) {
     const loc = plateLocation(row);
-    markers.push({ x: loc.x, z: loc.z, n, color: CALL_COLORS[code] ?? CALL_COLORS.X });
+    markers.push({ x: loc.x, z: loc.z, n, code, color: CALL_COLORS[code] ?? CALL_COLORS.X });
   }
 
   return {

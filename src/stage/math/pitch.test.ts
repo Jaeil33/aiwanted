@@ -1,7 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import type { PitchRow } from '../../types/data';
 
-import { BALL_R_FT, BALL_SCALE, DEFAULT_PITCH_ROW, TRACK_Y0, ballRadiusPx, pitchAt, plateTime, seamAngle, spinOf, timeToY } from './pitch';
+import {
+  BALL_R_FT,
+  BALL_SCALE,
+  DEFAULT_PITCH_ROW,
+  TRACK_Y0,
+  ballRadiusPx,
+  pitchAt,
+  plateTime,
+  seamAngle,
+  spinOf,
+  timeToY,
+  zoneCellAt,
+  zoneReactionOf,
+} from './pitch';
 
 /** 옛 camera.ts가 들고 있던 두 값. 계산을 못 박기 위해 테스트가 직접 든다 */
 const PLATE_Y = 0.7083;
@@ -118,5 +131,54 @@ describe('spinOf·seamAngle', () => {
       expect(seamAngle(type, 1)).toBeCloseTo(tilt + turns * Math.PI * 2, 10);
       expect(seamAngle(type, 0.5)).toBeCloseTo(tilt + turns * Math.PI, 10);
     }
+  });
+});
+
+/*
+ * 존 반응(21-pitch-stage step 5). 판정을 글자 말고 그림으로도 말한다.
+ */
+
+describe('zoneCellAt', () => {
+  const ZONE = { top: 3.4, bottom: 1.6 };
+  const HALF = 0.708;
+
+  it('존 한가운데는 가운데 칸이다', () => {
+    expect(zoneCellAt(0, 2.5, ZONE, HALF)).toEqual({ col: 1, row: 1 });
+  });
+
+  it('왼쪽 위·오른쪽 아래 구석', () => {
+    expect(zoneCellAt(-0.6, 3.3, ZONE, HALF)).toEqual({ col: 0, row: 0 });
+    expect(zoneCellAt(0.6, 1.7, ZONE, HALF)).toEqual({ col: 2, row: 2 });
+  });
+
+  it('존 밖이면 null', () => {
+    expect(zoneCellAt(1.2, 2.5, ZONE, HALF)).toBeNull();
+    expect(zoneCellAt(0, 3.9, ZONE, HALF)).toBeNull();
+    expect(zoneCellAt(0, 1.2, ZONE, HALF)).toBeNull();
+  });
+
+  it('경계선 위는 존 안이고 칸은 0~2를 벗어나지 않는다', () => {
+    for (const [x, z] of [[-HALF, ZONE.top], [HALF, ZONE.bottom], [HALF, ZONE.top], [-HALF, ZONE.bottom]] as const) {
+      const cell = zoneCellAt(x, z, ZONE, HALF);
+      expect(cell).not.toBeNull();
+      expect(cell!.col).toBeGreaterThanOrEqual(0);
+      expect(cell!.col).toBeLessThanOrEqual(2);
+      expect(cell!.row).toBeGreaterThanOrEqual(0);
+      expect(cell!.row).toBeLessThanOrEqual(2);
+    }
+  });
+});
+
+describe('zoneReactionOf', () => {
+  it('스트라이크·헛스윙·파울이면 존이 켜지고, 볼이면 식는다', () => {
+    expect(zoneReactionOf('T')).toBe('strike');
+    expect(zoneReactionOf('S')).toBe('strike');
+    expect(zoneReactionOf('F')).toBe('strike');
+    expect(zoneReactionOf('B')).toBe('ball');
+  });
+
+  it('배트에 맞았으면 존은 반응하지 않는다', () => {
+    // /grill-me Q24(a): 인플레이 순간은 지금 그대로 둔다. 맞은 공에 "스트라이크!" 할 수는 없다
+    expect(zoneReactionOf('X')).toBe('none');
   });
 });

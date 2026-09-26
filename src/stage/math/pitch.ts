@@ -1,4 +1,5 @@
 import type { PitchRow } from '../../types/data';
+import type { PitchCode } from '../../types/domain';
 
 /** 투구 추적은 매 공 홈플레이트에서 55ft 떨어진 곳에서 시작한다 */
 export const TRACK_Y0 = 55;
@@ -86,4 +87,34 @@ export function spinOf(pitchType: number): Spin {
 export function seamAngle(pitchType: number, progress: number): number {
   const { turns, tilt } = spinOf(pitchType);
   return tilt + turns * Math.PI * 2 * progress;
+}
+
+export interface ZoneCell {
+  /** 왼쪽부터 0·1·2 */
+  col: number;
+  /** 위부터 0·1·2 */
+  row: number;
+}
+
+/** 존 3×3에서 그 지점이 든 칸. 존 밖이면 null (경계선 위는 안으로 본다) */
+export function zoneCellAt(x: number, z: number, zone: { top: number; bottom: number }, halfWidth: number): ZoneCell | null {
+  const height = zone.top - zone.bottom;
+  if (height <= 0 || halfWidth <= 0) return null;
+  if (x < -halfWidth || x > halfWidth || z < zone.bottom || z > zone.top) return null;
+  const clamp = (n: number) => (n < 0 ? 0 : n > 2 ? 2 : n);
+  return {
+    col: clamp(Math.floor(((x + halfWidth) / (halfWidth * 2)) * 3)),
+    row: clamp(Math.floor(((zone.top - z) / height) * 3)),
+  };
+}
+
+export type ZoneReaction = 'strike' | 'ball' | 'none';
+
+/**
+ * 그 공에 존이 어떻게 반응하나(21-pitch-stage step 5).
+ * 인플레이(X)는 반응하지 않는다 — 맞은 공에 판정을 붙일 수 없다(/grill-me Q24 a).
+ */
+export function zoneReactionOf(code: PitchCode): ZoneReaction {
+  if (code === 'B') return 'ball';
+  return code === 'X' ? 'none' : 'strike';
 }

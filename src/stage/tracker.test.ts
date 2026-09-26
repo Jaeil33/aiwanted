@@ -5,9 +5,10 @@ import type { PitchRow } from '../types/data';
 
 const ROW: PitchRow = [0, 147, 1, 0, 0, 1, -1.645, 5.942, 5.386, -133.458, -5.875, -12.96, 30.399, -12.37, 3.29, 1.596];
 
-/** 모든 2D 메서드를 기록만 하는 가짜 컨텍스트(속성 대입은 저장) */
+/** 모든 2D 메서드를 기록만 하는 가짜 컨텍스트(속성 대입은 저장하고 순서도 남긴다) */
 function fakeContext() {
   const calls: string[] = [];
+  const sets: string[] = [];
   const store: Record<string | symbol, unknown> = {};
   const ctx = new Proxy(store, {
     get(target, prop) {
@@ -19,16 +20,17 @@ function fakeContext() {
     },
     set(target, prop, value) {
       target[prop] = value;
+      sets.push(`${String(prop)}=${String(value)}`);
       return true;
     },
   });
-  return { ctx, calls };
+  return { ctx, calls, sets };
 }
 
 function fakeCanvas(withContext = true) {
-  const { ctx, calls } = fakeContext();
+  const { ctx, calls, sets } = fakeContext();
   const canvas = { width: 0, height: 0, getContext: () => (withContext ? ctx : null) } as unknown as HTMLCanvasElement;
-  return { canvas, calls };
+  return { canvas, calls, sets };
 }
 
 /** 가짜 시계·프레임: flush(ms)가 시계를 옮기고 대기 중인 프레임을 한 번씩 부른다 */
@@ -173,6 +175,25 @@ describe('createTracker', () => {
     const { deps } = fakeDeps();
     const tracker = createTracker(canvas, deps);
     expect(() => tracker.setSky('day', '#F0474B')).not.toThrow();
+  });
+
+  it('존은 마지막 공에 반응한다: 스트라이크면 굵게, 볼이면 식는다, 인플레이면 그대로', () => {
+    // 21-pitch-stage step 5. 굵기로 본다 — 스트라이크 2.2 / 그 밖 1.5
+    const edgeAfter = (code: 'S' | 'B' | 'X' | null) => {
+      const { canvas, sets } = fakeCanvas();
+      const tracker = createTracker(canvas, fakeDeps().deps);
+      tracker.resize(390, 274, 1);
+      sets.length = 0;
+      if (code) tracker.mark(ROW, 1, code);
+      else tracker.setBases(0);
+      return sets;
+    };
+    expect(edgeAfter('S')).toContain('lineWidth=2.2');
+    expect(edgeAfter('B')).not.toContain('lineWidth=2.2');
+    expect(edgeAfter('B')).toContain('strokeStyle=rgba(255,255,255,0.32)');
+    expect(edgeAfter('X')).not.toContain('lineWidth=2.2');
+    expect(edgeAfter('X')).toContain('strokeStyle=rgba(255,255,255,0.9)');
+    expect(edgeAfter(null)).toContain('strokeStyle=rgba(255,255,255,0.9)');
   });
 
   it('날아오는 동안 공에 실밥을 돌려 그린다', async () => {
