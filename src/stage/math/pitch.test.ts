@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { PitchRow } from '../../types/data';
 
-import { DEFAULT_PITCH_ROW, TRACK_Y0, pitchAt, plateTime, timeToY } from './pitch';
+import { BALL_R_FT, BALL_SCALE, DEFAULT_PITCH_ROW, TRACK_Y0, ballRadiusPx, pitchAt, plateTime, seamAngle, spinOf, timeToY } from './pitch';
 
 /** 옛 camera.ts가 들고 있던 두 값. 계산을 못 박기 위해 테스트가 직접 든다 */
 const PLATE_Y = 0.7083;
@@ -65,5 +65,58 @@ describe('DEFAULT_PITCH_ROW', () => {
     const bottom = DEFAULT_PITCH_ROW[15];
     expect(Math.abs(at.x)).toBeLessThan(0.1);
     expect(Math.abs(at.z - (top + bottom) / 2)).toBeLessThan(0.1);
+  });
+});
+
+/*
+ * 공의 크기와 회전(21-pitch-stage step 4). 회전축은 기록에 없다 — 구종에서 지어낸다(/grill-me Q6 a).
+ */
+
+describe('ballRadiusPx', () => {
+  it('원근 크기에 과장 배수를 곱한다', () => {
+    // 자막 64px일 때 홈플레이트에서 1ft ≈ 65px → 공 반지름 11.8px
+    expect(ballRadiusPx(65.1)).toBeCloseTo(65.1 * BALL_R_FT * BALL_SCALE, 6);
+    expect(ballRadiusPx(65.1)).toBeGreaterThan(11);
+    expect(ballRadiusPx(65.1)).toBeLessThan(13);
+  });
+
+  it('과장 배수는 1.5다: 진짜 원근보다 크게 그린다', () => {
+    expect(BALL_SCALE).toBe(1.5);
+    expect(ballRadiusPx(65.1) / (65.1 * BALL_R_FT)).toBeCloseTo(1.5, 6);
+  });
+
+  it('아주 멀어도 점 하나로 사라지지 않는다', () => {
+    expect(ballRadiusPx(0)).toBeGreaterThanOrEqual(2);
+    expect(ballRadiusPx(1)).toBeGreaterThanOrEqual(2);
+  });
+});
+
+describe('spinOf·seamAngle', () => {
+  it('직구·투심·체인지업은 한쪽으로, 슬라이더·스위퍼·커브는 반대로 돈다', () => {
+    for (const type of [0, 1, 6]) expect(spinOf(type).turns).toBeGreaterThan(0);
+    for (const type of [3, 4, 5]) expect(spinOf(type).turns).toBeLessThan(0);
+  });
+
+  it('포크는 거의 돌지 않는다', () => {
+    expect(Math.abs(spinOf(7).turns)).toBeLessThan(1);
+  });
+
+  it('구종마다 회전이 다르다', () => {
+    const seen = new Set([0, 1, 2, 3, 4, 5, 6, 7, 8].map((t) => `${spinOf(t).turns}|${spinOf(t).tilt}`));
+    expect(seen.size).toBeGreaterThanOrEqual(8);
+  });
+
+  it('모르는 구종은 기타와 같다', () => {
+    expect(spinOf(99)).toEqual(spinOf(8));
+    expect(spinOf(-1)).toEqual(spinOf(8));
+  });
+
+  it('실밥 각도는 기울기에서 시작해 비행 동안 바퀴 수만큼 돈다', () => {
+    for (const type of [0, 3, 5, 7]) {
+      const { turns, tilt } = spinOf(type);
+      expect(seamAngle(type, 0)).toBeCloseTo(tilt, 10);
+      expect(seamAngle(type, 1)).toBeCloseTo(tilt + turns * Math.PI * 2, 10);
+      expect(seamAngle(type, 0.5)).toBeCloseTo(tilt + turns * Math.PI, 10);
+    }
   });
 });

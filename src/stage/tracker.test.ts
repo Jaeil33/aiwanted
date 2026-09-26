@@ -175,6 +175,24 @@ describe('createTracker', () => {
     expect(() => tracker.setSky('day', '#F0474B')).not.toThrow();
   });
 
+  it('날아오는 동안 공에 실밥을 돌려 그린다', async () => {
+    // 21-pitch-stage step 4: 회전이 있어야 "움직이는 점"이 아니라 "날아오는 물체"로 보인다
+    const { canvas, calls } = fakeCanvas();
+    const { deps, flush } = fakeDeps();
+    const tracker = createTracker(canvas, deps);
+    tracker.resize(390, 274, 1);
+    const thrown = tracker.throwPitch(ROW, 1, 'S');
+    flush(16);
+    // 멀리 있을 때는 실밥이 진흙이라 안 그린다: 반지름 4px을 넘는 홈플레이트 근처에서만
+    expect(calls).not.toContain('rotate');
+    flush(380);
+    await settle();
+    expect(calls).toContain('rotate');
+    expect(calls).toContain('clip');
+    tracker.skip();
+    await thrown;
+  });
+
   it('throwPitch는 궤적 시간(보통 1배)이 지나면 끝나고 번호 원을 하나 남긴다', async () => {
     const { canvas } = fakeCanvas();
     const { deps, flush } = fakeDeps();

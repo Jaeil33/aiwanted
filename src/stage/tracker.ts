@@ -1,6 +1,6 @@
 import type { PitchRow } from '../types/data';
 import type { Bases, PitchCode } from '../types/domain';
-import { TRACK_Y0, pitchAt, timeToY } from './math/pitch';
+import { TRACK_Y0, ballRadiusPx, pitchAt, seamAngle, timeToY } from './math/pitch';
 import { mixHex, rgbaOf, skyPalette, type SkyKind, type SkyPalette } from './math/sky';
 
 /*
@@ -11,6 +11,9 @@ import { mixHex, rgbaOf, skyPalette, type SkyKind, type SkyPalette } from './mat
  * 배경 색은 `math/sky.ts`의 네 통(낮·해질녘·밤·돔)에서 오고, 홈팀 색을 관중석·펜스에 옅게 섞는다(21-pitch-stage step 2).
  */
 
+/** 이 반지름(px) 아래에서는 실밥을 안 그린다 */
+const SEAM_MIN_R = 4;
+const SEAM_COLOR = '#c8342f';
 /** 홈팀 색을 관중석에 섞는 비율. 알아채기 전에 느껴지는 정도 */
 const HOME_TINT = 0.16;
 /** 외야 펜스는 더 진하게 물든다 */
@@ -19,7 +22,6 @@ const FENCE_TINT = 0.3;
 /** 존 판정 면: 홈플레이트 앞면(ft) */
 export const PLATE_FRONT_Y = 1.417;
 const HALF_PLATE = 0.708;
-const BALL_R = 0.121;
 /** 포수 눈높이 카메라(ft): 홈플레이트 10ft 뒤, 높이 4ft. 공이 투수 손에서 작게 나와 커지며 날아온다 */
 const CAM = { y: -10, z: 4 };
 /**
@@ -124,6 +126,8 @@ interface Marker {
 interface Trail {
   row: PitchRow;
   t: number;
+  /** 홈플레이트 앞면에 닿는 시각(초). t / tEnd가 비행 진행도다 */
+  tEnd: number;
   color: string;
   done: boolean;
 }
@@ -358,7 +362,7 @@ export function createTracker(canvas: HTMLCanvasElement, deps: TrackerDeps): Tra
         const k = i / n;
         c.strokeStyle = tr.color;
         c.globalAlpha = (tr.done ? 0.38 : 0.85) * (0.15 + 0.85 * k);
-        c.lineWidth = Math.max(1, p.s * BALL_R * 1.3 * k);
+        c.lineWidth = Math.max(1, ballRadiusPx(p.s) * 1.3 * k);
         c.lineCap = 'round';
         c.beginPath();
         c.moveTo(prev.x, prev.y);
@@ -373,11 +377,23 @@ export function createTracker(canvas: HTMLCanvasElement, deps: TrackerDeps): Tra
     const shadow = project(b3.x, b3.y, 0);
     const ball = project(b3.x, b3.y, b3.z);
     if (!shadow || !ball) return;
-    const r = Math.max(1.6, ball.s * BALL_R);
+    const r = ballRadiusPx(ball.s);
     c.fillStyle = 'rgba(0,0,0,0.28)';
     c.beginPath();
     c.ellipse(shadow.x, shadow.y, r * 1.1, r * 0.35, 0, 0, Math.PI * 2);
     c.fill();
+
+    // 조명 아래 빛무리. 낮에는 glow가 0이라 안 그린다
+    if (sky.glow > 0) {
+      const halo = c.createRadialGradient(ball.x, ball.y, r * 0.7, ball.x, ball.y, r * 2.4);
+      halo.addColorStop(0, rgbaOf(sky.light, 0.3 * sky.glow));
+      halo.addColorStop(1, rgbaOf(sky.light, 0));
+      c.fillStyle = halo;
+      c.beginPath();
+      c.arc(ball.x, ball.y, r * 2.4, 0, Math.PI * 2);
+      c.fill();
+    }
+
     const bg = c.createRadialGradient(ball.x - r * 0.35, ball.y - r * 0.35, r * 0.1, ball.x, ball.y, r);
     bg.addColorStop(0, '#ffffff');
     bg.addColorStop(1, '#d9d6cc');
@@ -385,6 +401,32 @@ export function createTracker(canvas: HTMLCanvasElement, deps: TrackerDeps): Tra
     c.beginPath();
     c.arc(ball.x, ball.y, r, 0, Math.PI * 2);
     c.fill();
+    drawSeams(c, ball.x, ball.y, r, tr);
+  }
+
+  /*
+   * 실밥 두 줄. 이게 있어야 공이 "움직이는 점"이 아니라 "날아오는 물체"가 된다.
+   * 각도는 구종에서 지어낸 회전이다(seamAngle) — 기록에 회전축이 없다.
+   * 너무 작으면 진흙이 되므로 반지름 4px 아래에서는 안 그린다.
+   */
+  function drawSeams(c: Ctx, x: number, y: number, r: number, tr: Trail) {
+    if (r < SEAM_MIN_R) return;
+    const angle = seamAngle(tr.row[0], tr.tEnd > 0 ? tr.t / tr.tEnd : 0);
+    c.save();
+    c.translate(x, y);
+    c.rotate(angle);
+    c.beginPath();
+    c.arc(0, 0, r, 0, Math.PI * 2);
+    c.clip();
+    c.strokeStyle = SEAM_COLOR;
+    c.lineWidth = Math.max(1, r * 0.17);
+    c.lineCap = 'round';
+    for (const sx of [-1, 1]) {
+      c.beginPath();
+      c.arc(sx * r * 1.15, 0, r * 1.35, sx > 0 ? Math.PI - 0.72 : -0.72, sx > 0 ? Math.PI + 0.72 : 0.72);
+      c.stroke();
+    }
+    c.restore();
   }
 
   function drawMarkers(c: Ctx) {
@@ -469,7 +511,7 @@ export function createTracker(canvas: HTMLCanvasElement, deps: TrackerDeps): Tra
           frame = 0;
           pending = null;
           addMarker(row, n, code);
-          trail = { row, t: tEnd, color, done: true };
+          trail = { row, t: tEnd, tEnd, color, done: true };
           draw();
           resolve();
         };
@@ -481,7 +523,7 @@ export function createTracker(canvas: HTMLCanvasElement, deps: TrackerDeps): Tra
         const step = (now: number) => {
           start ??= now;
           const k = duration > 0 ? Math.min((now - start) / duration, 1) : 1;
-          trail = { row, t: tEnd * k, color, done: false };
+          trail = { row, t: tEnd * k, tEnd, color, done: false };
           if (k >= 1) {
             finish();
             return;
