@@ -334,6 +334,35 @@ a.example:hover {
   white-space: nowrap;
 }
 
+/*
+ * 카드의 TMI 줄. 꽉 찬 노랑은 히어로 버튼 하나뿐이다 —
+ * 카드 다섯이 모두 꽉 찬 노랑이면 한 화면의 주요 버튼이 다섯 개가 된다(UI_GUIDE 원칙 5).
+ * 그래서 테두리와 글자만 --accent로 두고 높이도 히어로(52px)보다 낮춘다.
+ */
+.cardCta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 44px;
+  border: 1px solid var(--accent);
+  border-radius: var(--r-control);
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.cardCta:hover {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+.cardCta i {
+  font-size: 16px;
+  font-style: normal;
+  line-height: 1;
+}
+
 .more {
   display: flex;
   align-items: center;

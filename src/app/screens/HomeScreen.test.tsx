@@ -107,13 +107,15 @@ describe('HomeScreen 히어로', () => {
 
   it('노란 버튼 하나가 최근 승부처로 바로 데려간다', async () => {
     renderWithGame(<HomeScreen />, { platform: platformWith() });
-    await waitFor(() => expect(screen.getByRole('link', { name: /TMI 걸기/ }).getAttribute('href')).toMatch(/^#\/pa\//));
+    await waitFor(() =>
+      expect(screen.getByRole('link', { name: /아무 타석에나 TMI 걸기/ }).getAttribute('href')).toMatch(/^#\/pa\//),
+    );
   });
 
   it('승부처를 아직 못 받았으면 버튼이 구단 목록으로 간다', () => {
     // 경기 API가 아예 없는 아티팩트 미리보기(ADR-036)에서도 버튼이 죽지 않는다
     renderWithGame(<HomeScreen />, { platform: fakePlatform() });
-    expect(screen.getByRole('link', { name: /TMI 걸기/ })).toHaveAttribute('href', '#/teams');
+    expect(screen.getByRole('link', { name: /아무 타석에나 TMI 걸기/ })).toHaveAttribute('href', '#/teams');
   });
 
   it('승부처를 기다리는 동안 빈 상자가 아니라 뼈대를 보여준다', async () => {
@@ -121,6 +123,33 @@ describe('HomeScreen 히어로', () => {
     renderWithGame(<HomeScreen />, { platform: fakePlatform({ liveApi, today: () => '2026-09-20' }) });
     await waitFor(() => expect(document.querySelectorAll('[data-skeleton]').length).toBeGreaterThan(0));
     expect(screen.queryByText('승부처를 고르는 중…')).toBeNull();
+  });
+
+  it('경기 카드마다 TMI 걸기가 타석 전체 바로 위에 있다', async () => {
+    // 승부처 줄은 "그 상황 보기", 노란 줄은 "여기서 바로 걸기", 테두리 줄은 "더 보기"
+    renderWithGame(<HomeScreen />, { platform: platformWith() });
+    const feed = await screen.findByRole('list', { name: '추천 승부처' });
+    await waitFor(() => expect(within(feed).getAllByRole('link', { name: /이 타석에 TMI 걸기/ }).length).toBeGreaterThan(0));
+
+    const card = within(feed).getAllByRole('article')[0];
+    const cta = within(card).getByRole('link', { name: /이 타석에 TMI 걸기/ });
+    const more = within(card).getByRole('link', { name: /이 경기 타석 전체/ });
+
+    // 그 경기의 첫 승부처로 간다
+    const firstPick = within(card).getAllByRole('link').find((a) => a.getAttribute('href')?.startsWith('#/pa/'));
+    expect(cta).toHaveAttribute('href', firstPick?.getAttribute('href') ?? '');
+    // "이 경기 타석 전체" 바로 위다
+    expect(cta.compareDocumentPosition(more) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('승부처를 못 받은 경기에는 TMI 걸기를 달지 않는다', async () => {
+    const liveApi: LiveApi = { games: async () => games, game: () => new Promise<never>(() => {}) };
+    renderWithGame(<HomeScreen />, { platform: fakePlatform({ liveApi, today: () => '2026-09-20' }) });
+    const feed = await screen.findByRole('list', { name: '추천 승부처' });
+    await waitFor(() => expect(within(feed).getAllByRole('article').length).toBeGreaterThan(0));
+    expect(within(feed).queryByRole('link', { name: /이 타석에 TMI 걸기/ })).toBeNull();
+    // 갈 곳 없는 버튼을 흐리게 두느니 아예 안 단다. 타석 전체는 그대로 있다
+    expect(within(feed).getAllByRole('link', { name: /이 경기 타석 전체/ }).length).toBeGreaterThan(0);
   });
 
   it('예시를 누르면 그 문장이 걸린 채로 타석이 열린다', async () => {

@@ -257,6 +257,20 @@ function GameFeedCard({ summary, picks, waiting }: GameFeedCardProps) {
           ))}
       </ul>
 
+      {/*
+        승부처 줄은 "그 상황 보기"고 이 줄은 "여기서 바로 걸기"다. 피드에서 TMI가 할 수 있는
+        일이라는 걸 보여 주는 자리라, 못 받은 경기에는 흐리게 두느니 아예 안 단다.
+      */}
+      {picks.length > 0 && (
+        <a
+          className={styles.cardCta}
+          href={formatRoute({ screen: 'pa', gameId: summary.gameId, no: picks[0].no, share: null })}
+        >
+          이 타석에 TMI 걸기
+          <i aria-hidden="true">›</i>
+        </a>
+      )}
+
       <a className={styles.more} href={formatRoute({ screen: 'game', gameId: summary.gameId })}>
         이 경기 타석 전체
         <i aria-hidden="true">›</i>
