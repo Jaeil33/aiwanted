@@ -1,7 +1,9 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { decodeShare } from '../../game';
 import { fixtureGameSummaries, fixtureLiveGame } from '../../test/fixtures/live';
 import { fakeLiveApi, fakePlatform, renderWithGame } from '../../test/gameHarness';
+import type { LiveApi } from '../../live/providers/http';
 import type { GameSummary } from '../../types/live';
 import { HomeScreen } from './HomeScreen';
 
@@ -82,5 +84,59 @@ describe('HomeScreen', () => {
   it('경기 API가 없으면 그렇게 알린다', () => {
     renderWithGame(<HomeScreen />, { platform: fakePlatform() });
     expect(screen.getByText(/경기를 불러올 수 없/)).toBeInTheDocument();
+  });
+});
+
+/*
+ * 22-home-hero: 배포 직전 첫 화면.
+ * 지금 홈은 이 앱이 무엇인지 한 번도 말하지 않는다 — 정체성인 TMI가 홈에 한 글자도 없었다.
+ */
+describe('HomeScreen 히어로', () => {
+  it('첫 화면이 이 앱이 무엇인지 말한다', () => {
+    renderWithGame(<HomeScreen />, { platform: platformWith() });
+    expect(screen.getByRole('heading', { name: /방금 그 타석, 만약 그랬다면\?/ })).toBeInTheDocument();
+    expect(screen.getByText(/TMI 한 줄/)).toBeInTheDocument();
+  });
+
+  it('무엇을 쓰면 되는지 예시로 보여준다', () => {
+    renderWithGame(<HomeScreen />, { platform: platformWith() });
+    const examples = screen.getByRole('list', { name: 'TMI 예시' });
+    expect(within(examples).getAllByRole('listitem').length).toBeGreaterThanOrEqual(3);
+    expect(within(examples).getByText(/짜장면/)).toBeInTheDocument();
+  });
+
+  it('노란 버튼 하나가 최근 승부처로 바로 데려간다', async () => {
+    renderWithGame(<HomeScreen />, { platform: platformWith() });
+    await waitFor(() => expect(screen.getByRole('link', { name: /TMI 걸기/ }).getAttribute('href')).toMatch(/^#\/pa\//));
+  });
+
+  it('승부처를 아직 못 받았으면 버튼이 구단 목록으로 간다', () => {
+    // 경기 API가 아예 없는 아티팩트 미리보기(ADR-036)에서도 버튼이 죽지 않는다
+    renderWithGame(<HomeScreen />, { platform: fakePlatform() });
+    expect(screen.getByRole('link', { name: /TMI 걸기/ })).toHaveAttribute('href', '#/teams');
+  });
+
+  it('승부처를 기다리는 동안 빈 상자가 아니라 뼈대를 보여준다', async () => {
+    const liveApi: LiveApi = { games: async () => games, game: () => new Promise<never>(() => {}) };
+    renderWithGame(<HomeScreen />, { platform: fakePlatform({ liveApi, today: () => '2026-09-20' }) });
+    await waitFor(() => expect(document.querySelectorAll('[data-skeleton]').length).toBeGreaterThan(0));
+    expect(screen.queryByText('승부처를 고르는 중…')).toBeNull();
+  });
+
+  it('예시를 누르면 그 문장이 걸린 채로 타석이 열린다', async () => {
+    // 공유 값(?t=)이 이미 TMI 문장을 싣고 다닌다(src/game/share.ts) — 한 탭 데모에 그대로 쓴다
+    renderWithGame(<HomeScreen />, { platform: platformWith() });
+    const examples = screen.getByRole('list', { name: 'TMI 예시' });
+    await waitFor(() => expect(within(examples).getAllByRole('link').length).toBeGreaterThan(0));
+
+    const href = within(examples).getAllByRole('link')[0].getAttribute('href') ?? '';
+    const [path, query] = href.slice(1).split('?');
+    expect(path).toMatch(/^\/pa\/\d{8}[A-Z]{4}\d{5}\/\d+$/);
+
+    const share = decodeShare(new URLSearchParams(query).get('t') ?? '');
+    expect(share).not.toBeNull();
+    expect(share?.sceneId).toBe(path.slice('/pa/'.length).replace('/', '-'));
+    expect(share?.texts).toHaveLength(1);
+    expect(share?.mode).toBe('real');
   });
 });

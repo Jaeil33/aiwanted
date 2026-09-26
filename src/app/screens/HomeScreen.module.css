@@ -9,10 +9,124 @@
   gap: 10px;
 }
 
+/*
+ * 히어로(22-home-hero): 첫 화면이 이 앱이 무엇인지 말하는 자리.
+ * 카드와 같은 문법을 쓴다 — 위 모서리 3px 띠. 다만 팀 색이 아니라 --accent다.
+ */
+.hero {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+}
+
+.hero::before {
+  content: '';
+  display: block;
+  height: 3px;
+  margin: -16px -16px 0;
+  border-radius: var(--r-card) var(--r-card) 0 0;
+  background: var(--accent);
+}
+
 .tagline {
   margin: 0;
+  color: var(--text-3);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.heroTitle {
+  margin: -4px 0 0;
+  font-size: 28px;
+  font-weight: 900;
+  line-height: 1.18;
+  letter-spacing: -0.02em;
+  word-break: keep-all;
+}
+
+/* 두 줄로 세운다. 사이의 공백 글자는 읽어 주기용이라 화면에는 안 보인다 */
+.heroTitle span,
+.heroTitle em {
+  display: block;
+  font-style: normal;
+}
+
+.heroTitle em {
+  color: var(--accent);
+}
+
+.heroLede {
+  margin: -2px 0 0;
   color: var(--text-2);
-  font-size: 14px;
+  font-size: 13px;
+  line-height: 1.55;
+  word-break: keep-all;
+}
+
+.heroLede b {
+  color: var(--text);
+  font-weight: 800;
+}
+
+/* 예시 TMI: 가로로 흘러넘친다. 카드 안쪽 여백까지 써서 잘린 칩이 보이게 둔다 — 더 있다는 뜻 */
+.examples {
+  display: flex;
+  gap: 6px;
+  margin: 0 -16px;
+  padding: 0 16px 2px;
+  overflow-x: auto;
+  list-style: none;
+  scrollbar-width: none;
+}
+
+.examples::-webkit-scrollbar {
+  display: none;
+}
+
+.examples li {
+  flex: none;
+}
+
+.example {
+  display: block;
+  padding: 7px 11px;
+  border: 1px solid var(--line-2);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+a.example:hover {
+  border-color: var(--accent);
+  background: var(--surface-3);
+  color: var(--text);
+}
+
+.cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 52px;
+  border-radius: var(--r-control);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 16px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.cta i {
+  font-size: 20px;
+  font-style: normal;
+  line-height: 1;
 }
 
 .feed {
@@ -201,6 +315,23 @@
   background: var(--surface-2);
   color: var(--text-3);
   font-size: 12px;
+}
+
+/* 들어올 승부처 줄의 뼈대. 반짝이지 않는다 — 움직임은 결과를 알릴 때만(UI_GUIDE 원칙 6) */
+.skeleton {
+  height: 52px;
+  border-left: 3px solid var(--line-2);
+  border-radius: var(--r-row);
+  background: var(--surface-2);
+}
+
+.srOnly {
+  position: absolute;
+  overflow: hidden;
+  clip-path: inset(50%);
+  width: 1px;
+  height: 1px;
+  white-space: nowrap;
 }
 
 .more {
