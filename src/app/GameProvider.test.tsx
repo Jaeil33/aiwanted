@@ -254,6 +254,105 @@ describe('GameProvider', () => {
   });
 });
 
+/*
+ * 23-commentary step 2: 타석이 끝나면 자막을 부른다.
+ * 자막은 화면에 하나뿐이라 새 타석이 끝나면 앞의 요청을 끊는다.
+ */
+describe('actions.narrate', () => {
+  const finish = (game: ReturnType<typeof renderWithGame>['game'], over: Partial<PlayLogEntry> = {}) =>
+    act(() => {
+      game().dispatch({ type: 'paFinished', entry: { ...LOG, ...over }, state: SCENE.state });
+    });
+
+  it('AI가 없으면 규칙 자막을 바로 붙인다', async () => {
+    const { game } = renderWithGame(<div />);
+    await openFixture(game);
+    await act(async () => {
+      await game().actions.submitTmi(JJAJANG);
+    });
+    finish(game);
+    await act(async () => {
+      await game().actions.narrate();
+    });
+    const call = game().session.call!;
+    expect(call.paIndex).toBe(0);
+    expect(call.result).toMatchObject({ source: 'rules' });
+    expect(call.result!.line).toContain('볼넷');
+    expect(call.result!.line).toContain('짜장면');
+  });
+
+  it('걸린 TMI가 없으면 부르지 않는다', async () => {
+    const { game } = renderWithGame(<div />);
+    await openFixture(game);
+    finish(game);
+    await act(async () => {
+      await game().actions.narrate();
+    });
+    expect(game().session.call).toBeNull();
+  });
+
+  it('끝난 타석이 없으면 부르지 않는다', async () => {
+    const { game } = renderWithGame(<div />);
+    await openFixture(game);
+    await act(async () => {
+      await game().actions.narrate();
+    });
+    expect(game().session.call).toBeNull();
+  });
+
+  it('같은 타석을 두 번 불러도 AI는 한 번만 부른다 (StrictMode 두 번 호출 대비)', async () => {
+    const json = vi.fn(async () => ({ line: '자막 한 줄' }));
+    const { game } = renderWithGame(<div />, { platform: fakePlatform({ artifactSample: { json } }) });
+    await openFixture(game);
+    await act(async () => {
+      await game().actions.submitTmi(JJAJANG);
+    });
+    const afterTmi = json.mock.calls.length;
+    finish(game);
+    await act(async () => {
+      await Promise.all([game().actions.narrate(), game().actions.narrate()]);
+    });
+    expect(json.mock.calls.length - afterTmi).toBe(1);
+    expect(game().session.call!.result).toEqual({ source: 'ai', line: '자막 한 줄' });
+  });
+
+  it('새 타석이 끝나면 앞 자막 요청을 끊고 새 타석을 부른다', async () => {
+    // 해석은 곧바로 답하고 자막만 붙잡는 sample: 자막 프롬프트에만 "[타석]"이 있다
+    const callSignals: AbortSignal[] = [];
+    const sample: SampleLike = {
+      json: (input: string, options?: Record<string, unknown>) => {
+        if (!input.includes('[타석]')) return Promise.resolve({ refused: false, reason: '', comment: '', parts: [] });
+        const signal = options?.signal as AbortSignal;
+        callSignals.push(signal);
+        return new Promise<unknown>((_resolve, reject) => {
+          signal.addEventListener('abort', () => reject({ code: 'cancelled', message: '취소' }));
+        });
+      },
+    };
+    const { game } = renderWithGame(<div />, { platform: fakePlatform({ artifactSample: sample }) });
+    await openFixture(game);
+    await act(async () => {
+      await game().actions.submitTmi(JJAJANG);
+    });
+
+    finish(game);
+    let first: Promise<void> = Promise.resolve();
+    act(() => {
+      first = game().actions.narrate();
+    });
+    await waitFor(() => expect(callSignals).toHaveLength(1));
+    expect(game().session.call).toEqual({ paIndex: 0, result: null });
+
+    finish(game, { index: 1, headline: '삼진' });
+    act(() => {
+      void game().actions.narrate();
+    });
+    await waitFor(() => expect(callSignals[0].aborted).toBe(true));
+    await expect(first).resolves.toBeUndefined();
+    expect(game().session.call!.paIndex).toBe(1);
+  });
+});
+
 describe('sceneSeed', () => {
   it('같은 날짜·장면이면 같은 양의 32비트 정수, 날짜나 장면이 다르면 다른 값', () => {
     const seed = sceneSeed('2026-08-15', 'fixture-walkoff');

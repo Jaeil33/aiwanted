@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { fixtureSituation } from '../test/fixtures/appData';
 import type { Situation } from '../types/data';
-import type { GameState, PitchCode, TmiEntry, VerdictResult } from '../types/domain';
+import type { CallResult, GameState, PitchCode, TmiEntry, VerdictResult } from '../types/domain';
 import {
   canEditMode,
   canEditTmi,
@@ -82,6 +82,7 @@ describe('initialSession', () => {
       log: [],
       status: 'ready',
       final: null,
+      call: null,
     });
     expect(canEditTmi(initialSession)).toBe(false);
   });
@@ -400,5 +401,52 @@ describe('sessionReducer — 판정', () => {
     const judging = sessionReducer(s, { type: 'judgeStart', id: 'tmi-1' });
     expect(sessionReducer(judging, { type: 'judgeStart', id: 'tmi-1' })).toBe(judging);
     expect(sessionReducer(judging, { type: 'judgeDone', id: 'tmi-2', verdict: VERDICT, note: '', disableProvider: false })).toBe(judging);
+  });
+});
+
+
+/*
+ * 23-commentary step 2: 자막은 화면에 하나뿐이다.
+ * 타석이 끝나면 붙고, 다음 공이 날아가면 사라진다.
+ */
+describe('sessionReducer — 해설 자막', () => {
+  const LINE: CallResult = { source: 'ai', line: '어제 피자를 먹은 홈타자6, 끝내기 만루 홈런!' };
+  const finish = (s: SessionState) => reduce(s, { type: 'paFinished', entry: WALKOFF_LOG, state: WALKOFF_STATE });
+
+  it('처음에는 자막이 없다', () => {
+    expect(initialSession.call).toBeNull();
+  });
+
+  it('부르기 시작하면 그 타석 번호로 자리를 잡고, 받으면 채운다', () => {
+    const calling = reduce(finish(open()), { type: 'callStart', paIndex: 0 });
+    expect(calling.call).toEqual({ paIndex: 0, result: null });
+    const done = reduce(calling, { type: 'callDone', paIndex: 0, result: LINE, disableProvider: false });
+    expect(done.call).toEqual({ paIndex: 0, result: LINE });
+  });
+
+  it('늦게 온 앞 타석 자막은 받지 않는다', () => {
+    const second = reduce(finish(open()), { type: 'callStart', paIndex: 0 }, { type: 'callStart', paIndex: 1 });
+    expect(reduce(second, { type: 'callDone', paIndex: 0, result: LINE, disableProvider: false })).toBe(second);
+  });
+
+  it('부르지도 않았는데 온 자막은 받지 않는다', () => {
+    const s = finish(open());
+    expect(reduce(s, { type: 'callDone', paIndex: 0, result: LINE, disableProvider: false })).toBe(s);
+  });
+
+  it('프로바이더를 껐다는 답이면 이 판에서 AI를 더 쓰지 않는다', () => {
+    const s = reduce(finish(open()), { type: 'callStart', paIndex: 0 }, { type: 'callDone', paIndex: 0, result: LINE, disableProvider: true });
+    expect(s.providerDisabled).toBe(true);
+  });
+
+  it('다음 공이 날아가면 자막이 사라진다', () => {
+    const s = reduce(finish(open()), { type: 'callStart', paIndex: 0 }, { type: 'callDone', paIndex: 0, result: LINE, disableProvider: false });
+    expect(sessionReducer(s, { type: 'animationStart' }).call).toBeNull();
+  });
+
+  it('처음부터·다른 장면을 열면 자막이 사라진다', () => {
+    const s = reduce(finish(open()), { type: 'callStart', paIndex: 0 }, { type: 'callDone', paIndex: 0, result: LINE, disableProvider: false });
+    expect(sessionReducer(s, { type: 'resetPlay', seed: 43 }).call).toBeNull();
+    expect(sessionReducer(s, { type: 'openSituation', situation: SITUATION, seed: 7 }).call).toBeNull();
   });
 });

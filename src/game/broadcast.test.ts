@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { fixtureSetup } from '../test/fixtures/appData';
 import type { GameState, TmiEntry } from '../types/domain';
-import { deltaText, sparkSeries, tierReadout, tmiPill, type SparkPoint } from './broadcast';
+import type { PlayLogEntry } from './session';
+import { callFactsOf, deltaText, sparkSeries, tierReadout, tmiPill, type SparkPoint } from './broadcast';
 import type { GaugeLike } from './selectors';
 
 const setup = fixtureSetup(); // 9회말 2사 만루, 홈 롯데 공격, 홈타자6 vs 원정투수
@@ -107,5 +108,80 @@ describe('sparkSeries', () => {
     expect(sparkSeries(points, 'game', setup, { paIndex: 2, inning: 10, half: 0 })).toEqual([0.6, 0.65, 0.5, 0.45]);
     expect(sparkSeries(points, 'inning', setup, { paIndex: 2, inning: 10, half: 0 })).toEqual([0.2, 0.18]);
     expect(sparkSeries(points, 'pa', setup, { paIndex: 0, inning: 9, half: 1 })).toEqual([0.4, 0.45]);
+  });
+});
+
+
+/*
+ * 23-commentary step 2: 끝난 타석 하나를 자막 재료로 옮긴다.
+ * 확률은 담지 않는다 — 자막은 숫자를 말하지 않는다(CLAUDE.md CRITICAL).
+ */
+describe('callFactsOf', () => {
+  const log = (over: Partial<PlayLogEntry> = {}): PlayLogEntry => ({
+    index: 0,
+    inning: 9,
+    half: 1,
+    batterName: '홈타자6',
+    pitcherName: '원정투수',
+    headline: '2타점 적시 2루타',
+    score: { away: START.away, home: START.home + 2 },
+    wpHomeAfter: 0.9,
+    highlight: true,
+    ...over,
+  });
+  const stamina = entry([{ kind: 'knob', knob: 'stamina', subject: 'pitcher', strength: -1, scope: 'game', evidence: 'fun', why: '' }]);
+
+  it('마지막 타석의 이닝·타자·투수·결과·점수를 옮긴다', () => {
+    const facts = callFactsOf(setup, [log()], [stamina])!;
+    expect(facts).toMatchObject({
+      inningText: '9회말',
+      batter: '홈타자6',
+      pitcher: '원정투수',
+      battingTeam: '롯데',
+      fieldingTeam: 'KIA',
+      result: '2타점 적시 2루타',
+      runs: 2,
+      score: { away: START.away, home: START.home + 2 },
+      awayName: 'KIA',
+      homeName: '롯데',
+    });
+  });
+
+  it('점수는 직전 타석과의 차이다. 첫 타석은 장면 시작 점수와 견준다', () => {
+    const first = log({ index: 0, score: { away: START.away, home: START.home } });
+    expect(callFactsOf(setup, [first], [])!.runs).toBe(0);
+    const second = log({ index: 1, score: { away: START.away, home: START.home + 3 } });
+    expect(callFactsOf(setup, [first, second], [])!.runs).toBe(3);
+  });
+
+  it('확률을 담지 않는다', () => {
+    expect(Object.keys(callFactsOf(setup, [log()], [stamina])!)).not.toContain('wpHomeAfter');
+    expect(JSON.stringify(callFactsOf(setup, [log()], [stamina]))).not.toContain('0.9');
+  });
+
+  it('걸린 TMI는 문장과 효과 한 줄로 싣는다', () => {
+    expect(callFactsOf(setup, [log()], [stamina])!.tmis).toEqual([
+      { text: '원정투수가 경기 전 짜장면 곱빼기를 먹었다', effect: '투수 체력 ↓' },
+    ]);
+  });
+
+  it('거부된 TMI는 빼고, 그 타석에 안 걸린 타석 한정 TMI도 뺀다', () => {
+    const refused = { ...entry([], true), id: 'tmi-2' };
+    const paOnly: TmiEntry = {
+      ...entry([{ kind: 'knob', knob: 'focus', subject: 'batter', strength: -1, scope: 'pa', evidence: 'fun', why: '' }]),
+      id: 'tmi-3',
+      paIndex: 5,
+    };
+    const facts = callFactsOf(setup, [log()], [stamina, refused, paOnly])!;
+    expect(facts.tmis.map((t: { effect: string }) => t.effect)).toEqual(['투수 체력 ↓']);
+  });
+
+  it('경기 내내 가는 TMI는 어느 타석에서 걸었든 함께 부른다', () => {
+    const earlier: TmiEntry = { ...stamina, id: 'tmi-9', paIndex: 3 };
+    expect(callFactsOf(setup, [log({ index: 7 })], [earlier])!.tmis).toHaveLength(1);
+  });
+
+  it('끝난 타석이 없으면 null', () => {
+    expect(callFactsOf(setup, [], [stamina])).toBeNull();
   });
 });

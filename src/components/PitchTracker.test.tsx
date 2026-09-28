@@ -11,9 +11,11 @@ const ROW2: PitchRow = [6, 131, 3, 0, 1, 1, -1.737, 6.062, 5.263, -118.459, -1.8
 const BATTER: PlayerCaption = { role: '타자', name: '김타자', hand: '좌타', stats: '타율 .342 · OPS .884', color: '#D6D6D6' };
 const PITCHER: PlayerCaption = { role: '투수', name: '박투수', hand: '우투', stats: 'ERA 2.65 · WHIP 1.53', color: '#86A8EE' };
 
-function renderTracker() {
+function renderTracker(commentary: { text: string; loading: boolean } | null = null) {
   const ref = createRef<PitchTrackerHandle>();
-  render(<PitchTracker ref={ref} bases={7} zone={null} sky="night" homeColor="#5C8DF6" batter={BATTER} pitcher={PITCHER} />);
+  render(
+    <PitchTracker ref={ref} bases={7} zone={null} sky="night" homeColor="#5C8DF6" batter={BATTER} pitcher={PITCHER} commentary={commentary} />,
+  );
   return () => {
     if (!ref.current) throw new Error('트래커 핸들이 없어요');
     return ref.current;
@@ -88,5 +90,37 @@ describe('PitchTracker', () => {
     });
     expect(handle().inspect().markers).toBe(3);
     expect(screen.getByRole('status')).toHaveTextContent('');
+  });
+});
+
+
+/*
+ * 23-commentary step 2: 타석이 끝나면 캐스터 자막이 타자·투수 줄 위에 붙는다.
+ */
+describe('PitchTracker 해설 자막', () => {
+  it('자막이 없으면 자리를 차지하지 않는다', () => {
+    renderTracker();
+    expect(screen.queryByRole('status', { name: '해설' })).toBeNull();
+  });
+
+  it('받은 자막을 "해설" 표와 함께 보여준다', () => {
+    renderTracker({ text: '어제 피자를 먹은 김타자, 2타점 적시 2루타를 쳐냅니다!', loading: false });
+    const bar = screen.getByRole('status', { name: '해설' });
+    expect(bar).toHaveTextContent('어제 피자를 먹은 김타자, 2타점 적시 2루타를 쳐냅니다!');
+    expect(bar).toHaveTextContent('해설');
+  });
+
+  it('받는 중에는 움직이지 않는 한 줄을 대신 둔다 (반짝이지 않는다, UI_GUIDE 원칙 6)', () => {
+    renderTracker({ text: '', loading: true });
+    const bar = screen.getByRole('status', { name: '해설' });
+    expect(bar).toHaveTextContent('해설을 받는 중…');
+    expect(bar).toHaveAttribute('data-loading', 'true');
+  });
+
+  it('타자·투수 자막보다 위에 있다', () => {
+    renderTracker({ text: '자막 한 줄', loading: false });
+    const bar = screen.getByRole('status', { name: '해설' });
+    const name = screen.getByText('김타자');
+    expect(bar.compareDocumentPosition(name) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 });

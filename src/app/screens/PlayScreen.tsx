@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { BroadcastBug } from '../../components/BroadcastBug';
 import controls from '../../components/controls.module.css';
-import { PitchTracker, type PitchTrackerHandle, type PlayerCaption } from '../../components/PitchTracker';
+import { PitchTracker, type Commentary, type PitchTrackerHandle, type PlayerCaption } from '../../components/PitchTracker';
 import { TmiRail, type QuickTmi, type RailPill, type TmiInvite } from '../../components/TmiRail';
 import { TmiSheet } from '../../components/TmiSheet';
 import { WpPanel } from '../../components/WpPanel';
@@ -128,6 +128,11 @@ function PlayBoard({ setup }: { setup: SituationSetup }) {
     deltaPp: contributions[entry.id] ?? null,
   }));
 
+  // 자막은 세션이 들고 있다: 다음 공이 날아가면(animationStart) 리듀서가 지운다
+  const commentary: Commentary | null = session.call
+    ? { text: session.call.result?.line ?? '', loading: session.call.result === null }
+    : null;
+
   const editable = canEditTmi(session);
   const finished = session.status === 'finished';
   const playing = playback.busy || session.status === 'animating';
@@ -140,6 +145,15 @@ function PlayBoard({ setup }: { setup: SituationSetup }) {
   useEffect(() => {
     if (!playing) trackerRef.current?.setSkipping(false);
   }, [playing]);
+
+  /*
+   * 타석이 끝나면 캐스터를 부른다(23-commentary). 같은 타석을 두 번 부르지 않는 건 narrate가 막는다.
+   * "경기 끝까지"로 타석이 쏟아져도 앞 요청을 끊고 마지막 타석만 부른다 — 화면의 자막은 하나뿐이다.
+   */
+  const lastPaIndex = lastPlay ? lastPlay.index : null;
+  useEffect(() => {
+    if (lastPaIndex !== null) void actions.narrate();
+  }, [lastPaIndex, actions]);
 
   // 이 화면에서 경기가 끝나면 마지막 콜을 보여준 뒤 결과 화면으로 간다(이미 끝난 판으로 들어오면 그대로 둔다)
   const previousStatus = useRef(session.status);
@@ -246,6 +260,7 @@ function PlayBoard({ setup }: { setup: SituationSetup }) {
         homeColor={setup.teamColors.home}
         batter={batterCaption}
         pitcher={pitcherCaption}
+        commentary={commentary}
       />
       {/* 아직 TMI가 없으면 초대 판을 타자·투수 바로 아래에 둔다. 확률 판 아래(시안 자리)면 트래커에 밀려 눈에 안 들어온다(ADR-026) */}
       {invite && <TmiRail pills={pills} onOpen={() => openSheet(false)} action={railAction} invite={invite} />}

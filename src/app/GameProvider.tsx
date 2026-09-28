@@ -1,7 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useReducer, useRef, type ReactNode } from 'react';
-import { AiError, interpretTmi, judgeTmi, pickProvider, rulesVerdict, type AiProvider } from '../ai';
+import { AiError, interpretTmi, judgeTmi, narratePa, pickProvider, rulesVerdict, type AiProvider } from '../ai';
 import {
   buildSituationSetup,
+  callFactsOf,
   canEditTmi,
   currentSituation,
   initialSession,
@@ -27,6 +28,8 @@ export interface GameActions {
   setMode(mode: Mode): void;
   /** "진짜야?" 판정. 판정 중이거나 거부된 TMI면 부르지 않는다 */
   judge(id: string): Promise<void>;
+  /** 방금 끝난 타석의 해설 자막을 받는다. 걸린 TMI가 없으면 부르지 않는다(23-commentary) */
+  narrate(): Promise<void>;
   /** 처음부터: TMI는 두고 seed + 1로 재생만 되돌린다 */
   resetPlay(): void;
   /** 여기까지 보기: 이어서 치지 않고 지금까지의 결과로 마무리한다(ADR-033) */
@@ -119,6 +122,9 @@ export function GameProvider({ data, platform, children }: { data: AppData; plat
 
   const controllers = useRef(new Set<AbortController>());
   const judgeController = useRef<AbortController | null>(null);
+  const callController = useRef<AbortController | null>(null);
+  /** 이미 부른(또는 부르는 중인) 타석. StrictMode가 효과를 두 번 돌려도 AI를 두 번 부르지 않는다 */
+  const calledPa = useRef<string | null>(null);
   const tmiSeq = useRef(0);
   const openSeq = useRef(0);
 
@@ -195,6 +201,7 @@ export function GameProvider({ data, platform, children }: { data: AppData; plat
     async function openSituation(situation: Situation, extra: SituationExtra, share: SharePayload | null): Promise<void> {
       const { platform: currentPlatform } = latest.current;
       abortAll();
+      calledPa.current = null;
       openSeq.current += 1;
       const opened = openSeq.current;
       const payload = share !== null && share.sceneId === situation.id ? share : null;
@@ -256,9 +263,50 @@ export function GameProvider({ data, platform, children }: { data: AppData; plat
       }
     }
 
+    /*
+     * 방금 끝난 타석의 해설 자막(23-commentary). 화면에 자막은 하나뿐이라
+     * 새 타석이 끝나면 앞 요청을 끊고 새로 부른다 — "경기 끝까지"로 타석이 쏟아져도 호출은 사실상 한 번이다.
+     */
+    async function narrate(): Promise<void> {
+      const s = stateRef.current;
+      const situation = s.situation;
+      const entry = s.log[s.log.length - 1];
+      if (situation === null || !entry) return;
+      const key = `${situation.id}|${s.seed}|${entry.index}`;
+      if (calledPa.current === key) return;
+      calledPa.current = key;
+
+      const { data: currentData } = latest.current;
+      const facts = callFactsOf(buildSituationSetup(currentData.core, situation, s.extra), s.log, s.tmis);
+      // 자막의 재료는 걸린 TMI다. 없으면 자리도 잡지 않는다
+      if (facts === null || facts.tmis.length === 0) return;
+
+      callController.current?.abort();
+      const controller = begin();
+      callController.current = controller;
+      dispatch({ type: 'callStart', paIndex: entry.index });
+      try {
+        const outcome = await narratePa(facts, currentProvider(), controller.signal);
+        if (controller.signal.aborted) return;
+        dispatch({
+          type: 'callDone',
+          paIndex: entry.index,
+          result: { source: outcome.source, line: outcome.line },
+          disableProvider: outcome.disableProvider,
+        });
+      } catch {
+        // narratePa는 취소일 때만 던진다. 끊긴 자막은 그대로 둔다(새 타석 자막이 자리를 가져간다)
+      } finally {
+        end(controller);
+        if (callController.current === controller) callController.current = null;
+      }
+    }
+
     function resetPlay(): void {
       const s = stateRef.current;
       if (s.situation === null) return;
+      callController.current?.abort();
+      calledPa.current = null;
       dispatch({ type: 'resetPlay', seed: s.seed + 1 });
     }
 
@@ -267,7 +315,7 @@ export function GameProvider({ data, platform, children }: { data: AppData; plat
       dispatch({ type: 'stopHere' });
     }
 
-    return { openSituation, submitTmi, removeTmi, setMode, judge, resetPlay, stopHere };
+    return { openSituation, submitTmi, removeTmi, setMode, judge, narrate, resetPlay, stopHere };
   }, [dispatch]);
 
   const value = useMemo<GameContextValue>(

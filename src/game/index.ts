@@ -25,7 +25,8 @@ export type { EntryChip, GaugeLike, TierView } from './selectors';
 export { decodeShare, encodeShare } from './share';
 export type { SharePayload } from './share';
 export { canEditMode, canEditTmi, canStopHere, initialSession, sessionReducer } from './session';
-export type { LiveState, PlayLogEntry, Screen, SessionAction, SessionState } from './session';
+export type { CallState, LiveState, PlayLogEntry, Screen, SessionAction, SessionState } from './session';
+export { callFactsOf } from './broadcast';
 export { createLocalEngineClient, createWorkerEngineClient, handleEngineMessage, specKey } from './engineClient';
 export type {
   EngineClient,

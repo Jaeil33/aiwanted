@@ -1,7 +1,8 @@
 import { formatPct } from '../domain/format';
-import type { Evidence, GameState, Half, Side, TmiEntry } from '../types/domain';
+import type { CallFacts, Evidence, GameState, Half, Side, TmiEntry } from '../types/domain';
 import { gradeOf } from './headline';
 import { effectLabel } from './result';
+import type { PlayLogEntry } from './session';
 import { batterFor, nameOf, pitcherFor, type SituationSetup } from './situation';
 import { battingWin, type GaugeLike } from './selectors';
 
@@ -124,4 +125,43 @@ export interface SparkPoint {
 export function sparkSeries(points: readonly SparkPoint[], tier: Tier, setup: SituationSetup, now: { paIndex: number; inning: number; half: Half }): number[] {
   const kept = points.filter((p) => (tier === 'game' ? true : tier === 'inning' ? p.inning === now.inning && p.half === now.half : p.paIndex === now.paIndex));
   return kept.map((p) => tierValue(tier, setup, p.tmi));
+}
+
+
+/*
+ * 끝난 타석 하나 → 해설 자막 재료(23-commentary).
+ * 확률은 담지 않는다: 자막은 숫자를 말하지 않는다(CLAUDE.md CRITICAL). 점수와 이닝만 넘긴다.
+ */
+
+/**
+ * 그 타석에 걸려 있던 TMI인가. compileSessionEffects와 같은 규칙이다 —
+ * 타석 한정(scope 'pa') 효과는 그것을 건 타석에만, 나머지는 경기 내내 간다(ADR-033).
+ */
+function ranInPa(entry: TmiEntry, paIndex: number): boolean {
+  if (entry.interpretation.refused) return false;
+  if ((entry.paIndex ?? 0) === paIndex) return true;
+  return entry.interpretation.parts.some((part) => part.kind !== 'knob' || part.scope !== 'pa');
+}
+
+/** 마지막으로 끝난 타석의 자막 재료. 끝난 타석이 없으면 null */
+export function callFactsOf(setup: SituationSetup, log: readonly PlayLogEntry[], tmis: readonly TmiEntry[]): CallFacts | null {
+  const entry = log[log.length - 1];
+  if (!entry) return null;
+  const start = setup.situation.state;
+  const before = log.length > 1 ? log[log.length - 2].score : { away: start.away, home: start.home };
+  const bat: Side = entry.half === 0 ? 'away' : 'home';
+
+  return {
+    inningText: `${entry.inning}회${entry.half === 0 ? '초' : '말'}`,
+    batter: entry.batterName,
+    pitcher: entry.pitcherName,
+    battingTeam: setup.situation[bat].name,
+    fieldingTeam: setup.situation[other(bat)].name,
+    result: entry.headline,
+    runs: entry.score.away - before.away + (entry.score.home - before.home),
+    score: { ...entry.score },
+    awayName: setup.situation.away.name,
+    homeName: setup.situation.home.name,
+    tmis: tmis.filter((tmi) => ranInPa(tmi, entry.index)).map((tmi) => ({ text: tmi.text, effect: tmiPill(tmi).effect })),
+  };
 }

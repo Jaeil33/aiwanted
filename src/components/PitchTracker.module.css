@@ -82,6 +82,56 @@
   animation: call-stay 900ms var(--ease-out) both;
 }
 
+/*
+ * 캐스터 자막(23-commentary): 타자·투수 줄(64px) 바로 위에 얹는다.
+ * 왼쪽 노란 띠 + "해설" 표로 중계 자막처럼 읽히게 하고, 움직이지 않는다 — 들어올 때 한 번만 올라온다.
+ */
+.commentary {
+  position: absolute;
+  right: 14px;
+  bottom: 72px;
+  left: 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 9px 11px 9px 9px;
+  border-radius: var(--r-card);
+  border-left: 3px solid var(--accent);
+  background: var(--hud);
+  animation: call-in-up 260ms var(--ease-out) both;
+}
+
+.commentary i {
+  flex: none;
+  padding: 2px 6px;
+  border-radius: var(--r-chip);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font: 800 11px/1.4 var(--ui);
+  font-style: normal;
+  letter-spacing: -0.01em;
+}
+
+.commentary p {
+  margin: 0;
+  color: var(--text);
+  font: 600 13px/1.5 var(--ui);
+  letter-spacing: -0.01em;
+  word-break: keep-all;
+}
+
+.commentary[data-loading='true'] p {
+  color: var(--text-3);
+  font-weight: 500;
+}
+
+@keyframes call-in-up {
+  from {
+    transform: translateY(6px);
+    opacity: 0;
+  }
+}
+
 /* 두 줄 64px(tracker.ts CAPTION_PX와 같은 값). 위 24px은 흐려지는 구간이라 경기장을 덜 가린다 */
 .lower {
   position: absolute;

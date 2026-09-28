@@ -31,8 +31,10 @@
     {
       "step": 2,
       "name": "caption",
-      "status": "pending",
-      "note": "트래커 아래 자막 띠. 타석이 끝나면 뜨고 다음 공에 사라진다"
+      "status": "completed",
+      "note": "트래커 아래 자막 띠. 타석이 끝나면 뜨고 다음 공에 사라진다",
+      "completed_at": "2026-09-28T10:35:00+0900",
+      "summary": "step 0이 자막을 만들 수는 있게 했지만 아무도 부르지 않았고 아무 데도 안 그렸다. 이 step이 둘을 잇는다. 자리는 중계 자막이 있어야 할 곳 — 타자·투수 줄(64px) 바로 위다. PitchTracker에 commentary prop 하나를 더했고, 자막이 없으면 아예 안 그린다. 뜨는 때는 타석이 끝날 때(PlayScreen이 actions.narrate()), 사라지는 때는 다음 공이 날아갈 때(animationStart에서 리듀서가 지운다 — 타석 사이에 읽을 시간을 준다). 받는 중에는 '해설을 받는 중…'을 두되 반짝이지 않는다(UI_GUIDE 원칙 6). 화면의 자막은 하나뿐이다: session.call이 { paIndex, result } 하나이고, 새 타석이 끝나면 앞 요청을 끊고 늦게 온 앞 타석 자막은 리듀서가 버린다 — '경기 끝까지'로 타석이 쏟아져도 AI 호출은 사실상 한 번이다. calledPa ref가 situation|seed|paIndex를 기억해 StrictMode 두 번 호출에도 AI는 한 번만 부른다. 재료는 순수 함수 callFactsOf(src/game/broadcast.ts): 마지막 로그 줄에서 이닝·타자·투수·결과·점수를 옮기고 확률(wpHomeAfter)은 버린다. 걸린 TMI 고르는 규칙은 compileSessionEffects와 같다(ADR-033). 확인: 테스트 1,870개(새 26개)·pytest 369개 통과, 390px에서 띠 360×57px·트래커 바닥에서 66px 위·가로 넘침 0. 못 한 확인: 창이 뒤에 있으면 rAF가 멈춰 실제로 한 타석을 끝까지 쳐서 자막이 붙는 건 브라우저에서 못 봤다(그 경로는 PlayScreen 테스트 셋이 덮는다)."
     }
   ]
 }

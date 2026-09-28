@@ -53,6 +53,8 @@ const PUBLIC_API = [
   'canEditMode',
   'canStopHere',
   'sessionReducer',
+  // broadcast
+  'callFactsOf',
   // engineClient
   'specKey',
   'createLocalEngineClient',

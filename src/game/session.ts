@@ -1,5 +1,5 @@
 import type { Situation } from '../types/data';
-import type { GameState, Half, Mode, PitchCode, PitchSample, Side, TmiEntry, VerdictResult } from '../types/domain';
+import type { CallResult, GameState, Half, Mode, PitchCode, PitchSample, Side, TmiEntry, VerdictResult } from '../types/domain';
 import type { SituationExtra } from './situation';
 
 export type Screen = 'home' | 'play' | 'result' | 'evidence' | 'about';
@@ -30,6 +30,14 @@ export interface LiveState {
   pitches: PitchSample[];
 }
 
+/** 방금 끝난 타석의 해설 자막(23-commentary). 화면에 한 번에 하나만 뜬다 */
+export interface CallState {
+  /** 어느 타석(PlayLogEntry.index)의 해설인가 */
+  paIndex: number;
+  /** 아직 받는 중이면 null */
+  result: CallResult | null;
+}
+
 export interface SessionState {
   screen: Screen;
   /** 열린 상황(되돌려보는 한 타석). 없으면 아무것도 열지 않았다 */
@@ -53,6 +61,8 @@ export interface SessionState {
   status: 'ready' | 'animating' | 'finished';
   /** 끝난 판. stopped면 경기가 끝난 게 아니라 사용자가 "여기까지"로 멈춘 것이다(ADR-033) */
   final: { winner: Side | 'tie'; walkoff: boolean; state: GameState; stopped: boolean } | null;
+  /** 방금 끝난 타석의 해설 자막. 다음 공이 날아가면 지운다 */
+  call: CallState | null;
 }
 
 export type SessionAction =
@@ -70,6 +80,8 @@ export type SessionAction =
   | { type: 'paFinished'; entry: PlayLogEntry; state: GameState }
   | { type: 'gameFinished'; winner: Side | 'tie'; walkoff: boolean; state: GameState }
   | { type: 'stopHere' }
+  | { type: 'callStart'; paIndex: number }
+  | { type: 'callDone'; paIndex: number; result: CallResult; disableProvider: boolean }
   | { type: 'resetPlay'; seed: number };
 
 /** 한 판에 쌓는 TMI 최대 개수 (PRD 핵심 기능 2) */
@@ -91,6 +103,7 @@ export const initialSession: SessionState = {
   log: [],
   status: 'ready',
   final: null,
+  call: null,
 };
 
 /**
@@ -141,6 +154,7 @@ export function sessionReducer(s: SessionState, a: SessionAction): SessionState 
         judgingId: null,
         notice: '',
         verdicts: {},
+        call: null,
         live: freshLive(a.situation.state),
         log: [],
         status: 'ready',
@@ -196,8 +210,9 @@ export function sessionReducer(s: SessionState, a: SessionAction): SessionState 
         providerDisabled: s.providerDisabled || a.disableProvider,
       };
 
+    // 자막은 다음 공이 날아갈 때 사라진다: 타석 사이에 읽을 시간을 준다
     case 'animationStart':
-      return s.live !== null && s.status === 'ready' ? { ...s, status: 'animating' } : s;
+      return s.live !== null && s.status === 'ready' ? { ...s, status: 'animating', call: null } : s;
 
     case 'pitchApplied': {
       if (!isPlaying(s)) return s;
@@ -234,10 +249,22 @@ export function sessionReducer(s: SessionState, a: SessionAction): SessionState 
       return { ...s, status: 'finished', screen: 'result', final: { winner, walkoff: false, state, stopped: true } };
     }
 
+    case 'callStart':
+      return { ...s, call: { paIndex: a.paIndex, result: null } };
+
+    /** 늦게 온 앞 타석 자막은 버린다: 화면에 있는 자막이 곧 지금 부르는 타석이다 */
+    case 'callDone':
+      if (s.call === null || s.call.paIndex !== a.paIndex) return s;
+      return {
+        ...s,
+        call: { paIndex: a.paIndex, result: a.result },
+        providerDisabled: s.providerDisabled || a.disableProvider,
+      };
+
     case 'resetPlay':
       // 공이 날아가는 중에는 되돌리지 않는다 (연출이 끝난 뒤 pitchApplied가 새 판에 섞이지 않게)
       if (s.situation === null || s.live === null || s.status === 'animating') return s;
-      return { ...s, screen: 'play', seed: a.seed, live: freshLive(s.situation.state), log: [], status: 'ready', final: null };
+      return { ...s, screen: 'play', seed: a.seed, live: freshLive(s.situation.state), log: [], status: 'ready', final: null, call: null };
 
     default:
       return s;

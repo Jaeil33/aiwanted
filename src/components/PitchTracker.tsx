@@ -29,8 +29,16 @@ export interface PitchTrackerProps {
   homeColor: string;
   batter: PlayerCaption;
   pitcher: PlayerCaption;
+  /** 방금 끝난 타석의 해설 자막(23-commentary). 없으면 자리를 차지하지 않는다 */
+  commentary?: Commentary | null;
   /** 화면이 높이를 정할 때(시안처럼 남은 높이를 채우기) */
   className?: string;
+}
+
+/** 캐스터 자막 한 줄. 아직 받는 중이면 loading */
+export interface Commentary {
+  text: string;
+  loading: boolean;
 }
 
 /** usePlayback이 쓰는 StageController + 실제 투구 다시 보기·미리 찍기·건너뛰기 */
@@ -53,7 +61,7 @@ const CALL_MS = 1600;
 const REPLAY_GAP_MS = 380;
 
 /** 포수 뒤 트래커(캔버스) + 구종·구속 판, 콜, 타자·투수 자막(DOM). 문서가 숨겨지면 연출을 바로 끝낸다(ADR-018) */
-export const PitchTracker = forwardRef<PitchTrackerHandle, PitchTrackerProps>(function PitchTracker({ bases, zone, sky, homeColor, batter, pitcher, className }, ref) {
+export const PitchTracker = forwardRef<PitchTrackerHandle, PitchTrackerProps>(function PitchTracker({ bases, zone, sky, homeColor, batter, pitcher, commentary, className }, ref) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const trackerRef = useRef<Tracker | null>(null);
   const reduced = useReducedMotion();
@@ -247,6 +255,16 @@ export const PitchTracker = forwardRef<PitchTrackerHandle, PitchTrackerProps>(fu
           </span>
         )}
       </div>
+      {/*
+        캐스터 자막: 타자·투수 줄 바로 위. 다음 공이 날아가면 화면이 commentary를 null로 바꾼다.
+        읽는 도중 바뀌지 않게 받는 중에도 자리를 지킨다 — 다만 반짝이지는 않는다(UI_GUIDE 원칙 6).
+      */}
+      {commentary && (
+        <div className={styles.commentary} role="status" aria-label="해설" data-loading={String(commentary.loading)}>
+          <i aria-hidden="true">해설</i>
+          <p>{commentary.loading ? '해설을 받는 중…' : commentary.text}</p>
+        </div>
+      )}
       <div className={styles.lower}>
         {[batter, pitcher].map((cap, index) => (
           <div key={cap.role} className={styles.cap} data-side={index === 0 ? 'left' : 'right'} style={{ '--c': cap.color } as CSSProperties}>

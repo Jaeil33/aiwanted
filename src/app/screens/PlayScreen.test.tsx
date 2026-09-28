@@ -178,3 +178,57 @@ describe('PlayScreen', () => {
     await waitFor(() => expect(window.location.hash).toBe('#/result'), { timeout: 5_000 });
   });
 });
+
+/*
+ * 23-commentary step 2: 타석이 끝나면 캐스터 자막이 붙고, 다음 공에 사라진다.
+ */
+describe('PlayScreen 해설 자막', () => {
+  const LOG = {
+    index: 0,
+    inning: 9,
+    half: 1 as const,
+    batterName: '홈타자6',
+    pitcherName: '원정투수',
+    headline: '2타점 적시 2루타',
+    score: { away: 4, home: 6 },
+    wpHomeAfter: 0.9,
+    highlight: true,
+  };
+
+  it('TMI를 걸고 타석이 끝나면 자막이 붙는다', SLOW, async () => {
+    const view = await openPlay();
+    await act(async () => {
+      await view.game().actions.submitTmi('원정투수가 경기 전 짜장면 곱빼기를 먹었다');
+    });
+    await act(async () => {
+      view.game().dispatch({ type: 'paFinished', entry: LOG, state: SCENE.state });
+    });
+    const bar = await screen.findByRole('status', { name: '해설' }, WAIT);
+    await waitFor(() => expect(bar).toHaveTextContent('2타점 적시 2루타'), WAIT);
+    expect(bar).toHaveTextContent('짜장면');
+  });
+
+  it('TMI가 없으면 자막을 부르지 않는다', SLOW, async () => {
+    const view = await openPlay();
+    await act(async () => {
+      view.game().dispatch({ type: 'paFinished', entry: LOG, state: SCENE.state });
+    });
+    await waitFor(() => expect(view.game().session.log).toHaveLength(1), WAIT);
+    expect(screen.queryByRole('status', { name: '해설' })).toBeNull();
+  });
+
+  it('다음 공이 날아가면 자막이 사라진다', SLOW, async () => {
+    const view = await openPlay();
+    await act(async () => {
+      await view.game().actions.submitTmi('원정투수가 경기 전 짜장면 곱빼기를 먹었다');
+    });
+    await act(async () => {
+      view.game().dispatch({ type: 'paFinished', entry: LOG, state: SCENE.state });
+    });
+    await screen.findByRole('status', { name: '해설' }, WAIT);
+    await act(async () => {
+      view.game().dispatch({ type: 'animationStart' });
+    });
+    expect(screen.queryByRole('status', { name: '해설' })).toBeNull();
+  });
+});
