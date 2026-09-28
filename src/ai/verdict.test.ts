@@ -15,7 +15,7 @@ const dayGame = evidence.items.find((item) => item.id === 'day_game')!;
 
 function fakeProvider(verdict: (req: VerdictRequest, signal?: AbortSignal) => Promise<unknown>) {
   const spy = vi.fn(verdict);
-  const provider: AiProvider = { name: 'artifact', interpret: vi.fn(async () => null), verdict: spy };
+  const provider: AiProvider = { name: 'artifact', interpret: vi.fn(async () => null), verdict: spy, call: vi.fn(async () => null) };
   return { provider, spy };
 }
 

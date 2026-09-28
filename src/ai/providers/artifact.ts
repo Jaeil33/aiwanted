@@ -1,4 +1,4 @@
-import { buildInterpretPrompt, buildVerdictPrompt, evidenceToolResult, VERDICT_TOOL } from '../prompts';
+import { buildCallPrompt, buildInterpretPrompt, buildVerdictPrompt, evidenceToolResult, VERDICT_TOOL } from '../prompts';
 import { fromSampleError } from './errors';
 import type { AiProvider } from './types';
 
@@ -13,7 +13,7 @@ export interface SampleLike {
  * 도구를 쓸 때는 cache 옵션을 넘기지 않는다(sample 계약). 오류는 fromSampleError로 AiError가 된다.
  */
 export function createArtifactProvider(sample: SampleLike): AiProvider {
-  async function call(input: string, options: Record<string, unknown>, signal?: AbortSignal): Promise<unknown> {
+  async function ask(input: string, options: Record<string, unknown>, signal?: AbortSignal): Promise<unknown> {
     try {
       // 플랫폼 네임스페이스는 얼어 있는 객체다: json을 떼어 내지 않고 메서드로 부른다.
       return await sample.json(input, signal ? { ...options, signal } : options);
@@ -26,7 +26,7 @@ export function createArtifactProvider(sample: SampleLike): AiProvider {
     name: 'artifact',
     interpret(req, signal) {
       const prompt = buildInterpretPrompt(req.text, req.ctx, { measuredAvailable: req.measuredAvailable });
-      return call(prompt, { modelTier: 'quick' }, signal);
+      return ask(prompt, { modelTier: 'quick' }, signal);
     },
     verdict(req, signal) {
       const tools = [
@@ -36,7 +36,11 @@ export function createArtifactProvider(sample: SampleLike): AiProvider {
             evidenceToolResult(req.evidence, typeof input === 'object' && input !== null ? input.variable : undefined),
         },
       ];
-      return call(buildVerdictPrompt(req.text, req.interpretation, req.ctx), { modelTier: 'default', tools }, signal);
+      return ask(buildVerdictPrompt(req.text, req.interpretation, req.ctx), { modelTier: 'default', tools }, signal);
+    },
+    // 자막은 짧은 JSON 한 줄이라 도구 없이 quick tier로 끝낸다
+    call(req, signal) {
+      return ask(buildCallPrompt(req.facts), { modelTier: 'quick' }, signal);
     },
   };
 }

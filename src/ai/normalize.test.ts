@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { EvidenceData } from '../types/data';
 import type { MeasuredId } from '../types/domain';
-import { normalizeInterpretation, normalizeVerdict } from './normalize';
+import { normalizeCall, normalizeInterpretation, normalizeVerdict } from './normalize';
 import { SENSITIVE_REASON } from './safety';
 import { fixtureEvidence } from './test-helpers';
 
@@ -231,5 +231,35 @@ describe('normalizeVerdict', () => {
     expect(normalizeVerdict({ verdict: 'unmeasurable', headline: '잴 수 없는 이야기', body: '기록에 남지 않아요' }, evidence)).toEqual({
       source: 'ai', variables: [], verdict: 'unmeasurable', headline: '잴 수 없는 이야기', body: '기록에 남지 않아요',
     });
+  });
+});
+
+/*
+ * 23-commentary: 자막 한 줄 검증.
+ * 확률 숫자가 든 자막은 통과시키지 않는다 — 숫자는 언제나 엔진이 낸다(CLAUDE.md CRITICAL).
+ */
+describe('normalizeCall', () => {
+  it('line 문자열을 다듬어 돌려준다', () => {
+    expect(normalizeCall({ line: '  어제 피자를 먹은 김타자, 2타점 적시 2루타!  ' })).toBe('어제 피자를 먹은 김타자, 2타점 적시 2루타!');
+  });
+
+  it('줄바꿈·제어 문자는 한 칸 공백으로 펴서 한 줄로 만든다', () => {
+    expect(normalizeCall({ line: '앞줄\n\t뒷줄' })).toBe('앞줄 뒷줄');
+  });
+
+  it('너무 길면 자른다', () => {
+    const line = normalizeCall({ line: '가'.repeat(400) })!;
+    expect([...line].length).toBeLessThanOrEqual(120);
+  });
+
+  it('퍼센트가 들어 있으면 통과시키지 않는다 (규칙 자막으로 떨어진다)', () => {
+    expect(normalizeCall({ line: '이 한 방으로 승리확률이 62.1%까지 올라갑니다!' })).toBeNull();
+    expect(normalizeCall({ line: '무려 3%p 차이입니다' })).toBeNull();
+  });
+
+  it('line이 없거나 비었거나 모양이 다르면 null', () => {
+    for (const raw of [null, undefined, 42, '문자열', [], {}, { line: '' }, { line: '   ' }, { line: 7 }]) {
+      expect(normalizeCall(raw)).toBeNull();
+    }
   });
 });

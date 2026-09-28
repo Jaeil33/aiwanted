@@ -1,11 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { buildInterpretPrompt, buildVerdictPrompt, evidenceToolResult, VERDICT_TOOL } from '../prompts';
+import { buildCallPrompt, buildInterpretPrompt, buildVerdictPrompt, evidenceToolResult, VERDICT_TOOL } from '../prompts';
 import { ruleInterpret } from '../rules';
-import { fixtureContext, fixtureEvidence } from '../test-helpers';
+import { fixtureCallFacts, fixtureContext, fixtureEvidence } from '../test-helpers';
 import { createArtifactProvider, resolveArtifactSample } from './artifact';
 import type { SampleLike } from './artifact';
 import { AiError } from './errors';
-import type { InterpretRequest, VerdictRequest } from './types';
+import type { CallRequest, InterpretRequest, VerdictRequest } from './types';
 
 const ctx = fixtureContext();
 const evidence = fixtureEvidence();
@@ -16,6 +16,7 @@ const verdictReq: VerdictRequest = {
   ctx,
   evidence,
 };
+const callReq: CallRequest = { facts: fixtureCallFacts() };
 
 type Answer = (input: string, options?: Record<string, unknown>) => Promise<unknown>;
 type ToolLike = {
@@ -61,6 +62,15 @@ describe('createArtifactProvider', () => {
     await createArtifactProvider(sample).interpret({ ...interpretReq, measuredAvailable: false }, controller.signal);
     expect(calls[0].input).toBe(buildInterpretPrompt(interpretReq.text, ctx, { measuredAvailable: false }));
     expect(calls[0].options).toEqual({ modelTier: 'quick', signal: controller.signal });
+  });
+
+  it('call: quick tier로 해설 프롬프트를 보내고 원문을 그대로 돌려준다(도구 없음)', async () => {
+    const raw = { line: '자막 한 줄' };
+    const { sample, calls } = fakeSample(async () => raw);
+    await expect(createArtifactProvider(sample).call(callReq)).resolves.toBe(raw);
+    expect(calls).toHaveLength(1);
+    expect(calls[0].input).toBe(buildCallPrompt(callReq.facts));
+    expect(calls[0].options).toEqual({ modelTier: 'quick' });
   });
 
   it('verdict: default tier, lookupEvidence 도구, cache 옵션 없음, execute는 evidence 요약', async () => {

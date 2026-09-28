@@ -6,18 +6,22 @@ describe('src/ai 공개 API', () => {
     expect(Object.keys(ai).sort()).toEqual([
       'AiError',
       'VERDICT_TOOL',
+      'buildCallPrompt',
       'buildInterpretPrompt',
       'buildVerdictPrompt',
       'checkSensitive',
       'evidenceToolResult',
       'interpretTmi',
       'judgeTmi',
+      'narratePa',
+      'normalizeCall',
       'normalizeInterpretation',
       'normalizeVerdict',
       'pickProvider',
       'prepareText',
       'resolveArtifactSample',
       'ruleInterpret',
+      'rulesCall',
       'rulesVerdict',
     ]);
   });

@@ -2,7 +2,7 @@ import { situationText } from '../domain/format';
 import { TEAMS } from '../domain/teams';
 import { fixtureAppData, fixtureSituation } from '../test/fixtures/appData';
 import type { EvidenceData, TeamCode } from '../types/data';
-import type { KnownPlayer, PromptContext, RosterEntry } from '../types/domain';
+import type { CallFacts, KnownPlayer, PromptContext, RosterEntry } from '../types/domain';
 
 /*
  * src/ai·api 테스트 전용 도우미. 합성 픽스처 상황(9회말 2사 만루, 홈타자6 대 원정투수)으로
@@ -60,4 +60,25 @@ export function fixtureContext(overrides: Partial<PromptContext> = {}): PromptCo
 export function fixtureEvidence(): EvidenceData {
   if (!fixtureAppData.evidence) throw new Error('픽스처 evidence가 없다');
   return JSON.parse(JSON.stringify(fixtureAppData.evidence)) as EvidenceData;
+}
+
+/*
+ * 해설 자막(23-commentary) 픽스처: 9회말 김타자가 2타점 적시 2루타.
+ * 실존 선수 이름을 쓰지 않는다(ADR-005).
+ */
+export function fixtureCallFacts(overrides: Partial<CallFacts> = {}): CallFacts {
+  return {
+    inningText: '9회말',
+    batter: '김타자',
+    pitcher: '박투수',
+    battingTeam: '롯데',
+    fieldingTeam: 'KIA',
+    result: '2타점 적시 2루타',
+    runs: 2,
+    score: { away: 4, home: 6 },
+    awayName: 'KIA',
+    homeName: '롯데',
+    tmis: [{ text: '어제 피자를 먹었다', effect: '타자 집중력 ↓' }],
+    ...overrides,
+  };
 }

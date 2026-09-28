@@ -24,6 +24,8 @@ import { SENSITIVE_REASON } from './safety.js';
 
 const MAX_PARTS = 3;
 const MAX_VARIABLES = 3;
+/** 자막 한 줄의 최대 글자 수 */
+const MAX_CALL_LINE = 120;
 
 /** 실측 변수 who마다 해석 결과가 고를 수 있는 Subject (env는 everyone으로 바꾼다) */
 const MEASURED_SUBJECTS: Record<Exclude<MeasuredWho, 'env'>, readonly Subject[]> = {
@@ -158,4 +160,16 @@ export function normalizeVerdict(raw: unknown, evidence: EvidenceData): VerdictR
     headline: headline || (first ? VERDICT_HEADLINE[first.verdict] : UNMEASURABLE_HEADLINE),
     body: body || (first ? cleanText(first.note, 220) : UNMEASURABLE_BODY),
   };
+}
+
+/**
+ * AI 해설 원문 → 자막 한 줄. 객체가 아니거나 line이 비면 null.
+ * 퍼센트가 들어 있으면 통과시키지 않는다: 확률 숫자는 언제나 엔진이 낸다(CLAUDE.md CRITICAL).
+ * 자막은 한 줄이므로 줄바꿈·제어 문자는 공백으로 펴고 연속 공백은 하나로 만든다.
+ */
+export function normalizeCall(raw: unknown): string | null {
+  if (!isRecord(raw) || typeof raw.line !== 'string') return null;
+  const line = stripControl(raw.line, ' ').replace(/\s+/g, ' ').trim();
+  if (line === '' || line.includes('%')) return null;
+  return Array.from(line).slice(0, MAX_CALL_LINE).join('').trim();
 }

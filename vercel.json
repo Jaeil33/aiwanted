@@ -10,6 +10,9 @@
     "api/verdict.ts": {
       "maxDuration": 60
     },
+    "api/call.ts": {
+      "maxDuration": 20
+    },
     "api/games.ts": {
       "maxDuration": 10
     },

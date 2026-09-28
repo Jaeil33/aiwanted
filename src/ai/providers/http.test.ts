@@ -1,10 +1,10 @@
 // @vitest-environment node
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ruleInterpret } from '../rules';
-import { fixtureContext, fixtureEvidence } from '../test-helpers';
+import { fixtureCallFacts, fixtureContext, fixtureEvidence } from '../test-helpers';
 import { AiError } from './errors';
 import { createHttpProvider } from './http';
-import type { InterpretRequest, VerdictRequest } from './types';
+import type { CallRequest, InterpretRequest, VerdictRequest } from './types';
 
 const ctx = fixtureContext();
 const interpretReq: InterpretRequest = { text: '오늘 폭염', ctx, measuredAvailable: true };
@@ -14,6 +14,7 @@ const verdictReq: VerdictRequest = {
   ctx,
   evidence: fixtureEvidence(),
 };
+const callReq: CallRequest = { facts: fixtureCallFacts() };
 
 interface Call {
   url: string;
@@ -102,6 +103,15 @@ describe('createHttpProvider', () => {
     await expect(createHttpProvider({ baseUrl: '/api', fetch: fakeFetch(() => jsonResponse(200, { raw: null })).fetchImpl }).verdict(verdictReq)).resolves.toBeNull();
   });
 
+  it('call: POST {baseUrl}/call, 본문은 CallRequest 그대로(장면 맥락을 싣지 않는다)', async () => {
+    const { fetchImpl, calls } = fakeFetch(() => jsonResponse(200, { raw: { line: '자막 한 줄' } }));
+    const provider = createHttpProvider({ baseUrl: '/api', fetch: fetchImpl });
+    await expect(provider.call(callReq)).resolves.toEqual({ line: '자막 한 줄' });
+    expect(calls[0].url).toBe('/api/call');
+    expect(calls[0].init.method).toBe('POST');
+    expect(JSON.parse(String(calls[0].init.body))).toEqual(callReq);
+  });
+
   const STATUS: Array<[status: number, code: string, permanent: boolean]> = [
     [429, 'rate_limited', false],
     [503, 'unavailable', true],
@@ -114,12 +124,12 @@ describe('createHttpProvider', () => {
   it.each(STATUS)('HTTP %i → %s (permanent %s), 재시도하지 않는다', async (status, code, permanent) => {
     const { fetchImpl, calls } = fakeFetch(() => jsonResponse(status, { error: 'nope' }));
     const provider = createHttpProvider({ baseUrl: '/api', fetch: fetchImpl });
-    for (const run of [() => provider.interpret(interpretReq), () => provider.verdict(verdictReq)]) {
+    for (const run of [() => provider.interpret(interpretReq), () => provider.verdict(verdictReq), () => provider.call(callReq)]) {
       const error = await errorOf(run());
       expect(error).toBeInstanceOf(AiError);
       expect(error).toMatchObject({ code, permanent });
     }
-    expect(calls).toHaveLength(2);
+    expect(calls).toHaveLength(3);
   });
 
   it('200인데 {raw} 모양이 아니거나 JSON이 아니면 bad_response', async () => {

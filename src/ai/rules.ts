@@ -1,7 +1,9 @@
+import { josa } from '../domain/format.js';
 import { KNOB_META } from '../domain/knobs.js';
 import { MEASURED } from '../domain/measured.js';
 import type { EvidenceData } from '../types/data.js';
 import type {
+  CallFacts,
   EffectPart,
   Interpretation,
   KnobId,
@@ -422,4 +424,38 @@ export function rulesVerdict(text: string, interpretation: Interpretation, evide
     return { source: 'rules', variables: [], verdict: 'unmeasurable', headline: UNMEASURABLE_HEADLINE, body: UNMEASURABLE_BODY };
   }
   return { source: 'rules', variables, verdict: first.verdict, headline: VERDICT_HEADLINE[first.verdict], body: first.note };
+}
+
+/*
+ * AI를 쓸 수 없을 때의 규칙 자막(23-commentary). 늘 한 줄을 만든다 —
+ * 키가 없는 곳(로컬·아티팩트)에서 자막이 빈 채로 남지 않게. 확률은 쓰지 않는다(CLAUDE.md CRITICAL).
+ */
+
+/** 주자를 남기지 않고 끝난 타석 머리말(game/playback.ts headline()이 만드는 값) */
+const CALL_OUTS = new Set(['삼진', '병살타', '땅볼 아웃', '뜬공 아웃', '직선타 아웃']);
+/** 자막에 싣는 TMI 문장 길이 */
+const CALL_TMI_CHARS = 24;
+/** 규칙 자막 한 줄의 최대 글자 수(normalize.ts MAX_CALL_LINE과 같다) */
+const CALL_LINE_CHARS = 120;
+
+function clipChars(text: string, max: number): string {
+  const chars = Array.from(text.trim());
+  return chars.length > max ? `${chars.slice(0, max - 1).join('').trimEnd()}…` : chars.join('');
+}
+
+/** 결과에 붙이는 한마디: 점수가 나면 크게, 아웃이면 이겨낸 투수 쪽으로 */
+function toneOf(facts: CallFacts): string {
+  if (facts.runs >= 2) return '경기를 통째로 흔드는 한 방입니다!';
+  if (facts.runs === 1) return '귀중한 한 점이 들어옵니다!';
+  if (CALL_OUTS.has(facts.result)) return `${josa(facts.pitcher, '이/가')} 이겨냅니다.`;
+  return '일단 살아 나갑니다.';
+}
+
+export function rulesCall(facts: CallFacts): string {
+  const result = facts.result.trim();
+  const head = `${facts.inningText} ${facts.batter}, ${result}${result.endsWith('!') ? '' : '.'}`;
+  const first = facts.tmis[0];
+  const more = facts.tmis.length > 1 ? ` 외 ${facts.tmis.length - 1}개` : '';
+  const tail = first ? `걸린 변수는 “${clipChars(first.text, CALL_TMI_CHARS)}”(${first.effect})${more}.` : '';
+  return clipChars([head, toneOf(facts), tail].filter(Boolean).join(' '), CALL_LINE_CHARS);
 }

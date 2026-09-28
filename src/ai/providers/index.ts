@@ -18,4 +18,4 @@ export type { SampleLike } from './artifact';
 export { createHttpProvider } from './http';
 export type { HttpProviderOptions } from './http';
 export { AiError, fromSampleError } from './errors';
-export type { AiErrorCode, AiProvider, InterpretRequest, VerdictRequest } from './types';
+export type { AiErrorCode, AiProvider, CallRequest, InterpretRequest, VerdictRequest } from './types';

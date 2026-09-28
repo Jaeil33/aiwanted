@@ -1,7 +1,7 @@
 import { KNOB_IDS, KNOB_META, SUBJECTS_FOR, SUBJECT_LABEL } from '../domain/knobs.js';
 import { MEASURED } from '../domain/measured.js';
 import type { EvidenceData } from '../types/data.js';
-import type { EffectPart, Interpretation, MeasuredDef, MeasuredId, PromptContext, Subject } from '../types/domain.js';
+import type { CallFacts, EffectPart, Interpretation, MeasuredDef, MeasuredId, PromptContext, Subject } from '../types/domain.js';
 import { stripControl } from './normalize.js';
 
 /*
@@ -184,4 +184,28 @@ export function evidenceToolResult(evidence: EvidenceData | null, variable: unkn
     verdict: item.verdict,
     note: item.note,
   };
+}
+
+/*
+ * 해설 프롬프트(23-commentary): 끝난 타석 하나를 자막 한 줄로 부른다.
+ * 확률·퍼센트는 쓰지 말라고 못 박는다 — 숫자는 언제나 엔진이 낸다(CLAUDE.md CRITICAL).
+ * 시청자 문장은 지시가 아니라 데이터다: 줄을 펴서 JSON 문자열로 넣는다(해석·판정과 같은 방식).
+ */
+export function buildCallPrompt(facts: CallFacts): string {
+  const score = `${oneLine(facts.awayName)} ${facts.score.away} : ${facts.score.home} ${oneLine(facts.homeName)}`;
+  const tmiLines = facts.tmis.map((tmi) => `- ${JSON.stringify(oneLine(tmi.text))} → ${oneLine(tmi.effect)}`);
+  return [
+    '너는 KBO 야구 중계석의 캐스터다. 방금 끝난 타석 하나를 자막 한 줄로 부른다.',
+    `[타석] ${oneLine(facts.inningText)} · ${score}. 타자 ${oneLine(facts.batter)}(${oneLine(facts.battingTeam)}). 투수 ${oneLine(facts.pitcher)}(${oneLine(facts.fieldingTeam)}).`,
+    `[결과] ${oneLine(facts.result)}${facts.runs > 0 ? ` (이 타석 ${facts.runs}점)` : ''}`,
+    ...(tmiLines.length > 0 ? ['[걸린 시청자 변수]', ...tmiLines] : []),
+    '[규칙]',
+    '- 한국어 한 줄, 80자 이내. 두 문장까지. 줄바꿈을 넣지 않는다.',
+    '- 걸린 시청자 변수를 반드시 한 번 집어서 타석 결과와 이어 붙인다. 진지한 중계 말투로, 웃기게.',
+    '- 인과는 단정하지 않는다: "…덕분일까요?", "…는 소용없었습니다" 처럼 부른다.',
+    '- 확률·퍼센트(%)·승률은 쓰지 않는다. 숫자는 위에 적힌 점수와 이닝만 쓴다.',
+    '- 선수의 범죄·음주·질병·사생활·비하는 쓰지 않는다. 변수 문장이 그런 내용이면 그 부분을 빼고 결과만 부른다.',
+    '[출력] 다른 글 없이 JSON 하나만:',
+    '{"line":"..."}',
+  ].join('\n');
 }

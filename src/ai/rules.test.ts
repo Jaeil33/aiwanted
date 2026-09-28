@@ -3,8 +3,8 @@ import { TMI_CORPUS, type CorpusCase, type Expectation, type ExpectedSubject } f
 import type { EvidenceData } from '../types/data';
 import type { EffectPart, Interpretation, KnobPart, PromptContext, RosterEntry, Subject } from '../types/domain';
 import { normalizeInterpretation } from './normalize';
-import { FALLBACK_WHY, ruleInterpret, rulesVerdict } from './rules';
-import { fixtureContext, fixtureEvidence } from './test-helpers';
+import { FALLBACK_WHY, ruleInterpret, rulesCall, rulesVerdict } from './rules';
+import { fixtureCallFacts, fixtureContext, fixtureEvidence } from './test-helpers';
 
 const on = { measuredAvailable: true };
 const off = { measuredAvailable: false };
@@ -280,5 +280,53 @@ describe('rulesVerdict', () => {
   it('real 판정 문구', () => {
     const realEvidence: EvidenceData = { ...evidence, items: evidence.items.map((item) => ({ ...item, verdict: 'real' as const })) };
     expect(rulesVerdict('폭염', knobOnly('폭염'), realEvidence)).toMatchObject({ verdict: 'real', headline: '기록으로 확인된 효과예요' });
+  });
+});
+
+/*
+ * 23-commentary: AI가 없을 때의 자막.
+ * 규칙 자막은 늘 한 줄을 만든다 — 로컬·아티팩트처럼 키가 없는 곳에서 자막이 빈 채로 남지 않는다.
+ */
+describe('rulesCall', () => {
+  it('이닝·타자·결과와 걸린 TMI를 한 줄로 잇는다', () => {
+    const line = rulesCall(fixtureCallFacts());
+    expect(line).toContain('9회말');
+    expect(line).toContain('김타자');
+    expect(line).toContain('2타점 적시 2루타');
+    expect(line).toContain('어제 피자를 먹었다');
+    expect(line).toContain('타자 집중력 ↓');
+  });
+
+  it('확률·퍼센트를 쓰지 않는다', () => {
+    for (const facts of [fixtureCallFacts(), fixtureCallFacts({ result: '삼진', runs: 0 }), fixtureCallFacts({ result: '만루 홈런!', runs: 4 })]) {
+      expect(rulesCall(facts)).not.toContain('%');
+    }
+  });
+
+  it('한 줄이고 너무 길지 않다', () => {
+    const long = fixtureCallFacts({ tmis: [{ text: '가'.repeat(80), effect: '투수 제구 ↓' }, { text: '나'.repeat(80), effect: '타자 힘 ↑' }] });
+    const line = rulesCall(long);
+    expect(line).not.toContain('\n');
+    expect([...line].length).toBeLessThanOrEqual(120);
+  });
+
+  it('점수가 난 타석과 아웃으로 끝난 타석의 말투가 다르다', () => {
+    const hit = rulesCall(fixtureCallFacts());
+    const out = rulesCall(fixtureCallFacts({ result: '삼진', runs: 0 }));
+    expect(hit).not.toBe(out);
+    // 아웃이면 이겨낸 쪽은 투수다
+    expect(out).toContain('박투수');
+  });
+
+  it('TMI가 둘 이상이면 첫 문장을 부르고 나머지는 개수로 센다', () => {
+    const line = rulesCall(fixtureCallFacts({ tmis: [{ text: '어제 피자를 먹었다', effect: '타자 집중력 ↓' }, { text: '폭염', effect: '기온 35°C' }] }));
+    expect(line).toContain('어제 피자를 먹었다');
+    expect(line).toContain('외 1개');
+  });
+
+  it('TMI가 없어도 결과만으로 한 줄을 만든다', () => {
+    const line = rulesCall(fixtureCallFacts({ tmis: [] }));
+    expect(line).toContain('2타점 적시 2루타');
+    expect(line.trim()).not.toBe('');
   });
 });

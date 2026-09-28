@@ -8,10 +8,13 @@ export interface HttpProviderOptions {
   fetch: typeof fetch;
   interpretTimeoutMs?: number;
   verdictTimeoutMs?: number;
+  callTimeoutMs?: number;
 }
 
 const DEFAULT_INTERPRET_TIMEOUT_MS = 8_000;
 const DEFAULT_VERDICT_TIMEOUT_MS = 60_000;
+/** 자막은 타석이 끝난 직후에만 쓸모가 있다: 늦게 오면 규칙 자막이 이미 자리를 지킨다 */
+const DEFAULT_CALL_TIMEOUT_MS = 12_000;
 
 /**
  * 서버에 보내는 장면 설명. 이름 인식용 otherPlayers(실데이터는 100명이 넘는다)는 해석 본문 4KB 제한을 넘기므로 비워 보낸다.
@@ -85,6 +88,10 @@ export function createHttpProvider(opts: HttpProviderOptions): AiProvider {
     },
     verdict(req, signal) {
       return post('/verdict', { ...req, ctx: wireContext(req.ctx) }, opts.verdictTimeoutMs ?? DEFAULT_VERDICT_TIMEOUT_MS, signal);
+    },
+    // 자막 요청에는 장면 맥락이 없다: 끝난 타석 사실만 그대로 보낸다
+    call(req, signal) {
+      return post('/call', req, opts.callTimeoutMs ?? DEFAULT_CALL_TIMEOUT_MS, signal);
     },
   };
 }

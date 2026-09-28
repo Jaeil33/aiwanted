@@ -199,3 +199,38 @@ export interface VerdictResult {
   headline: string;
   body: string;
 }
+
+/** 해설 자막이 말할 TMI 하나: 시청자가 쓴 문장과 그 문장이 만든 효과 한 줄("타자 집중력 ↓") */
+export interface CallTmi {
+  text: string;
+  effect: string;
+}
+
+/**
+ * 끝난 타석 하나를 해설 자막으로 부르는 데 필요한 사실(23-commentary).
+ * 확률은 담지 않는다: 자막은 숫자를 말하지 않는다(CLAUDE.md CRITICAL).
+ */
+export interface CallFacts {
+  /** "9회말" */
+  inningText: string;
+  batter: string;
+  pitcher: string;
+  battingTeam: string;
+  fieldingTeam: string;
+  /** 타석 결과 한 줄. game/playback.ts headline()이 만든 값("2타점 적시 2루타") */
+  result: string;
+  /** 이 타석에 난 점수 */
+  runs: number;
+  /** 타석 직후 점수 */
+  score: { away: number; home: number };
+  awayName: string;
+  homeName: string;
+  /** 이 타석에 걸려 있던 TMI. 비어 있으면 부르지 않는다 */
+  tmis: CallTmi[];
+}
+
+/** 해설 자막 한 줄과 그것을 만든 쪽 */
+export interface CallResult {
+  source: 'ai' | 'rules';
+  line: string;
+}

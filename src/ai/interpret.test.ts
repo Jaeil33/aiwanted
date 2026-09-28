@@ -13,7 +13,7 @@ const TEXT = '원정투수가 경기 전 짜장면 곱빼기를 먹었다';
 
 function fakeProvider(interpret: (req: InterpretRequest, signal?: AbortSignal) => Promise<unknown>) {
   const spy = vi.fn(interpret);
-  const provider: AiProvider = { name: 'http', interpret: spy, verdict: vi.fn(async () => null) };
+  const provider: AiProvider = { name: 'http', interpret: spy, verdict: vi.fn(async () => null), call: vi.fn(async () => null) };
   return { provider, spy };
 }
 
