@@ -85,7 +85,9 @@ export function buildInterpretPrompt(text: string, ctx: PromptContext, opts: { m
       ? ['- kind "measured": 문장에 그 사실(기온·바람·비·낮 경기·주말·원정 이동·휴식일·선발 휴식)이 분명할 때만 쓴다. value는 문장에 나온 값, 없으면 그 사실에 맞는 값. 사람 이야기를 실측 변수로 바꾸지 않는다.']
       : []),
     '- parts는 1~3개. 거부할 때 말고는 절대 빈 배열로 두지 않는다. 승부와 멀어 보여도 가장 그럴듯한 손잡이 하나를 1이나 -1로 반드시 고른다.',
-    '- 실존 인물의 범죄·음주·도박·폭력·질병·부상·사망·사생활·성적인 내용·비하가 담기면 refused를 true로, reason에 짧은 이유를 적고 parts는 빈 배열.',
+    '- 실존 인물의 범죄·음주·도박·폭력·약물·병·부상·사망·성적인 내용·비하가 담기면 refused를 true로, reason에 짧은 이유를 적고 parts는 빈 배열.',
+    '- 사생활은 해가 되는 것만 거부한다(ADR-040): 이혼·불륜·임신·열애설·신상·빚은 거부, 연애·이별·소개팅·짝사랑·배앓이·화장실은 그냥 계산한다. 웃기라고 넣는 변수다.',
+    '- "아프다"는 아픈 곳으로 가른다: 배가 아프면 계산하고, 어깨·팔꿈치·무릎처럼 경기에 쓰는 곳이 아프다는 말은 부상 주장이라 거부한다.',
     '- comment: 야구 해설위원 말투의 한국어 한 문장(60자 이내). 진지한 척하지만 웃기게. 확률·퍼센트 숫자는 쓰지 않는다.',
     '- why: 효과마다 40자 이내 한국어 근거.',
     '[출력] 다른 글 없이 JSON 하나만:',
@@ -193,7 +195,12 @@ export function evidenceToolResult(evidence: EvidenceData | null, variable: unkn
  */
 export function buildCallPrompt(facts: CallFacts): string {
   const score = `${oneLine(facts.awayName)} ${facts.score.away} : ${facts.score.home} ${oneLine(facts.homeName)}`;
-  const tmiLines = facts.tmis.map((tmi) => `- ${JSON.stringify(oneLine(tmi.text))} → ${oneLine(tmi.effect)}`);
+  const sideText = { batter: '타자에게 유리', pitcher: '투수에게 유리' } as const;
+  // 누구 편이었는지를 사실로 넘긴다: 모델이 "덕분에"와 "했는데도"를 제대로 고를 수 있어야 한다
+  const tmiLines = facts.tmis.map((tmi) => {
+    const side = tmi.favors === null ? '' : ` (${sideText[tmi.favors]})`;
+    return `- ${JSON.stringify(oneLine(tmi.text))} → ${oneLine(tmi.effect)}${side}`;
+  });
   return [
     '너는 KBO 야구 중계석의 캐스터다. 방금 끝난 타석 하나를 자막 한 줄로 부른다.',
     `[타석] ${oneLine(facts.inningText)} · ${score}. 타자 ${oneLine(facts.batter)}(${oneLine(facts.battingTeam)}). 투수 ${oneLine(facts.pitcher)}(${oneLine(facts.fieldingTeam)}).`,
@@ -202,9 +209,11 @@ export function buildCallPrompt(facts: CallFacts): string {
     '[규칙]',
     '- 한국어 한 줄, 80자 이내. 두 문장까지. 줄바꿈을 넣지 않는다.',
     '- 걸린 시청자 변수를 반드시 한 번 집어서 타석 결과와 이어 붙인다. 진지한 중계 말투로, 웃기게.',
-    '- 인과는 단정하지 않는다: "…덕분일까요?", "…는 소용없었습니다" 처럼 부른다.',
+    '- 변수가 편든 쪽(괄호)과 실제로 이긴 쪽을 견줘 인과를 고른다: 편든 쪽이 졌으면 "…했는데도", 이겼으면 "…덕분일까요?" 처럼.',
+    '- 인과를 단정하지 않는다. 변수를 데이터처럼 옮겨 적지 말고 문장 속에 녹여서 한 번만 집는다.',
+    '- 딱딱한 틀("걸린 변수는 …", 효과 이름 그대로 쓰기)을 쓰지 않는다. 화살표(↑↓)와 괄호 설명은 자막에 넣지 않는다.',
     '- 확률·퍼센트(%)·승률은 쓰지 않는다. 숫자는 위에 적힌 점수와 이닝만 쓴다.',
-    '- 선수의 범죄·음주·질병·사생활·비하는 쓰지 않는다. 변수 문장이 그런 내용이면 그 부분을 빼고 결과만 부른다.',
+    '- 선수의 범죄·음주·병·부상·비하는 쓰지 않는다. 변수 문장이 그런 내용이면 그 부분을 빼고 결과만 부른다. 연애·이별·배앓이 같은 일상은 마음껏 놀려도 된다.',
     '[출력] 다른 글 없이 JSON 하나만:',
     '{"line":"..."}',
   ].join('\n');

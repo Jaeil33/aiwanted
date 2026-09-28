@@ -78,7 +78,7 @@ export function fixtureCallFacts(overrides: Partial<CallFacts> = {}): CallFacts 
     score: { away: 4, home: 6 },
     awayName: 'KIA',
     homeName: '롯데',
-    tmis: [{ text: '어제 피자를 먹었다', effect: '타자 집중력 ↓' }],
+    tmis: [{ text: '김타자가 어제 피자를 먹었다', effect: '타자 집중력 ↓', favors: 'pitcher' }],
     ...overrides,
   };
 }

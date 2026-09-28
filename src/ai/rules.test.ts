@@ -288,13 +288,43 @@ describe('rulesVerdict', () => {
  * 규칙 자막은 늘 한 줄을 만든다 — 로컬·아티팩트처럼 키가 없는 곳에서 자막이 빈 채로 남지 않는다.
  */
 describe('rulesCall', () => {
-  it('이닝·타자·결과와 걸린 TMI를 한 줄로 잇는다', () => {
+  it('이닝·타자·결과를 앞에 두고, 걸린 TMI를 끝에서 한 번 친다', () => {
     const line = rulesCall(fixtureCallFacts());
     expect(line).toContain('9회말');
     expect(line).toContain('김타자');
     expect(line).toContain('2타점 적시 2루타');
     expect(line).toContain('어제 피자를 먹었다');
-    expect(line).toContain('타자 집중력 ↓');
+  });
+
+  it('데이터 줄처럼 읽히던 조각을 쓰지 않는다', () => {
+    // 사용자 지적: "문장이 자유롭지가 없어". 효과 라벨은 바로 아래 TMI 알약이 이미 보여준다
+    const line = rulesCall(fixtureCallFacts());
+    expect(line).not.toContain('걸린 변수는');
+    expect(line).not.toContain('(타자 집중력 ↓)');
+  });
+
+  it('편든 쪽이 졌으면 소용없었다고, 이겼으면 먹혔다고 부른다', () => {
+    // 투수 편을 든 변수(타자 집중력 ↓)인데 타자가 2타점 → 소용없었다
+    expect(rulesCall(fixtureCallFacts())).toContain('소용없');
+    // 같은 변수에 타자가 삼진 → 먹혔다
+    const struckOut = fixtureCallFacts({ result: '삼진', runs: 0 });
+    expect(rulesCall(struckOut)).toContain('먹혔');
+    expect(rulesCall(struckOut)).not.toContain('소용없');
+  });
+
+  it('누구 편인지 모르면 인과를 말하지 않는다', () => {
+    const unknown = fixtureCallFacts({ tmis: [{ text: '오늘 폭염이다', effect: '기온 35°C', favors: null }] });
+    const line = rulesCall(unknown);
+    expect(line).toContain('오늘 폭염이다');
+    expect(line).not.toContain('소용없');
+    expect(line).not.toContain('먹혔');
+  });
+
+  it('아웃으로 끝나면 이겨낸 쪽은 투수, 점수가 나면 그 점수를 부른다', () => {
+    expect(rulesCall(fixtureCallFacts({ result: '삼진', runs: 0 }))).toContain('박투수가 이겨냅니다');
+    expect(rulesCall(fixtureCallFacts({ result: '적시타', runs: 1 }))).toContain('한 점');
+    expect(rulesCall(fixtureCallFacts({ result: '만루 홈런!', runs: 4 }))).toContain('뒤집');
+    expect(rulesCall(fixtureCallFacts({ result: '볼넷', runs: 0 }))).toContain('살아 나갑니다');
   });
 
   it('확률·퍼센트를 쓰지 않는다', () => {
@@ -304,22 +334,24 @@ describe('rulesCall', () => {
   });
 
   it('한 줄이고 너무 길지 않다', () => {
-    const long = fixtureCallFacts({ tmis: [{ text: '가'.repeat(80), effect: '투수 제구 ↓' }, { text: '나'.repeat(80), effect: '타자 힘 ↑' }] });
+    const long = fixtureCallFacts({
+      tmis: [
+        { text: '가'.repeat(80), effect: '투수 제구 ↓', favors: 'batter' },
+        { text: '나'.repeat(80), effect: '타자 힘 ↑', favors: 'batter' },
+      ],
+    });
     const line = rulesCall(long);
-    expect(line).not.toContain('\n');
+    expect(line).not.toContain(String.fromCharCode(10));
     expect([...line].length).toBeLessThanOrEqual(120);
   });
 
-  it('점수가 난 타석과 아웃으로 끝난 타석의 말투가 다르다', () => {
-    const hit = rulesCall(fixtureCallFacts());
-    const out = rulesCall(fixtureCallFacts({ result: '삼진', runs: 0 }));
-    expect(hit).not.toBe(out);
-    // 아웃이면 이겨낸 쪽은 투수다
-    expect(out).toContain('박투수');
-  });
-
   it('TMI가 둘 이상이면 첫 문장을 부르고 나머지는 개수로 센다', () => {
-    const line = rulesCall(fixtureCallFacts({ tmis: [{ text: '어제 피자를 먹었다', effect: '타자 집중력 ↓' }, { text: '폭염', effect: '기온 35°C' }] }));
+    const line = rulesCall(fixtureCallFacts({
+      tmis: [
+        { text: '김타자가 어제 피자를 먹었다', effect: '타자 집중력 ↓', favors: 'pitcher' },
+        { text: '폭염', effect: '기온 35°C', favors: null },
+      ],
+    }));
     expect(line).toContain('어제 피자를 먹었다');
     expect(line).toContain('외 1개');
   });

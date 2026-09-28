@@ -1,5 +1,5 @@
 import { formatPct } from '../domain/format';
-import type { CallFacts, Evidence, GameState, Half, Side, TmiEntry } from '../types/domain';
+import type { CallFacts, CallTmi, EffectPart, Evidence, GameState, Half, Side, TmiEntry } from '../types/domain';
 import { gradeOf } from './headline';
 import { effectLabel } from './result';
 import type { PlayLogEntry } from './session';
@@ -143,6 +143,39 @@ function ranInPa(entry: TmiEntry, paIndex: number): boolean {
   return entry.interpretation.parts.some((part) => part.kind !== 'knob' || part.scope !== 'pa');
 }
 
+/**
+ * 손잡이가 양수일 때 누구 편인가(KNOB_META의 hint를 그대로 옮긴 표).
+ * mood는 팀 손잡이라 대상(공격팀·수비팀)을 봐야 갈린다.
+ */
+const KNOB_FAVORS: Record<string, 'batter' | 'pitcher' | 'bySubject'> = {
+  contact: 'batter', power: 'batter', eye: 'batter', focus: 'batter', speed: 'batter',
+  stuff: 'pitcher', control: 'pitcher', stamina: 'pitcher', nerve: 'pitcher',
+  defense: 'pitcher',
+  carry: 'batter', slick: 'batter', glare: 'pitcher',
+  mood: 'bySubject',
+};
+
+/**
+ * 그 효과가 누구 편이었나. 자막이 인과를 뒤집어 부르는 데 쓴다.
+ * 실측 변수는 방향이 변수마다 달라 여기서 가리지 않는다(null).
+ */
+function favorsOf(part: EffectPart | undefined): CallTmi['favors'] {
+  if (!part || part.kind !== 'knob') return null;
+  const side = Object.hasOwn(KNOB_FAVORS, part.knob) ? KNOB_FAVORS[part.knob] : null;
+  if (side === null) return null;
+  const positive =
+    side === 'bySubject'
+      ? part.subject === 'battingTeam'
+        ? 'batter'
+        : part.subject === 'fieldingTeam'
+          ? 'pitcher'
+          : null
+      : side;
+  if (positive === null) return null;
+  const flipped = positive === 'batter' ? 'pitcher' : 'batter';
+  return part.strength > 0 ? positive : flipped;
+}
+
 /** 마지막으로 끝난 타석의 자막 재료. 끝난 타석이 없으면 null */
 export function callFactsOf(setup: SituationSetup, log: readonly PlayLogEntry[], tmis: readonly TmiEntry[]): CallFacts | null {
   const entry = log[log.length - 1];
@@ -162,6 +195,8 @@ export function callFactsOf(setup: SituationSetup, log: readonly PlayLogEntry[],
     score: { ...entry.score },
     awayName: setup.situation.away.name,
     homeName: setup.situation.home.name,
-    tmis: tmis.filter((tmi) => ranInPa(tmi, entry.index)).map((tmi) => ({ text: tmi.text, effect: tmiPill(tmi).effect })),
+    tmis: tmis
+      .filter((tmi) => ranInPa(tmi, entry.index))
+      .map((tmi) => ({ text: tmi.text, effect: tmiPill(tmi).effect, favors: favorsOf(tmi.interpretation.parts[0]) })),
   };
 }

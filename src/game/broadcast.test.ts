@@ -161,7 +161,7 @@ describe('callFactsOf', () => {
 
   it('걸린 TMI는 문장과 효과 한 줄로 싣는다', () => {
     expect(callFactsOf(setup, [log()], [stamina])!.tmis).toEqual([
-      { text: '원정투수가 경기 전 짜장면 곱빼기를 먹었다', effect: '투수 체력 ↓' },
+      { text: '원정투수가 경기 전 짜장면 곱빼기를 먹었다', effect: '투수 체력 ↓', favors: 'batter' },
     ]);
   });
 

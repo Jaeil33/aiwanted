@@ -429,12 +429,16 @@ export function rulesVerdict(text: string, interpretation: Interpretation, evide
 /*
  * AI를 쓸 수 없을 때의 규칙 자막(23-commentary). 늘 한 줄을 만든다 —
  * 키가 없는 곳(로컬·아티팩트)에서 자막이 빈 채로 남지 않게. 확률은 쓰지 않는다(CLAUDE.md CRITICAL).
+ *
+ * 모양은 셋이다: 이닝·타자·결과 → 누가 이겼나 → 걸린 변수 한 방.
+ * 마지막 한 방은 인과를 뒤집어 부른다 — 변수가 편든 쪽이 졌으면 "소용없었다", 이겼으면 "먹혔다".
+ * 효과 라벨("타자 집중력 ↓")은 자막에 넣지 않는다: 바로 아래 TMI 알약이 이미 보여 준다.
  */
 
 /** 주자를 남기지 않고 끝난 타석 머리말(game/playback.ts headline()이 만드는 값) */
 const CALL_OUTS = new Set(['삼진', '병살타', '땅볼 아웃', '뜬공 아웃', '직선타 아웃']);
 /** 자막에 싣는 TMI 문장 길이 */
-const CALL_TMI_CHARS = 24;
+const CALL_TMI_CHARS = 30;
 /** 규칙 자막 한 줄의 최대 글자 수(normalize.ts MAX_CALL_LINE과 같다) */
 const CALL_LINE_CHARS = 120;
 
@@ -443,19 +447,36 @@ function clipChars(text: string, max: number): string {
   return chars.length > max ? `${chars.slice(0, max - 1).join('').trimEnd()}…` : chars.join('');
 }
 
-/** 결과에 붙이는 한마디: 점수가 나면 크게, 아웃이면 이겨낸 투수 쪽으로 */
-function toneOf(facts: CallFacts): string {
-  if (facts.runs >= 2) return '경기를 통째로 흔드는 한 방입니다!';
-  if (facts.runs === 1) return '귀중한 한 점이 들어옵니다!';
-  if (CALL_OUTS.has(facts.result)) return `${josa(facts.pitcher, '이/가')} 이겨냅니다.`;
+/** 이 타석은 누구 쪽이 이겼나. 점수가 났으면 타자 쪽, 주자 없이 아웃이면 투수 쪽 */
+function wonBy(facts: CallFacts): 'batter' | 'pitcher' {
+  if (facts.runs > 0) return 'batter';
+  return CALL_OUTS.has(facts.result.trim()) ? 'pitcher' : 'batter';
+}
+
+/** 가운데 한마디: 이긴 쪽과 난 점수를 부른다 */
+function swingLine(facts: CallFacts, won: 'batter' | 'pitcher'): string {
+  if (won === 'pitcher') return `${josa(facts.pitcher, '이/가')} 이겨냅니다.`;
+  if (facts.runs >= 3) return '경기가 통째로 뒤집힙니다!';
+  if (facts.runs === 2) return '두 점이 한꺼번에 들어옵니다!';
+  if (facts.runs === 1) return '한 점이 들어옵니다!';
   return '일단 살아 나갑니다.';
+}
+
+/** 마지막 한 방: 걸린 변수를 그대로 인용하고, 편든 쪽이 이겼는지로 말끝을 고른다 */
+function tmiLine(facts: CallFacts, won: 'batter' | 'pitcher'): string {
+  const first = facts.tmis[0];
+  if (!first) return '';
+  const quoted = `“${clipChars(first.text, CALL_TMI_CHARS)}”`;
+  const more = facts.tmis.length > 1 ? ` 외 ${facts.tmis.length - 1}개` : '';
+  // 편을 못 가리는 건 실측 변수(기온·바람·이동거리)뿐이다: 인과 대신 배경으로 깐다
+  if (first.favors === null) return `${quoted}${more} 속에서 나온 한 타석입니다.`;
+  return first.favors === won ? `${quoted}${more}, 제대로 먹혔습니다.` : `${quoted}${more}도 소용없었습니다.`;
 }
 
 export function rulesCall(facts: CallFacts): string {
   const result = facts.result.trim();
-  const head = `${facts.inningText} ${facts.batter}, ${result}${result.endsWith('!') ? '' : '.'}`;
-  const first = facts.tmis[0];
-  const more = facts.tmis.length > 1 ? ` 외 ${facts.tmis.length - 1}개` : '';
-  const tail = first ? `걸린 변수는 “${clipChars(first.text, CALL_TMI_CHARS)}”(${first.effect})${more}.` : '';
-  return clipChars([head, toneOf(facts), tail].filter(Boolean).join(' '), CALL_LINE_CHARS);
+  const won = wonBy(facts);
+  const mark = result.endsWith('!') ? '' : facts.runs > 0 ? '!' : '.';
+  const head = `${facts.inningText} ${facts.batter}, ${result}${mark}`;
+  return clipChars([head, swingLine(facts, won), tmiLine(facts, won)].filter(Boolean).join(' '), CALL_LINE_CHARS);
 }

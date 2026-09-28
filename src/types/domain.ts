@@ -204,6 +204,11 @@ export interface VerdictResult {
 export interface CallTmi {
   text: string;
   effect: string;
+  /**
+   * 그 효과가 누구 편이었나. 자막이 인과를 뒤집어 부르는 데 쓴다 —
+   * 편든 쪽이 졌으면 "…했는데도", 이겼으면 "…덕분일까요". 손잡이로 가릴 수 없으면 null
+   */
+  favors: 'batter' | 'pitcher' | null;
 }
 
 /**

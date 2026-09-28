@@ -74,6 +74,7 @@ const SOURCES = ['ai', 'rules'] as const;
 const BATS = ['L', 'R', 'S'] as const;
 const THROWS = ['L', 'R'] as const;
 const PLAYER_KINDS = ['H', 'P'] as const;
+const CALL_SIDES = ['batter', 'pitcher'] as const;
 
 // ---------- 응답 ----------
 
@@ -247,7 +248,9 @@ function parseEvidence(x: unknown): EvidenceData {
 /** 자막이 부를 TMI 하나: 시청자 문장과 그 효과 한 줄 */
 function callTmi(x: unknown): CallTmi {
   const raw = record(x);
-  return { text: tmiText(raw.text), effect: str(raw.effect, MAX_CTX_TEXT) };
+  // favors는 나중에 더한 필드다: 없으면(예전 클라이언트) 편을 모르는 것으로 본다
+  const favors = raw.favors === undefined || raw.favors === null ? null : oneOf(raw.favors, CALL_SIDES);
+  return { text: tmiText(raw.text), effect: str(raw.effect, MAX_CTX_TEXT), favors };
 }
 
 /** 끝난 타석 사실. 확률은 받지 않는다 — 자막은 숫자를 말하지 않는다(CLAUDE.md CRITICAL) */
