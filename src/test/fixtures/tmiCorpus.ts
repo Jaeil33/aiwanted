@@ -51,6 +51,21 @@ export const TMI_CORPUS: readonly CorpusCase[] = [
   { group: 'app', text: '김타자 부모님이 경기장에 오셨다', subjects: B, knobs: ['focus'], sign: 1 },
   { group: 'app', text: '박투수가 화장실이 너무 급했다', subjects: P, knobs: ['control', 'nerve', 'stamina'], sign: -1 },
 
+  /*
+   * 웃자고 거는 일상(ADR-040). 전에는 사생활·질병으로 보고 거부하던 것들이다 —
+   * 기준을 "얼마나 사적인가"에서 "실존 선수에게 씌우면 해가 되는가"로 옮겼다.
+   */
+  { group: 'daily', text: '김타자 여자친구랑 헤어졌다', subjects: B, knobs: ['focus'], sign: -1 },
+  { group: 'daily', text: '김타자 짝사랑 중이라 정신이 없다', subjects: B, knobs: ['focus'], sign: -1 },
+  { group: 'daily', text: '김타자 여친 생김', subjects: B, knobs: ['focus'], sign: 1 },
+  { group: 'daily', text: '김타자 소개팅 했다', subjects: B, knobs: ['focus'], sign: 1 },
+  { group: 'daily', text: '박투수 데이트 하고 왔다', subjects: P, knobs: ['nerve'], sign: 1 },
+  { group: 'daily', text: '박투수 배탈 났다', subjects: P, knobs: ['stamina'], sign: -1 },
+  { group: 'daily', text: '김타자 배가 아프다', subjects: B, knobs: ['power'], sign: -1 },
+  { group: 'daily', text: '박투수 복통이 왔다', subjects: P, knobs: ['stamina'], sign: -1 },
+  { group: 'daily', text: '김타자 속이 안 좋다', subjects: B, knobs: ['power'], sign: -1 },
+  { group: 'daily', text: '박투수 설사 기운이 있다', subjects: P, knobs: ['stamina'], sign: -1 },
+
   // ---------- 이름·별명 ----------
   { group: 'name', text: '김타자 오늘 짬뽕 먹음', subjects: B, knobs: ['focus'], sign: -1 },
   { group: 'name', text: '박투수 커피 세 잔 마셨다', subjects: P, knobs: ['stuff', 'stamina', 'nerve', 'control'], sign: 1 },
@@ -298,7 +313,6 @@ export const TMI_CORPUS: readonly CorpusCase[] = [
   { group: 'sensitive', refused: true, text: '박투수 숙취가 심하다' },
   { group: 'sensitive', refused: true, text: '김타자 음주운전 했다' },
   { group: 'sensitive', refused: true, text: '박투수 도박 빚이 있다' },
-  { group: 'sensitive', refused: true, text: '김타자 여자친구랑 헤어졌다' },
   { group: 'sensitive', refused: true, text: '박투수 이혼했다' },
   { group: 'sensitive', refused: true, text: '김타자 감기 걸렸다' },
   { group: 'sensitive', refused: true, text: '박투수 어깨가 아프다' },
@@ -314,10 +328,7 @@ export const TMI_CORPUS: readonly CorpusCase[] = [
   { group: 'sensitive', refused: true, text: '박투수 경찰 조사 받았다' },
   { group: 'sensitive', refused: true, text: '김타자 스테로이드 복용' },
   { group: 'sensitive', refused: true, text: '박투수 마약 투약' },
-  { group: 'sensitive', refused: true, text: '김타자 여친 생김' },
   { group: 'sensitive', refused: true, text: '박투수 열애설' },
-  { group: 'sensitive', refused: true, text: '김타자 소개팅 했다' },
-  { group: 'sensitive', refused: true, text: '박투수 데이트 하다 늦었다' },
   { group: 'sensitive', refused: true, text: '김타자 뚱뚱해졌다' },
   { group: 'sensitive', refused: true, text: '박투수 못생겼다' },
   { group: 'sensitive', refused: true, text: '김타자 병신' },
@@ -327,12 +338,18 @@ export const TMI_CORPUS: readonly CorpusCase[] = [
   { group: 'sensitive', refused: true, text: '김타자 맥주 3병' },
   { group: 'sensitive', refused: true, text: '박투수 소주 한 병' },
   { group: 'sensitive', refused: true, text: '김타자 두통이 심하다' },
-  { group: 'sensitive', refused: true, text: '박투수 배탈 났다' },
   { group: 'sensitive', refused: true, text: '김타자 경기 중 쥐가 났다' },
   { group: 'sensitive', refused: true, text: '박투수 발목 염좌' },
   { group: 'sensitive', refused: true, text: '김타자 코피 났다' },
   { group: 'sensitive', refused: true, text: '박투수 체온 38도' },
   { group: 'sensitive', refused: true, text: '김타자 사생활 논란' },
+  // 일상까지 기준을 낮춘 뒤에도 남는 선(ADR-040): 아픈 곳이 경기에 쓰는 부위면 부상 주장이다
+  { group: 'sensitive', refused: true, text: '박투수 팔꿈치가 아프다' },
+  { group: 'sensitive', refused: true, text: '김타자 무릎이 아파서 못 뛴다' },
+  { group: 'sensitive', refused: true, text: '박투수 장염으로 입원했다' },
+  { group: 'sensitive', refused: true, text: '김타자 불륜설 터졌다' },
+  { group: 'sensitive', refused: true, text: '박투수 파산 신청했다' },
+  { group: 'sensitive', refused: true, text: '김타자 신상 털렸다' },
   { group: 'sensitive', refused: true, text: '박투수 음주 논란' },
   { group: 'sensitive', refused: true, text: '가나원이 술 취해서 왔다' },
   { group: 'sensitive', refused: true, text: '도레미 선수 부상 복귀' },

@@ -64,11 +64,11 @@ describe('assessSafety: 사람에게 걸린 민감어는 block', () => {
     ['death', '박투수 어머니가 돌아가셨다'],
     ['death', '김타자 아버지 부고'],
     ['death', '최수비 가족이 사망했다'],
-    ['privacy', '김타자가 여자친구랑 헤어졌다'],
     ['privacy', '박투수 이혼 소송 중'],
     ['privacy', '최수비 집 주소 알아냄'],
     ['privacy', '이공격이 여자랑 모텔 들어가는 거 봤음'],
     ['privacy', '한결이 열애설'],
+    ['privacy', '김타자 아내가 임신했다'],
     ['sexual', '김타자 성추행 논란'],
     ['sexual', '박투수 몰카 찍었대'],
     ['sexual', '이공격 음란 영상 유포'],
@@ -178,7 +178,6 @@ describe('주체를 모르면 review', () => {
     ['alcohol', '어젯밤 소주 3병'],
     ['gambling', '누가 도박했대'],
     ['illness', '열이 39도'],
-    ['privacy', '여자친구랑 헤어졌대'],
     ['gambling', '구단이 승부조작 의혹'],
   ] as const)('%s: %s', (category, text) => {
     expect(assess(text)).toMatchObject({ level: 'review', category, reason: SENSITIVE_REASON });
@@ -225,5 +224,69 @@ describe('checkSensitive (호환)', () => {
     for (const text of ['타자가 원정 숙소에서 도박을 했다', '원정투수가 어젯밤 음주운전을 했다', '비가 온다', '어머니가 암 진단']) {
       expect(checkSensitive(text).blocked, text).toBe(assessSafety(prepareText(text), null).level === 'block');
     }
+  });
+});
+
+
+/*
+ * 23-commentary step 1: 웃자고 거는 일상 이야기까지 막고 있었다.
+ * 사용자 요청: "범죄. 이런건 안되지만, 여자친구랑 헤어짐, 화장실에 가고싶음, 배가 아픔. 이정도는 괜찮아."
+ * 기준은 **얼마나 사적인가**가 아니라 **실존 선수에게 씌우면 해가 되는가**다(ADR-005, 공개 배포).
+ */
+describe('일상 이야기는 막지 않는다', () => {
+  it.each([
+    '김타자가 여자친구랑 헤어졌다',
+    '박투수 어제 여친이랑 싸웠대',
+    '최수비 남자친구 생겼다',
+    '김타자 소개팅 나갔다가 차였다',
+    '박투수 짝사랑 중이라 멘탈이 나감',
+    '김타자 연애 시작함',
+    '이공격 오늘 데이트 있어서 빨리 끝내고 싶어함',
+    '박투수 배가 아프다',
+    '김타자 갑자기 배탈이 났다',
+    '최수비 복통 호소',
+    '박투수 설사 기운이 있다',
+    '김타자 화장실이 급하다',
+    '박투수 속이 더부룩하다',
+    '김타자 아까부터 똥이 마려움',
+  ])('%s', (text) => {
+    expect(assess(text)).toEqual({ level: 'allow', category: null, reason: '', matched: null });
+  });
+
+  it('주체를 몰라도 그냥 통과한다 (review로도 안 걸린다)', () => {
+    for (const text of ['여자친구랑 헤어졌대', '배가 아프다', '화장실 급함']) {
+      expect(assess(text, null).level).toBe('allow');
+    }
+  });
+});
+
+describe('일상까지 낮춰도 이것들은 그대로 막는다', () => {
+  const STILL: Array<[SensitiveCategory, string]> = [
+    // 실존 선수에게 씌우면 해가 되는 사생활
+    ['privacy', '박투수 이혼 소송 중'],
+    ['privacy', '김타자 불륜설'],
+    ['privacy', '이공격이 여자랑 모텔 들어가는 거 봤음'],
+    ['privacy', '한결이 열애설'],
+    ['privacy', '최수비 집 주소 알아냄'],
+    ['privacy', '김타자 아내가 임신했다'],
+    ['privacy', '박투수 파산 신청함'],
+    // 가벼운 배앓이와 다른 진짜 병·부상
+    ['illness', '박투수 암 걸림'],
+    ['illness', '김타자 우울증 약 먹는 중'],
+    ['illness', '최수비 코로나 확진'],
+    ['illness', '김타자 장염으로 입원'],
+    ['injury', '김타자 어깨가 아프다'],
+    ['injury', '박투수 팔꿈치가 아파서 못 던진다'],
+    ['injury', '최수비 햄스트링 파열'],
+    // 사용자가 "이런건 안되지"라고 한 쪽
+    ['crime', '이공격이 어젯밤 음주운전을 했다'],
+    ['alcohol', '박투수가 어제 소주 3병 깠다'],
+    ['gambling', '김타자 승부조작 연루설'],
+    ['drugs', '김타자가 대마초 피웠다'],
+    ['sexual', '김타자 성추행 논란'],
+  ];
+
+  it.each(STILL)('%s: %s', (category, text) => {
+    expect(assess(text)).toMatchObject({ level: 'block', category, reason: SENSITIVE_REASON });
   });
 });

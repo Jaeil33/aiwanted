@@ -224,7 +224,7 @@ export const CORE_CONCEPTS: readonly Concept[] = [
     'sleep-oversleep',
     {
       category: 'sleep',
-      patterns: [/늦잠|지각|알람\s*(?:을\s*)?못\s*들|늦게\s*일어/],
+      patterns: [/늦잠|지각|알람\s*(?:을\s*)?못\s*들|늦게\s*일어|늦었(?:다|어|음|네)|늦어서|(?<![가-힣])지각/],
       negation: 'flip',
       evidence: 'fun',
       scope: 'game',
@@ -378,6 +378,57 @@ export const CORE_CONCEPTS: readonly Concept[] = [
     },
     ['focus', -2, "'{what}' 신호에 {who}, 온 신경이 화장실로 간다고 봤어요"],
     ['control', -2, "'{what}' 신호에 {who}, 빨리 끝내려다 공이 날린다고 봤어요"],
+  ),
+
+  /*
+   * 가벼운 배앓이(ADR-040). 병이 아니라 그날의 컨디션이다 — 진짜 병·부상은 safety.ts가 먼저 막는다.
+   * 화장실 신호(body-bathroom)와 겹치면 더 구체적인 이쪽이 이긴다.
+   */
+  ...person(
+    'body-tummy',
+    {
+      category: 'body',
+      patterns: [
+        /배탈|복통|설사|배앓이|속\s*(?:이|은|도)?\s*(?:안\s*좋|더부룩|쓰리|쓰려|쓰림|울렁)/,
+        /(?:아랫배|윗배|배)(?:가|이|를|도)?\s*(?:너무\s*|좀\s*|살짝\s*|많이\s*|갑자기\s*|계속\s*)?(?:아프|아파|아팠|아픈|아플|아픔)/,
+      ],
+      negation: 'cancel',
+      evidence: 'fun',
+      scope: 'pa',
+      excludes: ['body-bathroom'],
+      why: '배가 아프면 힘을 제대로 싣지 못한다는 가정',
+    },
+    ['power', -2, "'{what}' {who}, 배에 힘이 안 들어간다고 봤어요"],
+    ['stamina', -2, "'{what}' {who}, 길게 끌고 갈 몸이 아니라고 봤어요"],
+  ),
+
+  // ---------- 연애(ADR-040: 웃자고 거는 일상) ----------
+  ...person(
+    'love-heartache',
+    {
+      category: 'mood',
+      patterns: [/이별(?!\s*(?:노래|곡|발라드|송|가사|장면|드라마|영화))|헤어(?:졌|지|짐|진)|결별|차였|차임|실연|짝사랑|전\s*(?:여친|남친|여자\s*친구|남자\s*친구)/],
+      negation: 'cancel',
+      evidence: 'fun',
+      scope: 'game',
+      excludes: ['love-dating'],
+      why: '마음이 딴 데 가 있으면 공이 눈에 안 들어온다는 가정',
+    },
+    ['focus', -2, "'{what}' {who}, 공보다 딴 생각이 먼저 온다고 봤어요"],
+    ['nerve', -2, "'{what}' {who}, 마운드에서 마음이 흔들린다고 봤어요"],
+  ),
+  ...person(
+    'love-dating',
+    {
+      category: 'mood',
+      patterns: [/연애|여자\s*친구|남자\s*친구|여친|남친|썸\s*(?:을\s*)?(?:타|탔|탄|탈)|소개팅|(?<!업)데이트|고백(?:했|하|함)/],
+      negation: 'cancel',
+      evidence: 'fun',
+      scope: 'game',
+      why: '좋은 일이 있으면 몸이 가볍다는 가정',
+    },
+    ['focus', 1, "'{what}' {who}, 발걸음이 가볍다고 봤어요"],
+    ['nerve', 1, "'{what}' {who}, 오늘은 마음 편히 던진다고 봤어요"],
   ),
 
   // ---------- 기분 ----------
