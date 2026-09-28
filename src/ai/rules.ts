@@ -448,7 +448,7 @@ function clipChars(text: string, max: number): string {
 }
 
 /** 이 타석은 누구 쪽이 이겼나. 점수가 났으면 타자 쪽, 주자 없이 아웃이면 투수 쪽 */
-function wonBy(facts: CallFacts): 'batter' | 'pitcher' {
+export function paWonBy(facts: CallFacts): 'batter' | 'pitcher' {
   if (facts.runs > 0) return 'batter';
   return CALL_OUTS.has(facts.result.trim()) ? 'pitcher' : 'batter';
 }
@@ -475,7 +475,7 @@ function tmiLine(facts: CallFacts, won: 'batter' | 'pitcher'): string {
 
 export function rulesCall(facts: CallFacts): string {
   const result = facts.result.trim();
-  const won = wonBy(facts);
+  const won = paWonBy(facts);
   const mark = result.endsWith('!') ? '' : facts.runs > 0 ? '!' : '.';
   const head = `${facts.inningText} ${facts.batter}, ${result}${mark}`;
   return clipChars([head, swingLine(facts, won), tmiLine(facts, won)].filter(Boolean).join(' '), CALL_LINE_CHARS);

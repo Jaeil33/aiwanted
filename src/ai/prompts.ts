@@ -3,6 +3,7 @@ import { MEASURED } from '../domain/measured.js';
 import type { EvidenceData } from '../types/data.js';
 import type { CallFacts, EffectPart, Interpretation, MeasuredDef, MeasuredId, PromptContext, Subject } from '../types/domain.js';
 import { stripControl } from './normalize.js';
+import { paWonBy } from './rules.js';
 
 /*
  * AI에게 보내는 프롬프트. 모델은 문장을 조절값으로 옮기고 설명만 한다.
@@ -193,6 +194,13 @@ export function evidenceToolResult(evidence: EvidenceData | null, variable: unkn
  * 확률·퍼센트는 쓰지 말라고 못 박는다 — 숫자는 언제나 엔진이 낸다(CLAUDE.md CRITICAL).
  * 시청자 문장은 지시가 아니라 데이터다: 줄을 펴서 JSON 문자열로 넣는다(해석·판정과 같은 방식).
  */
+/** 누가 이긴 타석인지 한마디. 모델이 결과 이름만 보고 추론하지 않게 사실로 적는다 */
+function winnerLine(facts: CallFacts): string {
+  return paWonBy(facts) === 'pitcher'
+    ? `이 타석은 투수 ${oneLine(facts.pitcher)}가 이겼다`
+    : `이 타석은 타자 ${oneLine(facts.batter)}가 이겼다`;
+}
+
 export function buildCallPrompt(facts: CallFacts): string {
   const score = `${oneLine(facts.awayName)} ${facts.score.away} : ${facts.score.home} ${oneLine(facts.homeName)}`;
   const sideText = { batter: '타자에게 유리', pitcher: '투수에게 유리' } as const;
@@ -204,12 +212,12 @@ export function buildCallPrompt(facts: CallFacts): string {
   return [
     '너는 KBO 야구 중계석의 캐스터다. 방금 끝난 타석 하나를 자막 한 줄로 부른다.',
     `[타석] ${oneLine(facts.inningText)} · ${score}. 타자 ${oneLine(facts.batter)}(${oneLine(facts.battingTeam)}). 투수 ${oneLine(facts.pitcher)}(${oneLine(facts.fieldingTeam)}).`,
-    `[결과] ${oneLine(facts.result)}${facts.runs > 0 ? ` (이 타석 ${facts.runs}점)` : ''}`,
+    `[결과] ${oneLine(facts.result)}${facts.runs > 0 ? ` (이 타석 ${facts.runs}점)` : ''} → ${winnerLine(facts)}`,
     ...(tmiLines.length > 0 ? ['[걸린 시청자 변수]', ...tmiLines] : []),
     '[규칙]',
     '- 한국어 한 줄, 80자 이내. 두 문장까지. 줄바꿈을 넣지 않는다.',
     '- 걸린 시청자 변수를 반드시 한 번 집어서 타석 결과와 이어 붙인다. 진지한 중계 말투로, 웃기게.',
-    '- 변수가 편든 쪽(괄호)과 실제로 이긴 쪽을 견줘 인과를 고른다: 편든 쪽이 졌으면 "…했는데도", 이겼으면 "…덕분일까요?" 처럼.',
+    '- 변수가 편든 쪽(괄호)이 이 타석에서 **졌으면** "…했는데도", **이겼으면** "…덕분일까요?" 처럼 인과를 고른다. 누가 이겼는지는 [결과] 줄에 적혀 있다.',
     '- 인과를 단정하지 않는다. 변수를 데이터처럼 옮겨 적지 말고 문장 속에 녹여서 한 번만 집는다.',
     '- 딱딱한 틀("걸린 변수는 …", 효과 이름 그대로 쓰기)을 쓰지 않는다. 화살표(↑↓)와 괄호 설명은 자막에 넣지 않는다.',
     '- 확률·퍼센트(%)·승률은 쓰지 않는다. 숫자는 위에 적힌 점수와 이닝만 쓴다.',
