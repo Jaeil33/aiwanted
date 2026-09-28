@@ -232,3 +232,26 @@ describe('PlayScreen 해설 자막', () => {
     expect(screen.queryByRole('status', { name: '해설' })).toBeNull();
   });
 });
+
+/*
+ * 23-commentary: 실제 재생 경로로 타석을 끝까지 쳐 본다.
+ * 위 테스트들은 paFinished를 직접 던진다 — 그러면 usePlayback(엔진 평가 → 공 결과 → 연출 →
+ * animationStart/pitchApplied/paFinished)을 통째로 건너뛴다. 배포본을 손으로 쳐 보다가
+ * 그 구간이 테스트에 없다는 걸 알았다.
+ */
+describe('PlayScreen 해설 자막 — 실제 재생', () => {
+  it('타석 끝까지로 한 타석을 치르면 자막이 붙는다', SLOW, async () => {
+    const user = userEvent.setup();
+    const view = await openPlay();
+    await screen.findByLabelText(/^롯데 승리확률 \d+\.\d%$/, undefined, WAIT);
+    await act(async () => {
+      await view.game().actions.submitTmi('원정투수가 경기 전 짜장면 곱빼기를 먹었다');
+    });
+    await user.click(screen.getByRole('button', { name: '타석 끝까지' }));
+    await waitFor(() => expect(view.game().session.log.length).toBeGreaterThan(0), WAIT);
+
+    const bar = await screen.findByRole('status', { name: '해설' }, WAIT);
+    await waitFor(() => expect(bar).not.toHaveAttribute('data-loading', 'true'), WAIT);
+    expect(bar.textContent).toContain('짜장면');
+  });
+});
