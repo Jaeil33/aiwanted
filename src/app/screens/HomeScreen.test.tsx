@@ -122,7 +122,17 @@ describe('HomeScreen 히어로', () => {
     const liveApi: LiveApi = { games: async () => games, game: () => new Promise<never>(() => {}) };
     renderWithGame(<HomeScreen />, { platform: fakePlatform({ liveApi, today: () => '2026-09-20' }) });
     await waitFor(() => expect(document.querySelectorAll('[data-skeleton]').length).toBeGreaterThan(0));
-    expect(screen.queryByText('승부처를 고르는 중…')).toBeNull();
+    // 회색 상자만 있으면 멈춘 줄 안다: 카드마다 불러오는 중이라고 눈에 보이게 말한다
+    const feed = screen.getByRole('list', { name: '추천 승부처' });
+    for (const card of within(feed).getAllByRole('article')) {
+      expect(within(card).getByText('불러오는 중…')).toBeVisible();
+    }
+  });
+
+  it('일정을 받는 동안 불러오는 중이라고 말한다', () => {
+    const liveApi: LiveApi = { games: () => new Promise<never>(() => {}), game: () => new Promise<never>(() => {}) };
+    renderWithGame(<HomeScreen />, { platform: fakePlatform({ liveApi, today: () => '2026-09-20' }) });
+    expect(screen.getByText('불러오는 중…')).toBeVisible();
   });
 
   it('경기 카드마다 TMI 걸기가 타석 전체 바로 위에 있다', async () => {

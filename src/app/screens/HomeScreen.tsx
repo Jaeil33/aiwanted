@@ -244,13 +244,17 @@ function GameFeedCard({ summary, picks, waiting }: GameFeedCardProps) {
             </a>
           </li>
         ))}
-        {/* 승부처가 붙기까지 실측 1.7초. 그동안 빈 상자를 두면 그게 첫인상이라 들어올 줄의 뼈대를 대신 둔다 */}
+        {/*
+          승부처가 붙기까지 실측 1.7초. 그동안 빈 상자를 두면 그게 첫인상이라 들어올 줄의 뼈대를 대신 둔다.
+          회색 상자만으로는 멈춘 줄 알아서 첫 줄에 불러오는 중이라고 적는다
+        */}
         {picks.length === 0 &&
           (waiting ? (
             <>
+              <li className={styles.skeleton} data-skeleton="pick" aria-live="polite">
+                불러오는 중…
+              </li>
               <li className={styles.skeleton} data-skeleton="pick" aria-hidden="true" />
-              <li className={styles.skeleton} data-skeleton="pick" aria-hidden="true" />
-              <li className={styles.srOnly}>승부처를 고르는 중</li>
             </>
           ) : (
             <li className={styles.waiting}>되돌려볼 타석이 없어요.</li>
