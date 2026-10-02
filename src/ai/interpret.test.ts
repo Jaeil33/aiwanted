@@ -10,6 +10,10 @@ import { fixtureContext } from './test-helpers';
 const ctx = fixtureContext();
 const on = { measuredAvailable: true };
 const TEXT = '원정투수가 경기 전 짜장면 곱빼기를 먹었다';
+/** 민감어가 있지만 주체를 몰라 AI에 판단을 미루는 문장(safety review) */
+const REVIEW_TEXT = '어제 술 마셨대';
+/** 웃자고 거는 일상: 규칙 안전 판정이 allow */
+const ALLOWED_TEXTS = [TEXT, '타자가 여자친구랑 헤어졌대', '짜장면 먹은 거', '투수가 소개팅에서 차였다'];
 
 function fakeProvider(interpret: (req: InterpretRequest, signal?: AbortSignal) => Promise<unknown>) {
   const spy = vi.fn(interpret);
@@ -73,9 +77,9 @@ describe('interpretTmi', () => {
     expect(out.interpretation.parts.length).toBeGreaterThan(0);
   });
 
-  it('AI가 거부하면서 parts가 비어 있으면 그 거부를 그대로 쓴다', async () => {
+  it('AI가 거부하면서 parts가 비어 있으면, 판단을 AI에 미룬 문장(review)에서는 그 거부를 그대로 쓴다', async () => {
     const { provider } = fakeProvider(async () => ({ refused: true, reason: '계산하지 않아요.', comment: '', parts: [] }));
-    const out = await interpretTmi(TEXT, ctx, provider, on);
+    const out = await interpretTmi(REVIEW_TEXT, ctx, provider, on);
     expect(out.interpretation).toMatchObject({ source: 'ai', refused: true, parts: [] });
     expect(out.note).toBe('');
   });
@@ -116,8 +120,28 @@ describe('interpretTmi', () => {
     });
   });
 
-  it('AI가 거부하면 source ai 거부 해석', async () => {
-    await expect(interpretTmi(TEXT, ctx, failing(new AiError('refused')), on)).resolves.toEqual({
+  /*
+   * AI가 짜장면·이별 같은 일상도 겁먹고 거부했다. 규칙 안전 판정이 allow라고 한 문장은
+   * AI가 거부해도 규칙 해석으로 계산한다(ADR-040: 웃자고 거는 일상은 받는다).
+   */
+  it.each(ALLOWED_TEXTS)('규칙 안전 판정이 allow인 문장(%s)은 AI가 거부해도 규칙으로 계산한다', async (text) => {
+    const { provider } = fakeProvider(async () => ({ refused: true, reason: '사생활이라 계산하지 않아요.', comment: '', parts: [] }));
+    const out = await interpretTmi(text, ctx, provider, on);
+    expect(out).toEqual({ interpretation: ruleInterpret(text, ctx, on), note: '', disableProvider: false });
+    expect(out.interpretation.refused).toBe(false);
+    expect(out.interpretation.parts.length).toBeGreaterThan(0);
+  });
+
+  it.each(ALLOWED_TEXTS)('규칙 안전 판정이 allow인 문장(%s)은 AiError refused여도 규칙으로 계산한다', async (text) => {
+    await expect(interpretTmi(text, ctx, failing(new AiError('refused')), on)).resolves.toEqual({
+      interpretation: ruleInterpret(text, ctx, on),
+      note: '',
+      disableProvider: false,
+    });
+  });
+
+  it('판단을 AI에 미룬 문장(review)에서 AI가 거부하면 source ai 거부 해석', async () => {
+    await expect(interpretTmi(REVIEW_TEXT, ctx, failing(new AiError('refused')), on)).resolves.toEqual({
       interpretation: { source: 'ai', refused: true, reason: 'AI가 이 문장은 계산하지 않기로 했어요.', comment: '', parts: [] },
       note: '',
       disableProvider: false,

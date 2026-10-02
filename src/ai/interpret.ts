@@ -3,7 +3,8 @@ import { normalizeInterpretation } from './normalize';
 import { AiError } from './providers/errors';
 import type { AiProvider } from './providers/types';
 import { ruleInterpret } from './rules';
-import { checkSensitive } from './safety';
+import { assessSafety, checkSensitive } from './safety';
+import { prepareText } from './text';
 
 /*
  * TMI 한 줄 → Interpretation. 순수 흐름이다: 외부 호출은 넘겨받은 provider만 한다.
@@ -59,6 +60,13 @@ export async function interpretTmi(
   });
   if (!provider) return rules('');
 
+  /*
+   * AI가 짜장면·이별 같은 일상까지 겁먹고 거부한다. 규칙 안전 판정이 allow라고 한 문장은
+   * AI가 거부해도 규칙 해석으로 계산한다(ADR-040: 웃자고 거는 일상은 받는다).
+   * 민감어가 있는데 주체를 몰라 AI에 판단을 미룬 문장(review)만 AI 거부를 그대로 쓴다.
+   */
+  const aiMayRefuse = assessSafety(prepareText(clean), ctx).level !== 'allow';
+
   let raw: unknown;
   try {
     raw = await provider.interpret({ text: clean, ctx, measuredAvailable: opts.measuredAvailable }, opts.signal);
@@ -71,6 +79,7 @@ export async function interpretTmi(
       case 'rate_limited':
         return rules(NOTE.rateLimited);
       case 'refused':
+        if (!aiMayRefuse) return rules('');
         return {
           interpretation: { source: 'ai', refused: true, reason: AI_REFUSED_REASON, comment: '', parts: [] },
           note: '',
@@ -87,6 +96,7 @@ export async function interpretTmi(
 
   const interpretation = normalizeInterpretation(raw);
   if (!interpretation) return rules(NOTE.unreadable);
+  if (interpretation.refused && !aiMayRefuse) return rules('');
   /*
    * AI가 "승부와 상관없다"며 효과를 하나도 안 줄 때가 있다. 그러면 확률이 안 움직여
    * "TMI를 걸면 확률이 바뀐다"는 약속이 깨진다(ADR-013 해석은 항상 답한다, ADR-026 무엇이든 받는다).
