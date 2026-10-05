@@ -421,7 +421,7 @@ export const CORE_CONCEPTS: readonly Concept[] = [
     'love-dating',
     {
       category: 'mood',
-      patterns: [/연애|여자\s*친구|남자\s*친구|여친|남친|썸\s*(?:을\s*)?(?:타|탔|탄|탈)|소개팅|(?<!업)데이트|고백(?:했|하|함)/],
+      patterns: [/연애|여자\s*친구|남자\s*친구|여친|남친|썸\s*(?:을\s*)?(?:타|탔|탄|탈)|소개팅|(?<!업)데이트|고백(?:했|하|함)|키스(?!톤)|뽀뽀/],
       negation: 'cancel',
       evidence: 'fun',
       scope: 'game',

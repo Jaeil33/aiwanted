@@ -65,6 +65,10 @@ export const TMI_CORPUS: readonly CorpusCase[] = [
   { group: 'daily', text: '박투수 복통이 왔다', subjects: P, knobs: ['stamina'], sign: -1 },
   { group: 'daily', text: '김타자 속이 안 좋다', subjects: B, knobs: ['power'], sign: -1 },
   { group: 'daily', text: '박투수 설사 기운이 있다', subjects: P, knobs: ['stamina'], sign: -1 },
+  // 연애의 뽀뽀·키스도 웃자고 거는 일상이다. 열애설·불륜·임신 같은 사생활 폭로와는 다르다
+  { group: 'daily', text: '김타자 여자친구랑 뽀뽀했다', subjects: B, knobs: ['focus'], sign: 1 },
+  { group: 'daily', text: '박투수 여친이랑 첫키스', subjects: P },
+  { group: 'daily', text: '김타자 급똥 참는 중', subjects: B },
 
   // ---------- 이름·별명 ----------
   { group: 'name', text: '김타자 오늘 짬뽕 먹음', subjects: B, knobs: ['focus'], sign: -1 },
