@@ -1,5 +1,6 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { Analytics } from '@vercel/analytics/react';
 import { App } from './app/App';
 import { detectPlatform } from './app/platform';
 import './styles/tokens.css';
@@ -11,6 +12,7 @@ export function mount(el: HTMLElement): () => void {
   root.render(
     <StrictMode>
       <App platformPromise={detectPlatform(window)} />
+      <Analytics />
     </StrictMode>,
   );
   return () => root.unmount();
