@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import { weekdayOf } from '../domain/format';
 import { TabBar, type TabBarTab } from '../components/TabBar';
 import { APP_DATA } from '../data/appData';
@@ -70,6 +71,7 @@ export function App({ data = APP_DATA, platformPromise }: AppProps) {
   return (
     <GameProvider data={data} platform={platform}>
       <Shell />
+      <Analytics />
     </GameProvider>
   );
 }
