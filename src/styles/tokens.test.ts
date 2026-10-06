@@ -235,4 +235,8 @@ describe('index.html', () => {
   it('theme-color는 --bg(#05070A)', () => {
     expect(indexHtml).toMatch(/<meta name="theme-color" content="#05070A"\s*\/?>/i);
   });
+
+  it('Vercel Web Analytics는 패키지 없이 스크립트 한 줄로 단다(ADR-007)', () => {
+    expect(indexHtml).toContain('<script defer src="/_vercel/insights/script.js"></script>');
+  });
 });
